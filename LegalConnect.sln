@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{646B7314-743C-47D6-BB40-3371954626A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegalConnect.Domain", "src\LegalConnect.Domain\LegalConnect.Domain.csproj", "{39AB0949-054F-49C7-90C6-DCD682D23526}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegalConnect.Application", "src\LegalConnect.Application\LegalConnect.Application.csproj", "{507930DE-7C75-4137-BE20-C10C7CE6CD51}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegalConnect.Infrastructure", "src\LegalConnect.Infrastructure\LegalConnect.Infrastructure.csproj", "{AF807175-8694-4FDC-9747-72AA352AA367}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegalConnect.API", "src\LegalConnect.API\LegalConnect.API.csproj", "{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LegalConnect.SignalR", "src\LegalConnect.SignalR\LegalConnect.SignalR.csproj", "{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{39AB0949-054F-49C7-90C6-DCD682D23526}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39AB0949-054F-49C7-90C6-DCD682D23526}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39AB0949-054F-49C7-90C6-DCD682D23526}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39AB0949-054F-49C7-90C6-DCD682D23526}.Release|Any CPU.Build.0 = Release|Any CPU
+		{507930DE-7C75-4137-BE20-C10C7CE6CD51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{507930DE-7C75-4137-BE20-C10C7CE6CD51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{507930DE-7C75-4137-BE20-C10C7CE6CD51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{507930DE-7C75-4137-BE20-C10C7CE6CD51}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF807175-8694-4FDC-9747-72AA352AA367}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF807175-8694-4FDC-9747-72AA352AA367}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF807175-8694-4FDC-9747-72AA352AA367}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF807175-8694-4FDC-9747-72AA352AA367}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{39AB0949-054F-49C7-90C6-DCD682D23526} = {646B7314-743C-47D6-BB40-3371954626A2}
+		{507930DE-7C75-4137-BE20-C10C7CE6CD51} = {646B7314-743C-47D6-BB40-3371954626A2}
+		{AF807175-8694-4FDC-9747-72AA352AA367} = {646B7314-743C-47D6-BB40-3371954626A2}
+		{8AB51EE7-3D26-45CD-A69E-D2420A2ADA4B} = {646B7314-743C-47D6-BB40-3371954626A2}
+		{08DA3C1F-CC79-4B2F-AFB9-CFB93BFD653E} = {646B7314-743C-47D6-BB40-3371954626A2}
+	EndGlobalSection
+EndGlobal

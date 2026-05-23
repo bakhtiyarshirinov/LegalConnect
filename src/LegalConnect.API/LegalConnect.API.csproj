@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.10" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LegalConnect.Application\LegalConnect.Application.csproj" />
+    <ProjectReference Include="..\LegalConnect.Infrastructure\LegalConnect.Infrastructure.csproj" />
+    <ProjectReference Include="..\LegalConnect.SignalR\LegalConnect.SignalR.csproj" />
+  </ItemGroup>
+
+</Project>
