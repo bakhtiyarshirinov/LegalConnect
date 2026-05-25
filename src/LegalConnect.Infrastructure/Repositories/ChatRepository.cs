@@ -14,6 +14,8 @@ public class ChatRepository : IChatRepository
         _context = context;
     }
 
+    // ─── Чаты ───────────────────────────────────────────────────────────────
+
     public async Task<Chat?> GetByIdAsync(Guid id)
         => await _context.Chats
             .Include(c => c.Messages.OrderBy(m => m.SentAt))
@@ -32,9 +34,25 @@ public class ChatRepository : IChatRepository
             .OrderByDescending(c => c.LastMessageAt)
             .ToListAsync();
 
+    public async Task<bool> ExistsByClientAndLawyerAsync(Guid clientId, Guid lawyerId)
+        => await _context.Chats
+            .AnyAsync(c => c.ClientId == clientId && c.LawyerId == lawyerId);
+
     public async Task AddAsync(Chat chat)
         => await _context.Chats.AddAsync(chat);
 
     public void Update(Chat chat)
         => _context.Chats.Update(chat);
+
+    // ─── Сообщения ──────────────────────────────────────────────────────────
+
+    public async Task<IEnumerable<Message>> GetMessagesAsync(Guid chatId)
+        => await _context.Messages
+            .Include(m => m.Sender)
+            .Where(m => m.ChatId == chatId)
+            .OrderBy(m => m.SentAt)
+            .ToListAsync();
+
+    public async Task AddMessageAsync(Message message)
+        => await _context.Messages.AddAsync(message);
 }

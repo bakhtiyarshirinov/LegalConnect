@@ -2,6 +2,7 @@ using System.Text;
 using LegalConnect.API.Middleware;
 using LegalConnect.Application;
 using LegalConnect.Infrastructure;
+using LegalConnect.SignalR.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// ─── JWT аутентификация ──────────────────────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -26,7 +28,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!))
         };
+
+        // SignalR не может передавать заголовок Authorization — берём токен из query string
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    context.HttpContext.Request.Path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
+
+// ─── SignalR ────────────────────────────────────────────────────────────────
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -44,4 +66,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ─── SignalR Hub ─────────────────────────────────────────────────────────────
+app.MapHub<ChatHub>("/hubs/chat");
+
 app.Run();

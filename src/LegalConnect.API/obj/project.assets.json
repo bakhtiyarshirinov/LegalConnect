@@ -1782,7 +1782,10 @@
         },
         "runtime": {
           "bin/placeholder/LegalConnect.SignalR.dll": {}
-        }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
