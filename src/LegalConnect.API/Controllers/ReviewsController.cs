@@ -1,12 +1,14 @@
 using LegalConnect.Application.Reviews.Commands.CreateReview;
 using LegalConnect.Application.Reviews.Queries.GetLawyerReviews;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LegalConnect.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ReviewsController : ControllerBase
 {
     private readonly IMediator _mediator;

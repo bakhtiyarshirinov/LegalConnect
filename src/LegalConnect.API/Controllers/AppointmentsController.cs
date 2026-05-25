@@ -3,12 +3,14 @@ using LegalConnect.Application.Appointments.Commands.ConfirmAppointment;
 using LegalConnect.Application.Appointments.Commands.CreateAppointment;
 using LegalConnect.Application.Appointments.Queries.GetClientAppointments;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LegalConnect.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AppointmentsController : ControllerBase
 {
     private readonly IMediator _mediator;

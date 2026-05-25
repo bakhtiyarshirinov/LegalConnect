@@ -46,6 +46,20 @@ public class Lawyer
         };
     }
 
+    public void UpdateProfile(
+        string bio,
+        string city,
+        decimal hourlyRate,
+        int experienceYears,
+        bool isAvailable)
+    {
+        Bio = bio;
+        City = city;
+        HourlyRate = hourlyRate;
+        ExperienceYears = experienceYears;
+        IsAvailable = isAvailable;
+    }
+
     public void UpdateRating(float newRating, int reviewCount)
     {
         Rating = newRating;

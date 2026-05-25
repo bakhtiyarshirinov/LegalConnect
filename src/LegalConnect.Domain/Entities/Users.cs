@@ -42,6 +42,13 @@ public class User
         };
     }
 
+    public void UpdateProfile(string fullName, string? phone, string? avatarUrl = null)
+    {
+        FullName = fullName;
+        Phone = phone;
+        if (avatarUrl is not null) AvatarUrl = avatarUrl;
+    }
+
     public void UpdateAvatar(string avatarUrl) => AvatarUrl = avatarUrl;
     public void Verify() => IsVerified = true;
 }

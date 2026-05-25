@@ -53,6 +53,15 @@ public class LawyerRepository : ILawyerRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Lawyer>> GetPendingAsync()
+        => await _context.Lawyers
+            .Include(l => l.User)
+            .Include(l => l.Specializations)
+            .ThenInclude(ls => ls.Specialization)
+            .Where(l => !l.IsVerified)
+            .OrderBy(l => l.User.FullName)
+            .ToListAsync();
+
     public async Task AddAsync(Lawyer lawyer)
         => await _context.Lawyers.AddAsync(lawyer);
 

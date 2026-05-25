@@ -15,6 +15,7 @@ public class SpecializationsController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>GET /api/specializations — public, no auth required.</summary>
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
