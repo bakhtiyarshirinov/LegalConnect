@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Chat> Chats => Set<Chat>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

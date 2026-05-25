@@ -1,4 +1,5 @@
 using LegalConnect.Application.Chat.DTOs;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,10 +8,12 @@ namespace LegalConnect.Application.Chat.Commands.SendMessage;
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, MessageDto>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
 
-    public SendMessageCommandHandler(IUnitOfWork unitOfWork)
+    public SendMessageCommandHandler(IUnitOfWork unitOfWork, IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
+        _emailService = emailService;
     }
 
     public async Task<MessageDto> Handle(
@@ -31,14 +34,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
         // ClientId — это User.Id клиента
         // LawyerId — это Lawyer.Id (профиль юриста)
         var isClient = chat.ClientId == request.SenderId;
-        var isLawyer = false;
-
-        if (!isClient)
-        {
-            var lawyerProfile = await _unitOfWork.Lawyers
-                .GetByUserIdAsync(request.SenderId);
-            isLawyer = lawyerProfile is not null && chat.LawyerId == lawyerProfile.Id;
-        }
+        var lawyerProfile = await _unitOfWork.Lawyers.GetByUserIdAsync(request.SenderId);
+        var isLawyer = lawyerProfile is not null && chat.LawyerId == lawyerProfile.Id;
 
         if (!isClient && !isLawyer)
             throw new InvalidOperationException(
@@ -57,6 +54,9 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // 6️⃣ Отправляем email уведомление получателю (fire-and-forget, некритичная операция)
+        _ = SendEmailNotificationAsync(chat, isClient, sender, request.Content);
+
         return new MessageDto(
             Id: message.Id,
             SenderId: message.SenderId,
@@ -64,5 +64,46 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
             Content: message.Content,
             IsRead: message.IsRead,
             SentAt: message.SentAt);
+    }
+
+    private async Task SendEmailNotificationAsync(
+        Domain.Entities.Chat chat,
+        bool senderIsClient,
+        Domain.Entities.User sender,
+        string messageContent)
+    {
+        try
+        {
+            if (senderIsClient)
+            {
+                // Отправитель — клиент → получатель — юрист
+                var lawyerProfile = await _unitOfWork.Lawyers.GetByIdAsync(chat.LawyerId);
+                if (lawyerProfile?.User is not null)
+                {
+                    await _emailService.SendNewMessageNotificationAsync(
+                        email: lawyerProfile.User.Email,
+                        fullName: lawyerProfile.User.FullName,
+                        senderName: sender.FullName,
+                        messagePreview: messageContent);
+                }
+            }
+            else
+            {
+                // Отправитель — юрист → получатель — клиент
+                var client = await _unitOfWork.Users.GetByIdAsync(chat.ClientId);
+                if (client is not null)
+                {
+                    await _emailService.SendNewMessageNotificationAsync(
+                        email: client.Email,
+                        fullName: client.FullName,
+                        senderName: sender.FullName,
+                        messagePreview: messageContent);
+                }
+            }
+        }
+        catch
+        {
+            // Email уведомление — некритичная операция, не прерываем основной поток
+        }
     }
 }

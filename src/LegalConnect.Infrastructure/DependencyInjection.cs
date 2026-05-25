@@ -5,6 +5,7 @@ using LegalConnect.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Resend;
 
 namespace LegalConnect.Infrastructure;
 
@@ -23,6 +24,17 @@ public static class DependencyInjection
 
         // Services
         services.AddScoped<IJwtService, JwtService>();
+
+        // Resend Email
+        services.AddOptions();
+        services.AddHttpClient<ResendClient>();
+        services.Configure<ResendClientOptions>(options =>
+        {
+            options.ApiToken = configuration["ResendSettings:ApiKey"]
+                ?? throw new InvalidOperationException("ResendSettings:ApiKey is not configured");
+        });
+        services.AddTransient<IResend, ResendClient>();
+        services.AddScoped<IEmailService, EmailService>();
 
         return services;
     }

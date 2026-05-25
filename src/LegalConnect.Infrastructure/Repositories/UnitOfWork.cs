@@ -14,7 +14,8 @@ public class UnitOfWork : IUnitOfWork
     public IAppointmentRepository Appointments { get; }
     public IChatRepository Chats { get; }
     public IReviewRepository Reviews { get; }
-    public ISpecializationRepository Specializations { get; } // ← добавили
+    public ISpecializationRepository Specializations { get; }
+    public IOtpCodeRepository OtpCodes { get; }
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -24,7 +25,8 @@ public class UnitOfWork : IUnitOfWork
         Appointments = new AppointmentRepository(context);
         Chats = new ChatRepository(context);
         Reviews = new ReviewRepository(context);
-        Specializations = new SpecializationRepository(context); // ← добавили
+        Specializations = new SpecializationRepository(context);
+        OtpCodes = new OtpCodeRepository(context);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

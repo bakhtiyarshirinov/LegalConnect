@@ -18,13 +18,24 @@ public class GetUserChatsQueryHandler
         GetUserChatsQuery request,
         CancellationToken cancellationToken)
     {
-        // Chat.ClientId — это User.Id клиента
-        // Chat.LawyerId — это Lawyer.Id (профиль юриста, не User.Id)
-        // Если пользователь — юрист, нужно сначала получить Lawyer.Id
+        // Репозиторий сам обрабатывает оба случая:
+        // c.ClientId == userId (клиент)
+        // c.LawyerId == userId (юрист — через Lawyer.Id)
+        // Но для юриста нужен Lawyer.Id, не User.Id
         var lawyerProfile = await _unitOfWork.Lawyers.GetByUserIdAsync(request.UserId);
-        var queryId = lawyerProfile is not null ? lawyerProfile.Id : request.UserId;
 
-        var chats = await _unitOfWork.Chats.GetByUserIdAsync(queryId);
+        IEnumerable<Domain.Entities.Chat> chats;
+
+        if (lawyerProfile is not null)
+        {
+            // Юрист — ищем по Lawyer.Id
+            chats = await _unitOfWork.Chats.GetByUserIdAsync(lawyerProfile.Id);
+        }
+        else
+        {
+            // Клиент — ищем по User.Id
+            chats = await _unitOfWork.Chats.GetByUserIdAsync(request.UserId);
+        }
 
         return chats.Select(c => new ChatDto(
             Id: c.Id,

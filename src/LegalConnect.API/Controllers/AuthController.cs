@@ -2,6 +2,8 @@ using LegalConnect.Application.Auth.Commands.Login;
 using LegalConnect.Application.Auth.Commands.Register;
 using LegalConnect.Application.Auth.Commands.RegisterClient;
 using LegalConnect.Application.Auth.Commands.RegisterLawyer;
+using LegalConnect.Application.Auth.Commands.ResendOtp;
+using LegalConnect.Application.Auth.Commands.VerifyOtp;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -56,5 +58,25 @@ public class AuthController : ControllerBase
     {
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
+    }
+
+    /// <summary>POST /api/auth/verify-otp — verify email with OTP code, returns JWT.</summary>
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp(
+        [FromBody] VerifyOtpCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>POST /api/auth/resend-otp — resend OTP code to email.</summary>
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp(
+        [FromBody] ResendOtpCommand command,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(command, cancellationToken);
+        return Ok(new { message = "OTP code has been sent to your email" });
     }
 }

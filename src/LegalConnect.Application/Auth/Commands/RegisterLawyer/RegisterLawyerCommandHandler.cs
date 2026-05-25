@@ -11,23 +11,28 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
+    private readonly IEmailService _emailService;
 
-    public RegisterLawyerCommandHandler(IUnitOfWork unitOfWork, IJwtService jwtService)
+    public RegisterLawyerCommandHandler(
+        IUnitOfWork unitOfWork,
+        IJwtService jwtService,
+        IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
+        _emailService = emailService;
     }
 
     public async Task<AuthResult> Handle(
         RegisterLawyerCommand request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Check email uniqueness
+        // 1️⃣ Проверяем уникальность email
         var emailExists = await _unitOfWork.Users.ExistsByEmailAsync(request.Email);
         if (emailExists)
             throw new InvalidOperationException("User with this email already exists");
 
-        // 2️⃣ Validate all specializations exist
+        // 2️⃣ Проверяем существование специализаций
         foreach (var specializationId in request.SpecializationIds)
         {
             var exists = await _unitOfWork.Specializations.ExistsAsync(specializationId);
@@ -36,7 +41,7 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
                     $"Specialization with id {specializationId} not found");
         }
 
-        // 3️⃣ Create user with Lawyer role
+        // 3️⃣ Создаём пользователя с ролью Lawyer (IsVerified = false)
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         var user = User.Create(
@@ -49,7 +54,7 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
 
         await _unitOfWork.Users.AddAsync(user);
 
-        // 4️⃣ Create basic LawyerProfile (IsVerified = false by default)
+        // 4️⃣ Создаём профиль юриста
         var lawyer = Lawyer.Create(
             userId: user.Id,
             bio: request.Bio,
@@ -63,9 +68,18 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
             lawyer.Specializations.Add(LawyerSpecialization.Create(lawyer.Id, specializationId));
 
         await _unitOfWork.Lawyers.AddAsync(lawyer);
+
+        // 5️⃣ Генерируем OTP-код
+        var code = Random.Shared.Next(100000, 999999).ToString();
+        var otpCode = OtpCode.Create(user.Email, code);
+        await _unitOfWork.OtpCodes.AddAsync(otpCode);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 5️⃣ Return token
+        // 6️⃣ Отправляем email с кодом
+        await _emailService.SendOtpAsync(user.Email, user.FullName, code);
+
+        // 7️⃣ Возвращаем токен
         var token = _jwtService.GenerateToken(user);
 
         return new AuthResult(

@@ -9,6 +9,7 @@ public interface IUnitOfWork
     IAppointmentRepository Appointments { get; }
     IChatRepository Chats { get; }
     IReviewRepository Reviews { get; }
-    ISpecializationRepository Specializations { get; } // ← добавили
+    ISpecializationRepository Specializations { get; }
+    IOtpCodeRepository OtpCodes { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
