@@ -2,7 +2,6 @@ using LegalConnect.Domain.Interfaces.Repositories;
 
 namespace LegalConnect.Domain.Interfaces;
 
-
 public interface IUnitOfWork
 {
     IUserRepository Users { get; }
@@ -10,6 +9,6 @@ public interface IUnitOfWork
     IAppointmentRepository Appointments { get; }
     IChatRepository Chats { get; }
     IReviewRepository Reviews { get; }
-
+    ISpecializationRepository Specializations { get; } // ← добавили
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

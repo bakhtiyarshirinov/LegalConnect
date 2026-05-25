@@ -42,7 +42,13 @@ public class ExceptionHandlingMiddleware
                 HttpStatusCode.Conflict,
                 ioe.Message,
                 (IDictionary<string, string[]>?)null),
-
+            
+            KeyNotFoundException knfe => (
+                HttpStatusCode.NotFound,
+                knfe.Message,
+                (IDictionary<string, string[]>?)null),
+            
+            
             UnauthorizedAccessException => (
                 HttpStatusCode.Unauthorized,
                 "Invalid credentials",
