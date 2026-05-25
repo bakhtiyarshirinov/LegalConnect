@@ -9,4 +9,5 @@ public interface ILawyerRepository
     Task<IEnumerable<Lawyer>> GetAllAsync(string? city, int? specializationId, decimal? maxRate);
     Task AddAsync(Lawyer lawyer);
     void Update(Lawyer lawyer);
+   
 }
