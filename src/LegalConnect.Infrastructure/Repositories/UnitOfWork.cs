@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     public IReviewRepository Reviews { get; }
     public ISpecializationRepository Specializations { get; }
     public IOtpCodeRepository OtpCodes { get; }
+    public INotificationRepository Notifications { get; }
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -27,6 +28,7 @@ public class UnitOfWork : IUnitOfWork
         Reviews = new ReviewRepository(context);
         Specializations = new SpecializationRepository(context);
         OtpCodes = new OtpCodeRepository(context);
+        Notifications = new NotificationRepository(context);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 using LegalConnect.Application.Chat.DTOs;
 using LegalConnect.Application.Common.Interfaces;
+using LegalConnect.Application.Notifications.Commands.CreateNotification;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -9,11 +10,16 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly IMediator _mediator;
 
-    public SendMessageCommandHandler(IUnitOfWork unitOfWork, IEmailService emailService)
+    public SendMessageCommandHandler(
+        IUnitOfWork unitOfWork,
+        IEmailService emailService,
+        IMediator mediator)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _mediator = mediator;
     }
 
     public async Task<MessageDto> Handle(
@@ -54,7 +60,10 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 6️⃣ Отправляем email уведомление получателю (fire-and-forget, некритичная операция)
+        // 6️⃣ Уведомляем получателя (in-app notification)
+        await CreateInAppNotificationAsync(chat, isClient, sender, cancellationToken);
+
+        // 7️⃣ Отправляем email уведомление получателю (fire-and-forget, некритичная операция)
         _ = SendEmailNotificationAsync(chat, isClient, sender, request.Content);
 
         return new MessageDto(
@@ -64,6 +73,41 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
             Content: message.Content,
             IsRead: message.IsRead,
             SentAt: message.SentAt);
+    }
+
+    private async Task CreateInAppNotificationAsync(
+        Domain.Entities.Chat chat,
+        bool senderIsClient,
+        Domain.Entities.User sender,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            Guid recipientUserId;
+
+            if (senderIsClient)
+            {
+                // Клиент → получатель юрист
+                var lawyerProfile = await _unitOfWork.Lawyers.GetByIdAsync(chat.LawyerId);
+                if (lawyerProfile is null) return;
+                recipientUserId = lawyerProfile.UserId;
+            }
+            else
+            {
+                // Юрист → получатель клиент
+                recipientUserId = chat.ClientId;
+            }
+
+            await _mediator.Send(new CreateNotificationCommand(
+                UserId: recipientUserId,
+                Title: "New Message",
+                Body: $"You have a new message from {sender.FullName}",
+                Type: "message"), cancellationToken);
+        }
+        catch
+        {
+            // In-app уведомление — некритичная операция
+        }
     }
 
     private async Task SendEmailNotificationAsync(

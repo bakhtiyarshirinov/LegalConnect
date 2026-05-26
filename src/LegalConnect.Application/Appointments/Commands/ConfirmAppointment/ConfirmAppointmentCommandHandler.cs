@@ -1,3 +1,4 @@
+using LegalConnect.Application.Notifications.Commands.CreateNotification;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,10 +8,12 @@ public class ConfirmAppointmentCommandHandler
     : IRequestHandler<ConfirmAppointmentCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMediator _mediator;
 
-    public ConfirmAppointmentCommandHandler(IUnitOfWork unitOfWork)
+    public ConfirmAppointmentCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
     {
         _unitOfWork = unitOfWork;
+        _mediator = mediator;
     }
 
     public async Task Handle(
@@ -32,5 +35,12 @@ public class ConfirmAppointmentCommandHandler
         appointment.Confirm();
         _unitOfWork.Appointments.Update(appointment);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Уведомляем клиента о подтверждении записи
+        await _mediator.Send(new CreateNotificationCommand(
+            UserId: appointment.ClientId,
+            Title: "Appointment Confirmed",
+            Body: "Your appointment has been confirmed by the lawyer",
+            Type: "appointment"), cancellationToken);
     }
 }
