@@ -53,7 +53,12 @@ public class RegisterClientCommandHandler : IRequestHandler<RegisterClientComman
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 4️⃣ Отправляем email с кодом
-        await _emailService.SendOtpAsync(user.Email, user.FullName, code);
+        // 4️⃣ Отправляем email с кодом (fire-and-forget)
+        _ = Task.Run(async () =>
+        {
+            try { await _emailService.SendOtpAsync(user.Email, user.FullName, code); }
+            catch { /* ignore email errors in dev */ }
+        });
 
         // 5️⃣ Возвращаем результат (токен без IsVerified — пользователь должен подтвердить email)
         var token = _jwtService.GenerateToken(user);

@@ -28,6 +28,11 @@ public class UserRepository : IUserRepository
     public async Task AddAsync(User user)
         => await _context.Users.AddAsync(user);
 
+    public async Task<IEnumerable<User>> GetAllAsync()
+        => await _context.Users
+            .OrderByDescending(u => u.CreatedAt)
+            .ToListAsync();
+
     public void Update(User user)
         => _context.Users.Update(user);
 }

@@ -1,4 +1,5 @@
 using LegalConnect.Application.Admin.Commands.VerifyLawyer;
+using LegalConnect.Application.Admin.Queries.GetAllUsers;
 using LegalConnect.Application.Admin.Queries.GetPendingLawyers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -32,5 +33,13 @@ public class AdminController : ControllerBase
     {
         await _mediator.Send(new VerifyLawyerCommand(id), cancellationToken);
         return NoContent();
+    }
+
+    /// <summary>GET /api/admin/users — returns all users.</summary>
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetAllUsersQuery(), cancellationToken);
+        return Ok(result);
     }
 }

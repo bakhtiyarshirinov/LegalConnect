@@ -1,0 +1,184 @@
+import React from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { Users, Briefcase, CheckCircle, Clock, ArrowRight, MapPin, Star } from 'lucide-react'
+import { getPendingLawyers, verifyLawyer } from '../api/admin'
+import { Card } from '../components/ui/Card'
+import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
+import { LawyerCardSkeleton } from '../components/ui/Skeleton'
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.35, ease: 'easeOut' as const },
+  }),
+}
+
+export const Dashboard: React.FC = () => {
+  const queryClient = useQueryClient()
+
+  const { data: pending = [], isLoading } = useQuery({
+    queryKey: ['pending-lawyers'],
+    queryFn: getPendingLawyers,
+  })
+
+  const { mutate: verify, isPending: verifying } = useMutation({
+    mutationFn: verifyLawyer,
+    onSuccess: (_, id) => {
+      toast.success('Lawyer verified successfully!')
+      queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
+        old.filter((l) => l.id !== id)
+      )
+    },
+    onError: () => toast.error('Verification failed. Try again.'),
+  })
+
+  const stats = [
+    {
+      label: 'Pending Verifications',
+      value: isLoading ? '—' : pending.length,
+      icon: Clock,
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
+    },
+    {
+      label: 'Total Users',
+      value: '248',
+      icon: Users,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      label: 'Verified Lawyers',
+      value: '34',
+      icon: CheckCircle,
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+    },
+  ]
+
+  const preview = pending.slice(0, 5)
+
+  return (
+    <div>
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-8"
+      >
+        <h1 className="text-2xl font-bold text-[#0A0A0A]">Admin Dashboard</h1>
+        <p className="text-[#6B6B6B] text-sm mt-1">Overview of platform activity</p>
+      </motion.div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {stats.map((stat, i) => {
+          const Icon = stat.icon
+          return (
+            <motion.div
+              key={stat.label}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+            >
+              <Card>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#6B6B6B] mb-1">{stat.label}</p>
+                    <p className="text-3xl font-bold text-[#0A0A0A]">{stat.value}</p>
+                  </div>
+                  <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Pending Verifications */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-[#0A0A0A]">Pending Verifications</h2>
+          <p className="text-sm text-[#6B6B6B]">Lawyers awaiting approval</p>
+        </div>
+        <Link to="/lawyers">
+          <Button variant="secondary" size="sm">
+            View All
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Button>
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map((i) => <LawyerCardSkeleton key={i} />)}
+        </div>
+      ) : preview.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-16 text-center"
+        >
+          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4">
+            <CheckCircle className="w-7 h-7 text-emerald-600" />
+          </div>
+          <p className="text-lg font-semibold text-[#0A0A0A]">All caught up!</p>
+          <p className="text-sm text-[#6B6B6B] mt-1">No pending verifications</p>
+        </motion.div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {preview.map((lawyer, i) => (
+            <motion.div
+              key={lawyer.id}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+            >
+              <Card>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="font-semibold text-[#0A0A0A]">{lawyer.fullName}</h3>
+                      <Badge variant="pending">Pending</Badge>
+                    </div>
+                    <p className="text-sm text-[#6B6B6B] mb-3">{lawyer.email}</p>
+                    <div className="flex items-center gap-4 text-xs text-[#6B6B6B]">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {lawyer.city}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Briefcase className="w-3 h-3" /> {lawyer.experienceYears} yrs exp
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3 h-3" /> ${lawyer.hourlyRate}/hr
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    loading={verifying}
+                    onClick={() => verify(lawyer.id)}
+                  >
+                    Verify
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

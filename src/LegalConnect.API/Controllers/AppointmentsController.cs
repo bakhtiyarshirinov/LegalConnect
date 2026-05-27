@@ -2,6 +2,7 @@ using LegalConnect.Application.Appointments.Commands.CancelAppointment;
 using LegalConnect.Application.Appointments.Commands.ConfirmAppointment;
 using LegalConnect.Application.Appointments.Commands.CreateAppointment;
 using LegalConnect.Application.Appointments.Queries.GetClientAppointments;
+using LegalConnect.Application.Appointments.Queries.GetLawyerAppointments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +57,16 @@ public class AppointmentsController : ControllerBase
     {
         var result = await _mediator.Send(
             new GetClientAppointmentsQuery(clientId), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("lawyer/{lawyerId:guid}")]
+    public async Task<IActionResult> GetLawyerAppointments(
+        Guid lawyerId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new GetLawyerAppointmentsQuery(lawyerId), cancellationToken);
         return Ok(result);
     }
 }

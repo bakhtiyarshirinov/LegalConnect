@@ -76,10 +76,14 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 6️⃣ Отправляем email с кодом
-        await _emailService.SendOtpAsync(user.Email, user.FullName, code);
+        // 6️⃣ Отправляем email с кодом (fire-and-forget)
+        _ = Task.Run(async () =>
+        {
+            try { await _emailService.SendOtpAsync(user.Email, user.FullName, code); }
+            catch { /* ignore email errors in dev */ }
+        });
 
-        // 7️⃣ Возвращаем токен
+        
         var token = _jwtService.GenerateToken(user);
 
         return new AuthResult(
