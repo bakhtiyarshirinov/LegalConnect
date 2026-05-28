@@ -146,7 +146,7 @@ export default function ClientDashboard() {
                       <Badge variant="info">{a.type}</Badge>
                       <span style={{ fontSize: 12, color: '#6B6B6B' }}>{a.durationMinutes}min</span>
                     </div>
-                    {a.status === 'Pending' && (
+                    {(a.status === 'Pending' || a.status === 'Confirmed') && (
                       <button
                         onClick={() => cancelMutation.mutate(a.id)}
                         style={{

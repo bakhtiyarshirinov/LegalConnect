@@ -48,7 +48,10 @@ export default function Chat() {
   const { sendMessage } = useSignalR({
     chatId: activeChatId,
     onReceiveMessage: (msg: MessageDto) => {
-      setMessages((prev) => [...prev, msg])
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev
+        return [...prev, msg]
+      })
       qc.invalidateQueries({ queryKey: ['chats', userId] })
     },
   })
@@ -64,7 +67,6 @@ export default function Chat() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['messages', activeChatId] })
       qc.invalidateQueries({ queryKey: ['chats', userId] })
     },
     onError: (err: Error) => toast.error(err.message),
