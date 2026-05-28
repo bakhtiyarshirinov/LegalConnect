@@ -70,9 +70,8 @@ export default function LawyerProfile() {
       if (!user || !lawyer) throw new Error('Not authenticated')
       return chatsApi.create(user.userId, lawyer.id)
     },
-    onSuccess: () => {
-      toast.success('Chat created!')
-      navigate('/chat')
+    onSuccess: (data) => {
+      navigate('/chat', { state: { chatId: data.chatId } })
     },
     onError: (err: Error) => toast.error(err.message),
   })

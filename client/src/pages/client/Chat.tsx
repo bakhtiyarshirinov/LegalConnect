@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -20,29 +21,35 @@ function formatTime(d: string) {
 export default function Chat() {
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
-  const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const location = useLocation()
+  const initialChatId = (location.state as { chatId?: string } | null)?.chatId ?? null
+  const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId)
   const [messages, setMessages] = useState<MessageDto[]>([])
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  const userId = useAuthStore((s) => s.user?.userId)
+
   const { data: chats = [], isLoading: loadingChats } = useQuery({
-    queryKey: ['chats', user.userId],
-    queryFn: () => chatsApi.getAll(user.userId),
+    queryKey: ['chats', userId],
+    queryFn: () => chatsApi.getAll(userId!),
+    enabled: !!userId,
+    refetchOnMount: 'always',
   })
 
-  const { data: fetchedMessages = [], isLoading: loadingMessages } = useQuery({
+  const { data: fetchedMessages, isLoading: loadingMessages } = useQuery({
     queryKey: ['messages', activeChatId],
     queryFn: () => chatsApi.getMessages(activeChatId!),
     enabled: !!activeChatId,
   })
 
-  useEffect(() => { setMessages(fetchedMessages) }, [fetchedMessages])
+  useEffect(() => { setMessages(fetchedMessages ?? []) }, [fetchedMessages])
 
   const { sendMessage } = useSignalR({
     chatId: activeChatId,
     onReceiveMessage: (msg: MessageDto) => {
       setMessages((prev) => [...prev, msg])
-      qc.invalidateQueries({ queryKey: ['chats', user.userId] })
+      qc.invalidateQueries({ queryKey: ['chats', userId] })
     },
   })
 
@@ -58,7 +65,7 @@ export default function Chat() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['messages', activeChatId] })
-      qc.invalidateQueries({ queryKey: ['chats', user.userId] })
+      qc.invalidateQueries({ queryKey: ['chats', userId] })
     },
     onError: (err: Error) => toast.error(err.message),
   })
@@ -112,7 +119,7 @@ export default function Chat() {
           ) : (
             chats.map((chat) => {
               const isActive = chat.id === activeChatId
-              const name = user.role === 'Client' ? chat.lawyerFullName : chat.clientFullName
+              const name = (user.role === 'Client' ? chat.lawyerFullName : chat.clientFullName) ?? ''
               return (
                 <button
                   key={chat.id}
@@ -137,7 +144,7 @@ export default function Chat() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
                     }}>
-                      {name[0]}
+                      {name[0] ?? '?'}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>

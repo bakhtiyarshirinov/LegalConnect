@@ -26,6 +26,7 @@ const clientNav: NavItem[] = [
 const lawyerNav: NavItem[] = [
   { label: 'Dashboard', to: '/lawyer/dashboard', icon: <LayoutDashboard size={16} /> },
   { label: 'Appointments', to: '/lawyer/appointments', icon: <Calendar size={16} /> },
+  { label: 'Chat', to: '/chat', icon: <MessageSquare size={16} /> },
   { label: 'My Profile', to: '/lawyer/profile', icon: <UserCircle size={16} /> },
 ]
 

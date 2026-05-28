@@ -13,6 +13,57 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
   const token = useAuthStore((s) => s.token)
   const connectionRef = useRef<HubConnection | null>(null)
 
+  // Keep refs up to date so handlers never go stale without rebuilding the connection
+  const onReceiveRef = useRef(onReceiveMessage)
+  const onReadRef = useRef(onMessagesRead)
+  useEffect(() => { onReceiveRef.current = onReceiveMessage }, [onReceiveMessage])
+  useEffect(() => { onReadRef.current = onMessagesRead }, [onMessagesRead])
+
+  useEffect(() => {
+    if (!token) return
+
+    const connection = new HubConnectionBuilder()
+      .withUrl('http://localhost:5218/hubs/chat', {
+        accessTokenFactory: () => token ?? '',
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
+      .configureLogging(LogLevel.Error)
+      .build()
+
+    // Stable wrappers — always call the latest callback ref
+    connection.on('ReceiveMessage', (msg: MessageDto) => {
+      onReceiveRef.current?.(msg)
+    })
+    connection.on('MessagesRead', (data: { chatId: string; readBy: string }) => {
+      onReadRef.current?.(data)
+    })
+
+    // Re-join the chat after an automatic reconnect
+    connection.onreconnected(async () => {
+      if (chatId) {
+        await connection.invoke('JoinChat', chatId).catch(console.error)
+      }
+    })
+
+    connection
+      .start()
+      .then(async () => {
+        connectionRef.current = connection
+        if (chatId) {
+          await connection.invoke('JoinChat', chatId).catch(console.error)
+        }
+      })
+      .catch(console.error)
+
+    return () => {
+      connectionRef.current = null
+      if (connection.state === 'Connected' && chatId) {
+        connection.invoke('LeaveChat', chatId).catch(() => {})
+      }
+      connection.stop().catch(() => {})
+    }
+  }, [token, chatId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const sendMessage = useCallback(async (cid: string, content: string) => {
     const conn = connectionRef.current
     if (conn && conn.state === 'Connected') {
@@ -26,40 +77,6 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
       await conn.invoke('MarkAsRead', cid)
     }
   }, [])
-
-  useEffect(() => {
-    if (!token) return
-
-    const connection = new HubConnectionBuilder()
-      .withUrl(`/hubs/chat?access_token=${token}`)
-      .withAutomaticReconnect()
-      .configureLogging(LogLevel.Error)
-      .build()
-
-    if (onReceiveMessage) {
-      connection.on('ReceiveMessage', onReceiveMessage)
-    }
-    if (onMessagesRead) {
-      connection.on('MessagesRead', onMessagesRead)
-    }
-
-    connection
-      .start()
-      .then(async () => {
-        connectionRef.current = connection
-        if (chatId) {
-          await connection.invoke('JoinChat', chatId)
-        }
-      })
-      .catch(console.error)
-
-    return () => {
-      if (chatId && connection.state === 'Connected') {
-        connection.invoke('LeaveChat', chatId).catch(() => {})
-      }
-      connection.stop()
-    }
-  }, [token, chatId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return { sendMessage, markAsRead }
 }

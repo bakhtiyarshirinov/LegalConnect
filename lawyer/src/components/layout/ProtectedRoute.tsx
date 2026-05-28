@@ -1,14 +1,9 @@
-import { type ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { Navbar } from './Navbar'
 import { Sidebar } from './Sidebar'
 
-interface ProtectedRouteProps {
-  children: ReactNode
-}
-
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+export default function ProtectedRoute() {
   const { token, user } = useAuthStore()
 
   if (!token || !user) {
@@ -31,7 +26,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
             background: '#FAFAFA',
           }}
         >
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

@@ -10,8 +10,10 @@ export function useSignalR(onMessage: (chatId: string, senderId: string, content
     if (!token) return
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`/hubs/chat?access_token=${token}`)
-      .withAutomaticReconnect()
+      .withUrl('http://localhost:5218/hubs/chat', {
+        accessTokenFactory: () => token ?? '',
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000])
       .configureLogging(signalR.LogLevel.Warning)
       .build()
 

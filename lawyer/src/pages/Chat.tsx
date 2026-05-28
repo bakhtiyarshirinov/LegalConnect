@@ -43,7 +43,7 @@ export default function Chat() {
     refetchInterval: 30_000,
   })
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages } = useQuery({
     queryKey: ['messages', selectedChat?.id],
     queryFn: () => getMessages(selectedChat!.id),
     enabled: !!selectedChat,
@@ -51,7 +51,7 @@ export default function Chat() {
 
   // Merge server messages with local messages
   useEffect(() => {
-    setLocalMessages(messages)
+    setLocalMessages(messages ?? [])
   }, [messages])
 
   const onSignalRMessage = useCallback(
@@ -116,7 +116,7 @@ export default function Chat() {
   }
 
   const filteredChats = chats.filter((c) =>
-    c.clientName.toLowerCase().includes(searchQuery.toLowerCase()),
+    (c.clientFullName?.toLowerCase() ?? '').includes(searchQuery.toLowerCase()),
   )
 
   return (
@@ -242,7 +242,7 @@ export default function Chat() {
                     flexShrink: 0,
                   }}
                 >
-                  {chat.clientName?.[0] ?? '?'}
+                  {chat.clientFullName?.[0] ?? '?'}
                 </div>
                 <div style={{ flex: 1, overflow: 'hidden' }}>
                   <div
@@ -255,22 +255,11 @@ export default function Chat() {
                     <span
                       style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A' }}
                     >
-                      {chat.clientName}
+                      {chat.clientFullName}
                     </span>
                     <span style={{ fontSize: 11, color: '#6B6B6B' }}>
                       {formatChatTime(chat.lastMessageAt)}
                     </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: '#6B6B6B',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {chat.lastMessage || 'No messages yet'}
                   </div>
                 </div>
               </button>
@@ -308,11 +297,11 @@ export default function Chat() {
                   color: '#FFFFFF',
                 }}
               >
-                {selectedChat.clientName?.[0]}
+                {selectedChat.clientFullName?.[0] ?? '?'}
               </div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#0A0A0A' }}>
-                  {selectedChat.clientName}
+                  {selectedChat.clientFullName}
                 </div>
                 <div style={{ fontSize: 12, color: '#6B6B6B' }}>Client</div>
               </div>

@@ -2,13 +2,9 @@ import api from './axios'
 
 export interface Chat {
   id: string
-  clientId: string
-  clientName: string
-  lawyerId: string
-  lawyerName: string
-  lastMessage?: string
+  clientFullName: string
+  lawyerFullName: string
   lastMessageAt?: string
-  unreadCount?: number
 }
 
 export interface Message {
