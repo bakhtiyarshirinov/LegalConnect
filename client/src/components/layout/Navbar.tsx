@@ -29,7 +29,7 @@ export function Navbar() {
       style={{
         height: 64,
         background: '#FFFFFF',
-        borderBottom: '1px solid #E8E8E8',
+        borderBottom: '1px solid #F0F0F0',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

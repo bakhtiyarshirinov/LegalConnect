@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import { ShieldCheck, Mail, Lock } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, CheckCircle } from 'lucide-react'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { Input } from '../components/ui/Input'
@@ -61,24 +61,55 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white border border-[#E8E8E8] rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] p-10">
-          {/* Header */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-14 h-14 bg-[#0A0A0A] rounded-2xl flex items-center justify-center mb-4 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
-              <ShieldCheck className="w-7 h-7 text-white" />
+    <div className="flex min-h-screen">
+      {/* Left dark panel */}
+      <div className="hidden lg:flex w-[42%] bg-[#0A0A0A] flex-col justify-center px-16 py-14">
+        <div className="flex items-center gap-2.5 mb-16">
+          <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
+            <ShieldCheck className="w-5 h-5 text-[#0A0A0A]" />
+          </div>
+          <div>
+            <div className="font-bold text-lg text-white tracking-tight leading-none">LegalConnect</div>
+            <div className="text-[10px] font-semibold text-[#6B6B6B] uppercase tracking-widest mt-0.5">Admin</div>
+          </div>
+        </div>
+
+        <h2 className="text-[34px] font-extrabold text-white leading-tight tracking-tighter mb-4">
+          Platform<br />Administration
+        </h2>
+        <p className="text-[#A3A3A3] text-[15px] leading-relaxed mb-12">
+          Manage and monitor the LegalConnect platform with full administrative control.
+        </p>
+
+        <div className="flex flex-col gap-4">
+          {[
+            'Verify and approve new lawyers',
+            'Monitor all platform users',
+            'Maintain platform integrity',
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-3">
+              <CheckCircle className="w-[15px] h-[15px] text-[#6B6B6B] flex-shrink-0" />
+              <span className="text-[#D4D4D4] text-sm">{item}</span>
             </div>
-            <h1 className="text-2xl font-bold text-[#0A0A0A] mb-1">Admin Portal</h1>
-            <p className="text-sm text-[#6B6B6B]">LegalConnect administration</p>
+          ))}
+        </div>
+      </div>
+
+      {/* Right white panel */}
+      <div className="flex-1 bg-[#FAFAFA] flex items-center justify-center p-12">
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          className="w-full max-w-[360px]"
+        >
+          <div className="mb-8">
+            <h1 className="text-[28px] font-extrabold text-[#0A0A0A] tracking-tight mb-1.5">
+              Admin Portal
+            </h1>
+            <p className="text-sm text-[#6B6B6B]">Sign in to your administrator account</p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
               label="Email"
@@ -100,7 +131,6 @@ export const Login: React.FC = () => {
               icon={<Lock className="w-4 h-4" />}
               autoComplete="current-password"
             />
-
             <Button
               type="submit"
               loading={loading}
@@ -113,8 +143,8 @@ export const Login: React.FC = () => {
           <p className="text-center text-xs text-[#6B6B6B] mt-6">
             Access restricted to administrators only
           </p>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { User, Mail, Lock, Phone, Scale } from 'lucide-react'
+import { User, Mail, Lock, Phone, Scale, CheckCircle } from 'lucide-react'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { Input } from '../../components/ui/Input'
@@ -50,53 +50,165 @@ export default function RegisterClient() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0A0A0A',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        fontFamily: 'Inter, sans-serif',
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{ width: '100%', maxWidth: 420 }}
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      {/* Left dark panel */}
+      <div
+        style={{
+          width: '42%',
+          background: '#0A0A0A',
+          padding: '56px 64px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Link to="/">
-            <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <Scale size={20} color="#000" />
-            </div>
-          </Link>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>Create account</h1>
-          <p style={{ color: '#A3A3A3', marginTop: 6, fontSize: 14 }}>Find your legal expert today</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 64 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              background: '#FFFFFF',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Scale size={18} color="#0A0A0A" />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 18, color: '#FFFFFF', letterSpacing: '-0.3px' }}>
+            LegalConnect
+          </span>
         </div>
 
-        <div style={{ background: '#141414', border: '1px solid #262626', borderRadius: 14, padding: 28 }}>
+        <h2
+          style={{
+            fontSize: 34,
+            fontWeight: 800,
+            color: '#FFFFFF',
+            letterSpacing: '-0.04em',
+            lineHeight: 1.15,
+            marginBottom: 16,
+          }}
+        >
+          Find Your Legal<br />Expert Today
+        </h2>
+        <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65, marginBottom: 48 }}>
+          Join thousands of clients who've resolved their legal matters through LegalConnect.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[
+            'Verified & trusted lawyers only',
+            'Secure and confidential consultations',
+            'Transparent pricing, no surprises',
+          ].map((item) => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <CheckCircle size={15} color="#6B6B6B" style={{ flexShrink: 0 }} />
+              <span style={{ color: '#D4D4D4', fontSize: 14 }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right white panel */}
+      <div
+        style={{
+          flex: 1,
+          background: '#FAFAFA',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '48px',
+          overflowY: 'auto',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ width: '100%', maxWidth: 380 }}
+        >
+          <div style={{ marginBottom: 32 }}>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                color: '#0A0A0A',
+                letterSpacing: '-0.5px',
+                marginBottom: 6,
+              }}
+            >
+              Create account
+            </h1>
+            <p style={{ color: '#6B6B6B', fontSize: 14 }}>Find your legal expert today</p>
+          </div>
+
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Input label="Full Name" placeholder="John Smith" value={form.fullName} onChange={set('fullName')} error={errors.fullName} icon={<User size={14} />} />
-            <Input label="Email" type="email" placeholder="you@example.com" value={form.email} onChange={set('email')} error={errors.email} icon={<Mail size={14} />} />
-            <Input label="Phone (optional)" type="tel" placeholder="+994 XX XXX XX XX" value={form.phone} onChange={set('phone')} icon={<Phone size={14} />} />
-            <Input label="Password" type="password" placeholder="••••••••" value={form.password} onChange={set('password')} error={errors.password} icon={<Lock size={14} />} />
-            <Input label="Confirm Password" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={set('confirmPassword')} error={errors.confirmPassword} icon={<Lock size={14} />} />
+            <Input
+              label="Full Name"
+              placeholder="John Smith"
+              value={form.fullName}
+              onChange={set('fullName')}
+              error={errors.fullName}
+              icon={<User size={14} />}
+            />
+            <Input
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={set('email')}
+              error={errors.email}
+              icon={<Mail size={14} />}
+            />
+            <Input
+              label="Phone (optional)"
+              type="tel"
+              placeholder="+994 XX XXX XX XX"
+              value={form.phone}
+              onChange={set('phone')}
+              icon={<Phone size={14} />}
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={set('password')}
+              error={errors.password}
+              icon={<Lock size={14} />}
+            />
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="••••••••"
+              value={form.confirmPassword}
+              onChange={set('confirmPassword')}
+              error={errors.confirmPassword}
+              icon={<Lock size={14} />}
+            />
             <Button type="submit" fullWidth loading={isPending} size="lg" style={{ marginTop: 4 }}>
               Create Account
             </Button>
           </form>
-        </div>
 
-        <p style={{ textAlign: 'center', color: '#A3A3A3', marginTop: 20, fontSize: 14 }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: '#fff', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-            Sign in
-          </Link>
-        </p>
-      </motion.div>
+          <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{
+                color: '#0A0A0A',
+                fontWeight: 600,
+                textDecoration: 'underline',
+                textUnderlineOffset: 3,
+              }}
+            >
+              Sign in
+            </Link>
+          </p>
+        </motion.div>
+      </div>
     </div>
   )
 }

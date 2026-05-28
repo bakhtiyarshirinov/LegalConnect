@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import type { ReactNode, ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: ReactNode
@@ -16,9 +16,9 @@ const variantStyles: Record<string, React.CSSProperties> = {
     border: '1px solid #0A0A0A',
   },
   secondary: {
-    background: 'transparent',
+    background: '#FFFFFF',
     color: '#0A0A0A',
-    border: '1px solid #E8E8E8',
+    border: '1px solid #E0E0E0',
   },
   ghost: {
     background: 'transparent',
@@ -26,9 +26,14 @@ const variantStyles: Record<string, React.CSSProperties> = {
     border: '1px solid transparent',
   },
   danger: {
-    background: 'transparent',
-    color: '#ef4444',
-    border: '1px solid #fecaca',
+    background: '#FFF1F0',
+    color: '#E03131',
+    border: '1px solid #FFCCC7',
+  },
+  success: {
+    background: '#F0FFF4',
+    color: '#2F9E44',
+    border: '1px solid #B2F2BB',
   },
 }
 

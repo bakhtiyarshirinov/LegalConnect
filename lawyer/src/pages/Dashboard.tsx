@@ -1,10 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Calendar, Clock, CheckCircle, Star } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
 import { getByLawyer, confirmAppointment, cancelAppointment, type Appointment } from '../api/appointments'
-import { getByUserId } from '../api/profile'
+import { getMyLawyerProfile } from '../api/profile'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -37,8 +37,8 @@ export default function Dashboard() {
 
   // If lawyerId not set yet, fetch it
   const { data: profile } = useQuery({
-    queryKey: ['lawyer-profile', user?.userId],
-    queryFn: () => getByUserId(user!.userId),
+    queryKey: ['lawyer-profile'],
+    queryFn: getMyLawyerProfile,
     enabled: !!user && !lawyerId,
   })
 
@@ -59,11 +59,7 @@ export default function Dashboard() {
   const pending = appointments.filter((a) => a.status === 'Pending')
   const confirmed = appointments.filter((a) => a.status === 'Confirmed')
 
-  const { data: lawyerProfile } = useQuery({
-    queryKey: ['lawyer-profile-full', user?.userId],
-    queryFn: () => getByUserId(user!.userId),
-    enabled: !!user,
-  })
+  const lawyerProfile = profile
 
   const handleConfirm = async (a: Appointment) => {
     if (!effectiveLawyerId) return
@@ -94,34 +90,10 @@ export default function Dashboard() {
   }
 
   const stats = [
-    {
-      label: 'Total Appointments',
-      value: appointments.length,
-      icon: Calendar,
-      color: '#6366F1',
-      bg: '#EEF2FF',
-    },
-    {
-      label: 'Pending',
-      value: pending.length,
-      icon: Clock,
-      color: '#D97706',
-      bg: '#FEF9C3',
-    },
-    {
-      label: 'Confirmed',
-      value: confirmed.length,
-      icon: CheckCircle,
-      color: '#16A34A',
-      bg: '#DCFCE7',
-    },
-    {
-      label: 'Rating',
-      value: lawyerProfile?.rating?.toFixed(1) ?? '—',
-      icon: Star,
-      color: '#EA580C',
-      bg: '#FFF7ED',
-    },
+    { label: 'Total Appointments', value: appointments.length },
+    { label: 'Pending', value: pending.length },
+    { label: 'Confirmed', value: confirmed.length },
+    { label: 'Rating', value: lawyerProfile?.rating?.toFixed(1) ?? '—' },
   ]
 
   return (
@@ -150,27 +122,29 @@ export default function Dashboard() {
         }}
       >
         {stats.map((s, i) => (
-          <motion.div key={s.label} custom={i} variants={fadeUp} initial="hidden" animate="visible">
-            <Card hover style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: s.bg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <s.icon size={20} color={s.color} />
-              </div>
-              <div>
-                <div style={{ fontSize: 24, fontWeight: 700, color: '#0A0A0A' }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: '#6B6B6B', marginTop: 2 }}>{s.label}</div>
-              </div>
-            </Card>
+          <motion.div
+            key={s.label}
+            custom={i}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #F0F0F0',
+              borderTop: '3px solid #0A0A0A',
+              borderRadius: 16,
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              cursor: 'default',
+            }}
+          >
+            <div style={{ fontSize: 40, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 8 }}>
+              {s.value}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {s.label}
+            </div>
           </motion.div>
         ))}
       </div>

@@ -7,11 +7,11 @@ interface BadgeProps {
 }
 
 const variants = {
-  default: 'bg-[#F5F5F5] text-[#6B6B6B]',
-  pending: 'bg-amber-50 text-amber-700 border border-amber-200',
-  success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  danger: 'bg-red-50 text-red-700 border border-red-200',
-  info: 'bg-blue-50 text-blue-700 border border-blue-200',
+  default: 'bg-[#F5F5F5] text-[#6B6B6B] border border-[#F0F0F0]',
+  pending: 'bg-[#FFF9DB] text-[#E67700] border border-[#FFE066]',
+  success: 'bg-[#EBFBEE] text-[#2F9E44] border border-[#B2F2BB]',
+  danger: 'bg-[#FFF1F0] text-[#E03131] border border-[#FFCCC7]',
+  info: 'bg-[#F0F0FF] text-[#3B5BDB] border border-[#BAC8FF]',
   admin: 'bg-purple-50 text-purple-700 border border-purple-200',
   client: 'bg-sky-50 text-sky-700 border border-sky-200',
   lawyer: 'bg-indigo-50 text-indigo-700 border border-indigo-200',

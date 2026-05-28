@@ -55,9 +55,9 @@ export default function ClientDashboard() {
   })
 
   const stats = [
-    { label: 'Total Appointments', value: total, icon: <Calendar size={20} />, color: '#eff6ff', iconColor: '#2563eb' },
-    { label: 'Upcoming', value: upcomingCount, icon: <Clock size={20} />, color: '#fffbeb', iconColor: '#d97706' },
-    { label: 'Completed', value: completed, icon: <CheckCircle size={20} />, color: '#f0fdf4', iconColor: '#16a34a' },
+    { label: 'Total Appointments', value: total },
+    { label: 'Upcoming', value: upcomingCount },
+    { label: 'Completed', value: completed },
   ]
 
   return (
@@ -79,21 +79,26 @@ export default function ClientDashboard() {
         style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}
       >
         {stats.map((s) => (
-          <motion.div key={s.label} variants={item} style={{
-            background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16,
-            padding: '22px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            display: 'flex', alignItems: 'center', gap: 16,
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: s.color, color: s.iconColor,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              {s.icon}
+          <motion.div
+            key={s.label}
+            variants={item}
+            whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #F0F0F0',
+              borderTop: '3px solid #0A0A0A',
+              borderRadius: 16,
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              cursor: 'default',
+            }}
+          >
+            <div style={{ fontSize: 40, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 8 }}>
+              {s.value}
             </div>
-            <div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.02em' }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: '#6B6B6B', marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {s.label}
             </div>
           </motion.div>
         ))}
@@ -101,7 +106,7 @@ export default function ClientDashboard() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         {/* Upcoming Appointments */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Calendar size={16} /> Upcoming Appointments
@@ -127,7 +132,7 @@ export default function ClientDashboard() {
               {upcoming.map((a) => (
                 <div key={a.id} style={{
                   padding: '16px', background: '#F5F5F5', borderRadius: 12,
-                  border: '1px solid #E8E8E8',
+                  border: '1px solid #F0F0F0',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
@@ -163,7 +168,7 @@ export default function ClientDashboard() {
         </div>
 
         {/* Recent Notifications */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Bell size={16} /> Recent Notifications

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Users, Briefcase, CheckCircle, Clock, ArrowRight, MapPin, Star } from 'lucide-react'
+import { Briefcase, CheckCircle, ArrowRight, MapPin, Star } from 'lucide-react'
 import { getPendingLawyers, verifyLawyer } from '../api/admin'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -39,27 +39,9 @@ export const Dashboard: React.FC = () => {
   })
 
   const stats = [
-    {
-      label: 'Pending Verifications',
-      value: isLoading ? '—' : pending.length,
-      icon: Clock,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-    },
-    {
-      label: 'Total Users',
-      value: '248',
-      icon: Users,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      label: 'Verified Lawyers',
-      value: '34',
-      icon: CheckCircle,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-    },
+    { label: 'Pending Verifications', value: isLoading ? '—' : pending.length },
+    { label: 'Total Users', value: '248' },
+    { label: 'Verified Lawyers', value: '34' },
   ]
 
   const preview = pending.slice(0, 5)
@@ -79,30 +61,32 @@ export const Dashboard: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon
-          return (
-            <motion.div
-              key={stat.label}
-              custom={i}
-              initial="hidden"
-              animate="visible"
-              variants={fadeUp}
-            >
-              <Card>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-[#6B6B6B] mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-[#0A0A0A]">{stat.value}</p>
-                  </div>
-                  <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          )
-        })}
+        {stats.map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            custom={i}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #F0F0F0',
+              borderTop: '3px solid #0A0A0A',
+              borderRadius: 16,
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              cursor: 'default',
+            }}
+          >
+            <div style={{ fontSize: 40, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.04em', lineHeight: 1, marginBottom: 8 }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {stat.label}
+            </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Pending Verifications */}

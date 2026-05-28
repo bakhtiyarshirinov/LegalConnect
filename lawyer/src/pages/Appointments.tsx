@@ -11,7 +11,7 @@ import {
   type Appointment,
   type AppointmentStatus,
 } from '../api/appointments'
-import { getByUserId } from '../api/profile'
+import { getMyLawyerProfile } from '../api/profile'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -42,8 +42,8 @@ export default function Appointments() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   const { data: profile } = useQuery({
-    queryKey: ['lawyer-profile', user?.userId],
-    queryFn: () => getByUserId(user!.userId),
+    queryKey: ['lawyer-profile'],
+    queryFn: getMyLawyerProfile,
     enabled: !!user && !lawyerId,
   })
 

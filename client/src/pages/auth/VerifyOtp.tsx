@@ -74,7 +74,7 @@ export default function VerifyOtp() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#F5F5F5',
+      minHeight: '100vh', background: '#FAFAFA',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24, fontFamily: 'Inter, sans-serif',
     }}>
@@ -101,7 +101,7 @@ export default function VerifyOtp() {
         </div>
 
         <div style={{
-          background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16,
+          background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16,
           padding: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

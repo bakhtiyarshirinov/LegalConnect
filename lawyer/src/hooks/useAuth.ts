@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { login } from '../api/auth'
-import { getByUserId } from '../api/profile'
+import { getMyLawyerProfile } from '../api/profile'
 import { useAuthStore } from '../store/authStore'
 
 export function useAuth() {
@@ -32,7 +32,7 @@ export function useAuth() {
 
       // Fetch lawyer profile to get lawyerId
       try {
-        const profile = await getByUserId(data.userId)
+        const profile = await getMyLawyerProfile()
         setLawyerId(profile.id)
       } catch {
         // profile will load later in dashboard

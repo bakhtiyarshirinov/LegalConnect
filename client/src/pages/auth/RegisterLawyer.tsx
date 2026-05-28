@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { User, Mail, Lock, Phone, Scale, FileText, MapPin, DollarSign, Briefcase } from 'lucide-react'
+import { User, Mail, Lock, Phone, Scale, FileText, MapPin, DollarSign, Briefcase, CheckCircle } from 'lucide-react'
 import { authApi } from '../../api/auth'
 import { specializationsApi } from '../../api/specializations'
 import { useAuthStore } from '../../store/authStore'
@@ -64,9 +64,7 @@ export default function RegisterLawyer() {
     return Object.keys(e).length === 0
   }
 
-  const handleNext = () => {
-    if (validateStep1()) setStep(2)
-  }
+  const handleNext = () => { if (validateStep1()) setStep(2) }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,56 +89,127 @@ export default function RegisterLawyer() {
     )
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#0A0A0A',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        fontFamily: 'Inter, sans-serif',
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        style={{ width: '100%', maxWidth: 480 }}
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      {/* Left dark panel */}
+      <div
+        style={{
+          width: '42%',
+          background: '#0A0A0A',
+          padding: '56px 64px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <Link to="/">
-            <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <Scale size={20} color="#000" />
-            </div>
-          </Link>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>
-            Join as a Lawyer
-          </h1>
-          <p style={{ color: '#A3A3A3', marginTop: 6, fontSize: 13 }}>Step {step} of 2</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 64 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              background: '#FFFFFF',
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Scale size={18} color="#0A0A0A" />
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 18, color: '#FFFFFF', letterSpacing: '-0.3px' }}>
+            LegalConnect
+          </span>
         </div>
 
-        {/* Progress */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-          {[1, 2].map((s) => (
-            <div
-              key={s}
-              style={{
-                flex: 1,
-                height: 3,
-                borderRadius: 2,
-                background: s <= step ? '#fff' : '#262626',
-                transition: 'background 0.3s',
-              }}
-            />
+        <h2
+          style={{
+            fontSize: 34,
+            fontWeight: 800,
+            color: '#FFFFFF',
+            letterSpacing: '-0.04em',
+            lineHeight: 1.15,
+            marginBottom: 16,
+          }}
+        >
+          Grow Your<br />Legal Practice
+        </h2>
+        <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65, marginBottom: 48 }}>
+          Join hundreds of verified lawyers who trust LegalConnect to connect with clients.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[
+            'Reach clients actively seeking legal help',
+            'Manage appointments effortlessly',
+            'Build your reputation with client reviews',
+          ].map((item) => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <CheckCircle size={15} color="#6B6B6B" style={{ flexShrink: 0 }} />
+              <span style={{ color: '#D4D4D4', fontSize: 14 }}>{item}</span>
+            </div>
           ))}
         </div>
 
-        <div style={{ background: '#141414', border: '1px solid #262626', borderRadius: 14, padding: 28 }}>
+        {/* Step indicator */}
+        <div style={{ marginTop: 64 }}>
+          <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            Step {step} of 2
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[1, 2].map((s) => (
+              <div
+                key={s}
+                style={{
+                  flex: 1,
+                  height: 3,
+                  borderRadius: 2,
+                  background: s <= step ? '#FFFFFF' : '#262626',
+                  transition: 'background 0.3s',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right white panel */}
+      <div
+        style={{
+          flex: 1,
+          background: '#FAFAFA',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '48px',
+          overflowY: 'auto',
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+          style={{ width: '100%', maxWidth: 420 }}
+        >
+          <div style={{ marginBottom: 28 }}>
+            <h1
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                color: '#0A0A0A',
+                letterSpacing: '-0.5px',
+                marginBottom: 6,
+              }}
+            >
+              {step === 1 ? 'Create your account' : 'Professional details'}
+            </h1>
+            <p style={{ color: '#6B6B6B', fontSize: 14 }}>
+              {step === 1 ? 'Start with your personal information' : 'Tell clients about your expertise'}
+            </p>
+          </div>
+
           {step === 1 && (
             <motion.div
               key="step1"
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
               style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
@@ -158,32 +227,32 @@ export default function RegisterLawyer() {
           {step === 2 && (
             <motion.form
               key="step2"
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               onSubmit={handleSubmit}
               style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
-              <div>
-                <label style={{ fontSize: 12, color: '#A3A3A3', fontWeight: 500, display: 'block', marginBottom: 6 }}>
-                  Bio / About you
-                </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Bio / About you</label>
                 <textarea
                   placeholder="Describe your experience and expertise..."
                   value={form.bio}
                   onChange={set('bio')}
                   rows={3}
                   style={{
-                    background: '#1C1C1C',
-                    border: `1px solid ${errors.bio ? '#ef444480' : '#262626'}`,
-                    borderRadius: 8,
-                    padding: '11px 14px',
-                    color: '#fff',
+                    border: `1px solid ${errors.bio ? '#fca5a5' : '#E8E8E8'}`,
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    color: '#0A0A0A',
                     fontSize: 14,
                     width: '100%',
                     outline: 'none',
                     resize: 'vertical',
                     fontFamily: 'Inter, sans-serif',
+                    background: '#FFFFFF',
                   }}
+                  onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
+                  onBlur={(e) => { e.target.style.borderColor = errors.bio ? '#fca5a5' : '#E8E8E8' }}
                 />
                 {errors.bio && <span style={{ fontSize: 12, color: '#ef4444' }}>{errors.bio}</span>}
               </div>
@@ -195,9 +264,8 @@ export default function RegisterLawyer() {
                 <Input label="Hourly Rate ($)" type="number" placeholder="100" value={form.hourlyRate} onChange={set('hourlyRate')} error={errors.hourlyRate} icon={<DollarSign size={14} />} />
               </div>
 
-              {/* Specializations */}
               <div>
-                <label style={{ fontSize: 12, color: '#A3A3A3', fontWeight: 500, display: 'block', marginBottom: 8 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'block', marginBottom: 8 }}>
                   Specializations
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -212,10 +280,11 @@ export default function RegisterLawyer() {
                         fontSize: 12,
                         fontWeight: 500,
                         cursor: 'pointer',
-                        border: selectedSpecs.includes(s.id) ? '1px solid #fff' : '1px solid #262626',
-                        background: selectedSpecs.includes(s.id) ? '#fff' : 'transparent',
-                        color: selectedSpecs.includes(s.id) ? '#000' : '#A3A3A3',
+                        border: selectedSpecs.includes(s.id) ? '1px solid #0A0A0A' : '1px solid #E8E8E8',
+                        background: selectedSpecs.includes(s.id) ? '#0A0A0A' : '#FFFFFF',
+                        color: selectedSpecs.includes(s.id) ? '#FFFFFF' : '#6B6B6B',
                         transition: 'all 0.15s',
+                        fontFamily: 'Inter, sans-serif',
                       }}
                     >
                       {s.name}
@@ -235,15 +304,23 @@ export default function RegisterLawyer() {
               </div>
             </motion.form>
           )}
-        </div>
 
-        <p style={{ textAlign: 'center', color: '#A3A3A3', marginTop: 20, fontSize: 14 }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: '#fff', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
-            Sign in
-          </Link>
-        </p>
-      </motion.div>
+          <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{
+                color: '#0A0A0A',
+                fontWeight: 600,
+                textDecoration: 'underline',
+                textUnderlineOffset: 3,
+              }}
+            >
+              Sign in
+            </Link>
+          </p>
+        </motion.div>
+      </div>
     </div>
   )
 }

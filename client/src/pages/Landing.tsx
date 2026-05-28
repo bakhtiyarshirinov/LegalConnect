@@ -20,9 +20,9 @@ export default function Landing() {
       {/* Navbar */}
       <nav style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '0 48px', height: 64, borderBottom: '1px solid #E8E8E8',
+        padding: '0 48px', height: 64, borderBottom: '1px solid #F0F0F0',
         position: 'sticky', top: 0, background: '#FFFFFF', zIndex: 50,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
@@ -40,21 +40,21 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section style={{ maxWidth: 860, margin: '0 auto', padding: '96px 24px 72px', textAlign: 'center' }}>
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '100px 24px 80px', textAlign: 'center' }}>
         <motion.div initial="hidden" animate="visible" variants={stagger}>
           <motion.div variants={fadeUp} custom={0}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 20,
-              padding: '5px 14px', fontSize: 12, fontWeight: 600, color: '#6B6B6B', marginBottom: 28,
+              background: '#F5F5F5', border: '1px solid #F0F0F0', borderRadius: 20,
+              padding: '5px 14px', fontSize: 12, fontWeight: 600, color: '#6B6B6B', marginBottom: 32,
             }}>
-              <CheckCircle size={12} color="#16a34a" /> Trusted by 500+ clients in Azerbaijan
+              <CheckCircle size={12} color="#2F9E44" /> Trusted by 500+ clients in Azerbaijan
             </span>
           </motion.div>
 
           <motion.h1 variants={fadeUp} custom={1} style={{
-            fontSize: 'clamp(40px, 7vw, 68px)', fontWeight: 800,
-            lineHeight: 1.08, letterSpacing: '-0.04em', color: '#0A0A0A', marginBottom: 24,
+            fontSize: 'clamp(40px, 7vw, 70px)', fontWeight: 800,
+            lineHeight: 1.06, letterSpacing: '-0.04em', color: '#0A0A0A', marginBottom: 24,
           }}>
             Find Your Legal<br />
             <span style={{ color: '#6B6B6B' }}>Expert in Azerbaijan</span>
@@ -62,7 +62,7 @@ export default function Landing() {
 
           <motion.p variants={fadeUp} custom={2} style={{
             fontSize: 18, color: '#6B6B6B', lineHeight: 1.65,
-            maxWidth: 540, margin: '0 auto 40px', fontWeight: 400,
+            maxWidth: 520, margin: '0 auto 44px', fontWeight: 400,
           }}>
             Connect with verified lawyers instantly. Book consultations, get legal advice,
             and resolve your issues — all in one place.
@@ -80,33 +80,41 @@ export default function Landing() {
       </section>
 
       {/* Stats */}
-      <section style={{ background: '#F5F5F5', borderTop: '1px solid #E8E8E8', borderBottom: '1px solid #E8E8E8', padding: '48px 24px' }}>
+      <section style={{ background: '#FAFAFA', borderTop: '1px solid #F0F0F0', borderBottom: '1px solid #F0F0F0', padding: '56px 24px' }}>
         <motion.div
           initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}
           style={{ maxWidth: 800, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}
         >
           {[
-            { num: '500+', label: 'Verified Lawyers', icon: <Users size={22} /> },
-            { num: '2,000+', label: 'Cases Resolved', icon: <CheckCircle size={22} /> },
-            { num: '4.9★', label: 'Average Rating', icon: <Star size={22} /> },
+            { num: '500+', label: 'Verified Lawyers' },
+            { num: '2,000+', label: 'Cases Resolved' },
+            { num: '4.9', label: 'Average Rating' },
           ].map((stat, i) => (
             <motion.div key={stat.label} variants={fadeUp} custom={i} style={{
-              background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16,
-              padding: '28px 24px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+              background: '#FFFFFF',
+              border: '1px solid #F0F0F0',
+              borderTop: '3px solid #0A0A0A',
+              borderRadius: 16,
+              padding: '28px 24px',
+              textAlign: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
             }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color: '#0A0A0A' }}>{stat.icon}</div>
-              <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', color: '#0A0A0A', marginBottom: 6 }}>{stat.num}</div>
-              <div style={{ fontSize: 14, color: '#6B6B6B', fontWeight: 500 }}>{stat.label}</div>
+              <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#0A0A0A', marginBottom: 8, lineHeight: 1 }}>
+                {stat.num}
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {stat.label}
+              </div>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
       {/* How it works */}
-      <section style={{ maxWidth: 920, margin: '0 auto', padding: '80px 24px' }}>
+      <section style={{ maxWidth: 920, margin: '0 auto', padding: '88px 24px' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
-          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-            <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>How it works</h2>
+          <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 64 }}>
+            <h2 style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>How it works</h2>
             <p style={{ color: '#6B6B6B', fontSize: 16 }}>Three simple steps to get legal help</p>
           </motion.div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
@@ -116,9 +124,19 @@ export default function Landing() {
               { step: '03', icon: <MessageSquare size={22} />, title: 'Get Legal Help', desc: 'Consult via chat. Get expert legal advice tailored to your situation.' },
             ].map((s, i) => (
               <motion.div key={s.step} variants={fadeUp} custom={i + 1} style={{
-                background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16,
-                padding: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16,
+                padding: '32px 28px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                position: 'relative', overflow: 'hidden',
               }}>
+                {/* Large step number as background */}
+                <div style={{
+                  position: 'absolute', top: 16, right: 20,
+                  fontSize: 64, fontWeight: 800, color: '#F5F5F5',
+                  letterSpacing: '-0.04em', lineHeight: 1, userSelect: 'none',
+                  pointerEvents: 'none',
+                }}>
+                  {s.step}
+                </div>
                 <div style={{
                   width: 48, height: 48, background: '#0A0A0A', borderRadius: 14,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -126,9 +144,8 @@ export default function Landing() {
                 }}>
                   {s.icon}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#A3A3A3', letterSpacing: '0.1em', marginBottom: 8 }}>STEP {s.step}</div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>{s.title}</h3>
-                <p style={{ fontSize: 14, color: '#6B6B6B', lineHeight: 1.6 }}>{s.desc}</p>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 10, color: '#0A0A0A' }}>{s.title}</h3>
+                <p style={{ fontSize: 14, color: '#6B6B6B', lineHeight: 1.65 }}>{s.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -136,15 +153,15 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section style={{ background: '#0A0A0A', padding: '72px 24px', textAlign: 'center' }}>
+      <section style={{ background: '#0A0A0A', padding: '80px 24px', textAlign: 'center' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={stagger}>
           <motion.div variants={fadeUp} style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 28 }}>
             <Shield size={20} color="#A3A3A3" /><Zap size={20} color="#A3A3A3" /><Star size={20} color="#A3A3A3" />
           </motion.div>
-          <motion.h2 variants={fadeUp} style={{ fontSize: 38, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.03em', marginBottom: 16 }}>
+          <motion.h2 variants={fadeUp} style={{ fontSize: 40, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>
             Ready to find your lawyer?
           </motion.h2>
-          <motion.p variants={fadeUp} style={{ fontSize: 16, color: '#A3A3A3', marginBottom: 36 }}>
+          <motion.p variants={fadeUp} style={{ fontSize: 16, color: '#A3A3A3', marginBottom: 40 }}>
             Join thousands of clients who've found legal help on LegalConnect.
           </motion.p>
           <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -160,7 +177,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer style={{
-        borderTop: '1px solid #E8E8E8', padding: '28px 48px',
+        borderTop: '1px solid #F0F0F0', padding: '28px 48px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

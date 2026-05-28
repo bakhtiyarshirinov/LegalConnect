@@ -36,7 +36,8 @@ const adminNav: NavItem[] = [
 ]
 
 export function Sidebar() {
-  const role = useAuthStore((s) => s.user?.role)
+  const user = useAuthStore((s) => s.user)
+  const role = user?.role
   const navItems =
     role === 'Lawyer' ? lawyerNav : role === 'Admin' ? adminNav : clientNav
 
@@ -46,9 +47,12 @@ export function Sidebar() {
         width: 240,
         minHeight: 'calc(100vh - 64px)',
         background: '#FFFFFF',
-        borderRight: '1px solid #E8E8E8',
-        padding: '20px 12px',
+        borderRight: '1px solid #F0F0F0',
+        padding: '16px 12px 80px',
         flexShrink: 0,
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -64,9 +68,8 @@ export function Sidebar() {
               borderRadius: 10,
               fontSize: 13,
               fontWeight: isActive ? 600 : 500,
-              color: isActive ? '#0A0A0A' : '#6B6B6B',
-              background: isActive ? '#F5F5F5' : 'transparent',
-              border: isActive ? '1px solid #E8E8E8' : '1px solid transparent',
+              color: isActive ? '#FFFFFF' : '#6B6B6B',
+              background: isActive ? '#0A0A0A' : 'transparent',
               textDecoration: 'none',
               transition: 'all 0.15s',
             })}
@@ -74,12 +77,14 @@ export function Sidebar() {
               const el = e.currentTarget as HTMLElement
               if (!el.getAttribute('aria-current')) {
                 el.style.background = '#F5F5F5'
+                el.style.color = '#0A0A0A'
               }
             }}
             onMouseLeave={(e) => {
               const el = e.currentTarget as HTMLElement
               if (!el.getAttribute('aria-current')) {
                 el.style.background = 'transparent'
+                el.style.color = '#6B6B6B'
               }
             }}
           >
@@ -88,6 +93,68 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* User info at bottom */}
+      {user && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: 12,
+            right: 12,
+            padding: '12px 14px',
+            background: '#F5F5F5',
+            borderRadius: 12,
+            border: '1px solid #F0F0F0',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#0A0A0A',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 13,
+                fontWeight: 700,
+                color: '#FFFFFF',
+                flexShrink: 0,
+              }}
+            >
+              {user.fullName?.[0]?.toUpperCase() ?? '?'}
+            </div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#0A0A0A',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {user.fullName}
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: '#6B6B6B',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  fontWeight: 600,
+                  marginTop: 1,
+                }}
+              >
+                {user.role}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

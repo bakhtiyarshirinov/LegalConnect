@@ -9,10 +9,10 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
   default: { background: '#F5F5F5', color: '#6B6B6B', border: '1px solid #E8E8E8' },
-  success: { background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' },
-  warning: { background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' },
-  error: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' },
-  info: { background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe' },
+  success: { background: '#EBFBEE', color: '#2F9E44', border: '1px solid #B2F2BB' },
+  warning: { background: '#FFF9DB', color: '#E67700', border: '1px solid #FFE066' },
+  error: { background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7' },
+  info: { background: '#F0F0FF', color: '#3B5BDB', border: '1px solid #BAC8FF' },
 }
 
 const statusMap: Record<string, BadgeVariant> = {

@@ -23,8 +23,8 @@ export const Card: React.FC<CardProps> = ({
   return (
     <motion.div
       className={`
-        bg-white border border-[#E8E8E8] rounded-2xl
-        shadow-[0_1px_3px_rgba(0,0,0,0.08)]
+        bg-white border border-[#F0F0F0] rounded-2xl
+        shadow-[0_1px_3px_rgba(0,0,0,0.06)]
         ${paddings[padding]}
         ${hover ? 'hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-shadow duration-200 cursor-pointer' : ''}
         ${className}

@@ -35,7 +35,7 @@ function AppLayout() {
       <Navbar />
       <div style={{ display: 'flex', flex: 1 }}>
         <Sidebar />
-        <main style={{ flex: 1, overflowY: 'auto', minHeight: 'calc(100vh - 64px)' }}>
+        <main style={{ flex: 1, minHeight: 'calc(100vh - 64px)' }}>
           <Outlet />
         </main>
       </div>

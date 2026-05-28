@@ -4,15 +4,15 @@ interface BadgeProps {
   status: AppointmentStatus
 }
 
-const config: Record<AppointmentStatus, { bg: string; color: string; label: string }> = {
-  Pending: { bg: '#FEF9C3', color: '#854D0E', label: 'Pending' },
-  Confirmed: { bg: '#DCFCE7', color: '#15803D', label: 'Confirmed' },
-  Cancelled: { bg: '#FEE2E2', color: '#B91C1C', label: 'Cancelled' },
-  Completed: { bg: '#DBEAFE', color: '#1D4ED8', label: 'Completed' },
+const config: Record<AppointmentStatus, { bg: string; color: string; border: string; label: string }> = {
+  Pending: { bg: '#FFF9DB', color: '#E67700', border: '#FFE066', label: 'Pending' },
+  Confirmed: { bg: '#EBFBEE', color: '#2F9E44', border: '#B2F2BB', label: 'Confirmed' },
+  Cancelled: { bg: '#FFF1F0', color: '#E03131', border: '#FFCCC7', label: 'Cancelled' },
+  Completed: { bg: '#F0F0FF', color: '#3B5BDB', border: '#BAC8FF', label: 'Completed' },
 }
 
 export function Badge({ status }: BadgeProps) {
-  const { bg, color, label } = config[status]
+  const { bg, color, border, label } = config[status]
   return (
     <span
       style={{
@@ -25,13 +25,14 @@ export function Badge({ status }: BadgeProps) {
         fontWeight: 600,
         background: bg,
         color,
+        border: `1px solid ${border}`,
         whiteSpace: 'nowrap',
       }}
     >
       <span
         style={{
-          width: 6,
-          height: 6,
+          width: 5,
+          height: 5,
           borderRadius: '50%',
           background: color,
           display: 'inline-block',

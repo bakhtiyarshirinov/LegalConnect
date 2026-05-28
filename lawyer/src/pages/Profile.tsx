@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { User, Briefcase, MapPin, DollarSign, Clock, ToggleLeft, ToggleRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { getByUserId, updateProfile, type UpdateProfileData } from '../api/profile'
+import { getMyLawyerProfile, updateProfile, type UpdateProfileData } from '../api/profile'
 import { Card } from '../components/ui/Card'
 import { Input, Textarea } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
@@ -25,7 +25,7 @@ export default function Profile() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile-page', user?.userId],
-    queryFn: () => getByUserId(user!.userId),
+    queryFn: getMyLawyerProfile,
     enabled: !!user,
   })
 

@@ -10,13 +10,13 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 export function Card({ children, hover = false, padding = 24, style, ...props }: CardProps) {
   return (
     <motion.div
-      whileHover={hover ? { scale: 1.01, boxShadow: '0 4px 16px rgba(0,0,0,0.10)' } : {}}
+      whileHover={hover ? { y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' } : {}}
       transition={{ duration: 0.15 }}
       style={{
         background: '#FFFFFF',
-        border: '1px solid #E8E8E8',
-        borderRadius: 12,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+        border: '1px solid #F0F0F0',
+        borderRadius: 16,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
         padding,
         ...style,
       }}
