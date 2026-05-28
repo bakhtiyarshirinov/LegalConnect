@@ -12,25 +12,32 @@ interface UseSignalROptions {
 export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSignalROptions) {
   const token = useAuthStore((s) => s.token)
   const connectionRef = useRef<HubConnection | null>(null)
+  const connectedRef = useRef(false)
 
-  // Keep refs up to date so handlers never go stale without rebuilding the connection
   const onReceiveRef = useRef(onReceiveMessage)
   const onReadRef = useRef(onMessagesRead)
-  useEffect(() => { onReceiveRef.current = onReceiveMessage }, [onReceiveMessage])
-  useEffect(() => { onReadRef.current = onMessagesRead }, [onMessagesRead])
+  const chatIdRef = useRef(chatId)
 
+  // Update refs in render so async callbacks always see latest values
+  onReceiveRef.current = onReceiveMessage
+  onReadRef.current = onMessagesRead
+  chatIdRef.current = chatId
+
+  // Build connection ONCE per token — not per chatId
   useEffect(() => {
-    if (!token) return
+    if (!token || connectedRef.current) return
 
     const connection = new HubConnectionBuilder()
       .withUrl('http://localhost:5218/hubs/chat', {
-        accessTokenFactory: () => token ?? '',
+        accessTokenFactory: () => token,
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000])
-      .configureLogging(LogLevel.Error)
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(LogLevel.Warning)
       .build()
 
-    // Stable wrappers — always call the latest callback ref
+    connection.serverTimeoutInMilliseconds = 60000
+    connection.keepAliveIntervalInMilliseconds = 15000
+
     connection.on('ReceiveMessage', (msg: MessageDto) => {
       onReceiveRef.current?.(msg)
     })
@@ -38,36 +45,72 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
       onReadRef.current?.(data)
     })
 
-    // Re-join the chat after an automatic reconnect
+    // Re-join current chat after auto-reconnect
     connection.onreconnected(async () => {
-      if (chatId) {
-        await connection.invoke('JoinChat', chatId).catch(console.error)
+      if (chatIdRef.current) {
+        await connection.invoke('JoinChat', chatIdRef.current).catch(console.error)
       }
     })
+
+    // Guard synchronously so StrictMode double-invoke doesn't build two connections
+    connectedRef.current = true
 
     connection
       .start()
       .then(async () => {
         connectionRef.current = connection
-        if (chatId) {
-          await connection.invoke('JoinChat', chatId).catch(console.error)
+        // Join whichever chat was selected before connection finished
+        if (chatIdRef.current) {
+          await connection.invoke('JoinChat', chatIdRef.current).catch(console.error)
         }
       })
-      .catch(console.error)
+      .catch((err) => {
+        connectedRef.current = false
+        console.error(err)
+      })
 
     return () => {
+      connectedRef.current = false
       connectionRef.current = null
-      if (connection.state === 'Connected' && chatId) {
-        connection.invoke('LeaveChat', chatId).catch(() => {})
-      }
       connection.stop().catch(() => {})
     }
-  }, [token, chatId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Join/leave chat group when chatId changes
+  useEffect(() => {
+    if (!chatId) return
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    let cancelled = false
+
+    const tryJoin = () => {
+      if (cancelled) return
+      const conn = connectionRef.current
+      if (conn?.state === 'Connected') {
+        conn.invoke('JoinChat', chatId).catch(console.error)
+      } else {
+        timeoutId = setTimeout(tryJoin, 500)
+      }
+    }
+
+    tryJoin()
+
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+      const conn = connectionRef.current
+      if (conn?.state === 'Connected') {
+        conn.invoke('LeaveChat', chatId).catch(() => {})
+      }
+    }
+  }, [chatId])
 
   const sendMessage = useCallback(async (cid: string, content: string) => {
     const conn = connectionRef.current
     if (conn && conn.state === 'Connected') {
       await conn.invoke('SendMessage', cid, content)
+    } else {
+      throw new Error('SignalR not connected')
     }
   }, [])
 

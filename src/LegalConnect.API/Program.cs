@@ -48,19 +48,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 // ─── CORS ───────────────────────────────────────────────────────────────────
+
 builder.Services.AddCors(options =>
 {
+    
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+        
     });
 });
-
 // ─── SignalR ────────────────────────────────────────────────────────────────
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -75,6 +85,7 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+app.UseWebSockets(); 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();

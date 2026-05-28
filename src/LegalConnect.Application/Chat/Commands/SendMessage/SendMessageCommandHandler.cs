@@ -63,8 +63,48 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
         // 6️⃣ Уведомляем получателя (in-app notification)
         await CreateInAppNotificationAsync(chat, isClient, sender, cancellationToken);
 
-        // 7️⃣ Отправляем email уведомление получателю (fire-and-forget, некритичная операция)
-        _ = SendEmailNotificationAsync(chat, isClient, sender, request.Content);
+        // 7️⃣ Extract recipient data while DbContext is still alive, then fire-and-forget
+        string? recipientEmail = null;
+        string? recipientFullName = null;
+
+        if (isClient)
+        {
+            var lawyerRecipient = await _unitOfWork.Lawyers.GetByIdAsync(chat.LawyerId);
+            if (lawyerRecipient?.User is not null)
+            {
+                recipientEmail = lawyerRecipient.User.Email;
+                recipientFullName = lawyerRecipient.User.FullName;
+            }
+        }
+        else
+        {
+            var client = await _unitOfWork.Users.GetByIdAsync(chat.ClientId);
+            if (client is not null)
+            {
+                recipientEmail = client.Email;
+                recipientFullName = client.FullName;
+            }
+        }
+
+        if (recipientEmail is not null && recipientFullName is not null)
+        {
+            var emailCopy = recipientEmail;
+            var nameCopy = recipientFullName;
+            var senderCopy = sender.FullName;
+            var contentCopy = request.Content;
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _emailService.SendNewMessageNotificationAsync(
+                        email: emailCopy,
+                        fullName: nameCopy,
+                        senderName: senderCopy,
+                        messagePreview: contentCopy);
+                }
+                catch { }
+            });
+        }
 
         return new MessageDto(
             Id: message.Id,
@@ -110,44 +150,4 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
         }
     }
 
-    private async Task SendEmailNotificationAsync(
-        Domain.Entities.Chat chat,
-        bool senderIsClient,
-        Domain.Entities.User sender,
-        string messageContent)
-    {
-        try
-        {
-            if (senderIsClient)
-            {
-                // Отправитель — клиент → получатель — юрист
-                var lawyerProfile = await _unitOfWork.Lawyers.GetByIdAsync(chat.LawyerId);
-                if (lawyerProfile?.User is not null)
-                {
-                    await _emailService.SendNewMessageNotificationAsync(
-                        email: lawyerProfile.User.Email,
-                        fullName: lawyerProfile.User.FullName,
-                        senderName: sender.FullName,
-                        messagePreview: messageContent);
-                }
-            }
-            else
-            {
-                // Отправитель — юрист → получатель — клиент
-                var client = await _unitOfWork.Users.GetByIdAsync(chat.ClientId);
-                if (client is not null)
-                {
-                    await _emailService.SendNewMessageNotificationAsync(
-                        email: client.Email,
-                        fullName: client.FullName,
-                        senderName: sender.FullName,
-                        messagePreview: messageContent);
-                }
-            }
-        }
-        catch
-        {
-            // Email уведомление — некритичная операция, не прерываем основной поток
-        }
-    }
 }

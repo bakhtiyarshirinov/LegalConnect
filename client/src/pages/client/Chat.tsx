@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Send, MessageSquare } from 'lucide-react'
 import { chatsApi, type MessageDto } from '../../api/chats'
@@ -26,6 +26,7 @@ export default function Chat() {
   const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId)
   const [messages, setMessages] = useState<MessageDto[]>([])
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const userId = useAuthStore((s) => s.user?.userId)
@@ -37,13 +38,27 @@ export default function Chat() {
     refetchOnMount: 'always',
   })
 
+  const initializedRef = useRef(false)
+
   const { data: fetchedMessages, isLoading: loadingMessages } = useQuery({
     queryKey: ['messages', activeChatId],
     queryFn: () => chatsApi.getMessages(activeChatId!),
     enabled: !!activeChatId,
+    staleTime: Infinity,
+    gcTime: 0,
   })
 
-  useEffect(() => { setMessages(fetchedMessages ?? []) }, [fetchedMessages])
+  useEffect(() => {
+    if (fetchedMessages && !initializedRef.current) {
+      setMessages(fetchedMessages)
+      initializedRef.current = true
+    }
+  }, [fetchedMessages])
+
+  useEffect(() => {
+    setMessages([])
+    initializedRef.current = false
+  }, [activeChatId])
 
   const { sendMessage } = useSignalR({
     chatId: activeChatId,
@@ -56,41 +71,32 @@ export default function Chat() {
     },
   })
 
-  const sendMutation = useMutation({
-    mutationFn: async (content: string) => {
-      if (activeChatId) {
-        try {
-          await sendMessage(activeChatId, content)
-        } catch {
-          return chatsApi.sendMessage(activeChatId, user.userId, content)
-        }
-      }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['chats', userId] })
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const text = input.trim()
-    if (!text || !activeChatId) return
+    if (!text || !activeChatId || sending) return
     setInput('')
-    // Optimistically add
-    const optimistic: MessageDto = {
-      id: crypto.randomUUID(),
-      senderId: user.userId,
-      senderFullName: user.fullName,
-      content: text,
-      isRead: false,
-      sentAt: new Date().toISOString(),
+    setSending(true)
+    try {
+      await sendMessage(activeChatId, text)
+      // Server broadcasts back to group including sender — onReceiveMessage adds it
+      qc.invalidateQueries({ queryKey: ['chats', userId] })
+    } catch {
+      try {
+        const msg = await chatsApi.sendMessage(activeChatId, user.userId, text)
+        setMessages((prev) => [...prev, msg])
+        qc.invalidateQueries({ queryKey: ['chats', userId] })
+      } catch (err: unknown) {
+        toast.error((err as Error).message || 'Failed to send')
+        setInput(text)
+      }
+    } finally {
+      setSending(false)
     }
-    setMessages((prev) => [...prev, optimistic])
-    sendMutation.mutate(text)
   }
 
   const activeChat = chats.find((c) => c.id === activeChatId)
@@ -252,12 +258,12 @@ export default function Chat() {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim()}
+                disabled={!input.trim() || sending}
                 style={{
                   width: 42, height: 42, borderRadius: 12, border: 'none',
-                  background: input.trim() ? '#0A0A0A' : '#E8E8E8',
-                  color: input.trim() ? '#FFFFFF' : '#A3A3A3',
-                  cursor: input.trim() ? 'pointer' : 'not-allowed',
+                  background: input.trim() && !sending ? '#0A0A0A' : '#E8E8E8',
+                  color: input.trim() && !sending ? '#FFFFFF' : '#A3A3A3',
+                  cursor: input.trim() && !sending ? 'pointer' : 'not-allowed',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.15s', flexShrink: 0,
                 }}
