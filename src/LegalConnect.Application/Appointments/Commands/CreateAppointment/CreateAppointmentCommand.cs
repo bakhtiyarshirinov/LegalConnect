@@ -9,5 +9,6 @@ public record CreateAppointmentCommand(
     DateTime ScheduledAt,
     int DurationMinutes,
     AppointmentType Type,
-    string? Notes
+    string? Notes,
+    Guid? SlotId = null
 ) : IRequest<Guid>;

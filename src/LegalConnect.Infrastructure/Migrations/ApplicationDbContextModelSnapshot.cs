@@ -51,6 +51,9 @@ namespace LegalConnect.Infrastructure.Migrations
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("SlotId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -66,6 +69,37 @@ namespace LegalConnect.Infrastructure.Migrations
                     b.HasIndex("LawyerId");
 
                     b.ToTable("appointments", (string)null);
+                });
+
+            modelBuilder.Entity("LegalConnect.Domain.Entities.AvailabilitySlot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AppointmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsBooked")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("LawyerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LawyerId");
+
+                    b.ToTable("availability_slots", (string)null);
                 });
 
             modelBuilder.Entity("LegalConnect.Domain.Entities.Chat", b =>
@@ -388,6 +422,17 @@ namespace LegalConnect.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Client");
+
+                    b.Navigation("Lawyer");
+                });
+
+            modelBuilder.Entity("LegalConnect.Domain.Entities.AvailabilitySlot", b =>
+                {
+                    b.HasOne("LegalConnect.Domain.Entities.Lawyer", "Lawyer")
+                        .WithMany()
+                        .HasForeignKey("LawyerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Lawyer");
                 });

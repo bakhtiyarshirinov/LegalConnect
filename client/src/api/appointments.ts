@@ -31,6 +31,7 @@ export interface CreateAppointmentPayload {
   durationMinutes: number
   type: number  // 1=Online, 2=Offline  (matches AppointmentType enum)
   notes?: string
+  slotId?: string
 }
 
 export const appointmentsApi = {

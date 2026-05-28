@@ -17,6 +17,7 @@ public class UnitOfWork : IUnitOfWork
     public ISpecializationRepository Specializations { get; }
     public IOtpCodeRepository OtpCodes { get; }
     public INotificationRepository Notifications { get; }
+    public IAvailabilitySlotRepository Slots { get; }
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -29,6 +30,7 @@ public class UnitOfWork : IUnitOfWork
         Specializations = new SpecializationRepository(context);
         OtpCodes = new OtpCodeRepository(context);
         Notifications = new NotificationRepository(context);
+        Slots = new AvailabilitySlotRepository(context);
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

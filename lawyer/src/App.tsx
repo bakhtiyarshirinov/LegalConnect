@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Appointments from './pages/Appointments'
 import Profile from './pages/Profile'
 import Chat from './pages/Chat'
+import Schedule from './pages/Schedule'
 import NotFound from './pages/NotFound'
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/appointments" element={<Appointments />} />
+          <Route path="/schedule" element={<Schedule />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />
         </Route>

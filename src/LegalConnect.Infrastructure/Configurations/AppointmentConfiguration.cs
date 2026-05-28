@@ -25,6 +25,8 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
         builder.Property(a => a.Notes)
             .HasMaxLength(1000);
 
+        builder.Property(a => a.SlotId).IsRequired(false);
+
         // Клиент -> Записи (один ко многим)
         builder.HasOne(a => a.Client)
             .WithMany(u => u.Appointments)

@@ -9,5 +9,5 @@ public interface IAppointmentRepository
     Task<IEnumerable<Appointment>> GetByLawyerIdAsync(Guid lawyerId);
     Task AddAsync(Appointment appointment);
     void Update(Appointment appointment);
-    
+    Task<bool> HasConfirmedAsync(Guid clientId, Guid lawyerId);
 }

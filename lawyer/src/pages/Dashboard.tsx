@@ -76,10 +76,10 @@ export default function Dashboard() {
   }
 
   const handleCancel = async (a: Appointment) => {
-    if (!user) return
+    if (!effectiveLawyerId) return
     setActionLoading(a.id + 'cancel')
     try {
-      await cancelAppointment(a.id, user.userId)
+      await cancelAppointment(a.id, effectiveLawyerId)
       toast.success('Appointment cancelled')
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch {

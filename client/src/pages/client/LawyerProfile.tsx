@@ -5,12 +5,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
   MapPin, Star, Briefcase, BadgeCheck, ArrowLeft, MessageSquare,
-  Calendar, Clock, DollarSign, FileText
+  Calendar, DollarSign, FileText
 } from 'lucide-react'
 import { lawyersApi } from '../../api/lawyers'
 import { reviewsApi } from '../../api/reviews'
 import { appointmentsApi } from '../../api/appointments'
 import { chatsApi } from '../../api/chats'
+import { slotsApi, type SlotDto } from '../../api/slots'
 import { useAuthStore } from '../../store/authStore'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -22,15 +23,21 @@ const pageVariant = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
 }
 
+function formatTime(dt: string): string {
+  return new Date(dt).toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  })
+}
+
 export default function LawyerProfile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const qc = useQueryClient()
   const [bookOpen, setBookOpen] = useState(false)
-  const [form, setForm] = useState({
-    date: '', time: '', duration: 60, type: 1, notes: '',
-  })
+  const [selectedDate, setSelectedDate] = useState('')
+  const [selectedSlot, setSelectedSlot] = useState<SlotDto | null>(null)
+  const [form, setForm] = useState({ type: 1, notes: '' })
 
   const { data: lawyer, isLoading } = useQuery({
     queryKey: ['lawyer', id],
@@ -44,23 +51,37 @@ export default function LawyerProfile() {
     enabled: !!id,
   })
 
+  const { data: availableSlots = [], isLoading: loadingSlots, error: slotsError } = useQuery({
+    queryKey: ['slots', lawyer?.id, selectedDate],
+    queryFn: async () => {
+      console.log('Fetching slots for:', lawyer?.id, selectedDate)
+      const result = await slotsApi.getAvailable(lawyer!.id, selectedDate)
+      console.log('Slots response:', result)
+      return result
+    },
+    enabled: !!lawyer?.id && !!selectedDate,
+  })
+
   const bookMutation = useMutation({
     mutationFn: () => {
-      if (!user || !lawyer) throw new Error('Not authenticated')
-      const scheduledAt = new Date(`${form.date}T${form.time}`).toISOString()
+      if (!user || !lawyer || !selectedSlot) throw new Error('Select a slot first')
       return appointmentsApi.create({
         clientId: user.userId,
         lawyerId: lawyer.id,
-        scheduledAt,
-        durationMinutes: form.duration,
+        scheduledAt: selectedSlot.startTime,
+        durationMinutes: selectedSlot.durationMinutes,
         type: form.type,
         notes: form.notes || undefined,
+        slotId: selectedSlot.id,
       })
     },
     onSuccess: () => {
       toast.success('Appointment booked!')
       qc.invalidateQueries({ queryKey: ['appointments', user?.userId] })
+      qc.invalidateQueries({ queryKey: ['slots'] })
       setBookOpen(false)
+      setSelectedSlot(null)
+      setSelectedDate('')
     },
     onError: (err: Error) => toast.error(err.message),
   })
@@ -76,7 +97,9 @@ export default function LawyerProfile() {
     onError: (err: Error) => toast.error(err.message),
   })
 
-  const price = lawyer ? (lawyer.hourlyRate * form.duration) / 60 : 0
+  const price = lawyer && selectedSlot
+    ? (lawyer.hourlyRate * selectedSlot.durationMinutes) / 60
+    : 0
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -228,7 +251,7 @@ export default function LawyerProfile() {
             </div>
           </div>
 
-          {/* Availability */}
+          {/* Details */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Details</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -251,61 +274,85 @@ export default function LawyerProfile() {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      <Modal open={bookOpen} onClose={() => setBookOpen(false)} title="Book Appointment" width={520}>
+      {/* Booking Modal — slot-based */}
+      <Modal open={bookOpen} onClose={() => { setBookOpen(false); setSelectedSlot(null); setSelectedDate('') }} title="Book Appointment" width={520}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Calendar size={13} /> Date
-              </label>
-              <input
-                type="date"
-                value={form.date}
-                min={new Date().toISOString().split('T')[0]}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                style={{
-                  border: '1px solid #E8E8E8', borderRadius: 10, padding: '10px 14px',
-                  fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
-                  background: '#FFFFFF', color: '#0A0A0A',
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Clock size={13} /> Time
-              </label>
-              <input
-                type="time"
-                value={form.time}
-                onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                style={{
-                  border: '1px solid #E8E8E8', borderRadius: 10, padding: '10px 14px',
-                  fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
-                  background: '#FFFFFF', color: '#0A0A0A',
-                }}
-              />
-            </div>
+          {/* Date picker */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Calendar size={13} /> Select Date
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                setSelectedDate(e.target.value)
+                setSelectedSlot(null)
+              }}
+              style={{
+                border: '1px solid #E8E8E8', borderRadius: 10, padding: '10px 14px',
+                fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
+                background: '#FFFFFF', color: '#0A0A0A',
+              }}
+            />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Duration</label>
-              <select
-                value={form.duration}
-                onChange={(e) => setForm((f) => ({ ...f, duration: parseInt(e.target.value) }))}
-                style={{
-                  border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
-                  fontSize: 14, cursor: 'pointer', outline: 'none',
-                  fontFamily: 'Inter, sans-serif', background: '#FFFFFF', color: '#0A0A0A',
-                }}
-              >
-                <option value={30}>30 minutes</option>
-                <option value={60}>60 minutes</option>
-                <option value={90}>90 minutes</option>
-                <option value={120}>120 minutes</option>
-              </select>
+          {/* Slot picker */}
+          {selectedDate && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>
+                Available Slots
+              </label>
+              {loadingSlots ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {[1, 2, 3].map((k) => (
+                    <div key={k} style={{ height: 42, background: '#F5F5F5', borderRadius: 10 }} />
+                  ))}
+                </div>
+              ) : slotsError ? (
+                <div style={{
+                  padding: '16px', background: '#FEF2F2', borderRadius: 10,
+                  textAlign: 'center', color: '#DC2626', fontSize: 13,
+                }}>
+                  Failed to load slots. {(slotsError as Error).message}
+                </div>
+              ) : availableSlots.length === 0 ? (
+                <div style={{
+                  padding: '16px', background: '#F5F5F5', borderRadius: 10,
+                  textAlign: 'center', color: '#6B6B6B', fontSize: 13,
+                }}>
+                  No available slots for this date. Try another date.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot.id}
+                      onClick={() => setSelectedSlot(slot)}
+                      style={{
+                        padding: '10px 8px',
+                        borderRadius: 10,
+                        border: `2px solid ${selectedSlot?.id === slot.id ? '#0A0A0A' : '#E8E8E8'}`,
+                        background: selectedSlot?.id === slot.id ? '#0A0A0A' : '#FFFFFF',
+                        color: selectedSlot?.id === slot.id ? '#FFFFFF' : '#0A0A0A',
+                        fontSize: 13,
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        fontFamily: 'Inter, sans-serif',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+          )}
+
+          {/* Type and notes */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Type</label>
               <select
@@ -321,6 +368,17 @@ export default function LawyerProfile() {
                 <option value={2}>Offline</option>
               </select>
             </div>
+            {selectedSlot && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Duration</label>
+                <div style={{
+                  border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
+                  fontSize: 14, color: '#6B6B6B', background: '#F5F5F5',
+                }}>
+                  {selectedSlot.durationMinutes} min
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -341,22 +399,24 @@ export default function LawyerProfile() {
           </div>
 
           {/* Price summary */}
-          <div style={{
-            background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 12,
-            padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6B6B6B', fontSize: 14 }}>
-              <DollarSign size={15} /> Total price
+          {selectedSlot && (
+            <div style={{
+              background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 12,
+              padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6B6B6B', fontSize: 14 }}>
+                <DollarSign size={15} /> Total price
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#0A0A0A' }}>
+                ${price.toFixed(2)}
+              </div>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#0A0A0A' }}>
-              ${price.toFixed(2)}
-            </div>
-          </div>
+          )}
 
           <Button
             fullWidth size="lg"
             loading={bookMutation.isPending}
-            disabled={!form.date || !form.time}
+            disabled={!selectedSlot}
             onClick={() => bookMutation.mutate()}
           >
             Confirm Booking

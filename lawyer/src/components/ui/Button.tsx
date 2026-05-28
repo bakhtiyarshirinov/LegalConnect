@@ -5,6 +5,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
+  fullWidth?: boolean
   children: ReactNode
 }
 
@@ -36,6 +37,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   loading = false,
+  fullWidth = false,
   disabled,
   children,
   style,
@@ -51,6 +53,7 @@ export function Button({
       disabled={isDisabled}
       style={{
         display: 'inline-flex',
+        width: fullWidth ? '100%' : undefined,
         alignItems: 'center',
         gap: '6px',
         borderRadius: '10px',

@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Calendar, User, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Calendar, User, MessageSquare, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 
 const links = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/appointments', icon: Calendar, label: 'Appointments' },
+  { to: '/schedule', icon: Clock, label: 'Schedule' },
   { to: '/profile', icon: User, label: 'Profile' },
   { to: '/chat', icon: MessageSquare, label: 'Chat' },
 ]

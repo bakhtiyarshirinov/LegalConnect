@@ -1,4 +1,5 @@
 using LegalConnect.Domain.Entities;
+using LegalConnect.Domain.Enums;
 using LegalConnect.Domain.Interfaces.Repositories;
 using LegalConnect.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -39,4 +40,10 @@ public class AppointmentRepository : IAppointmentRepository
 
     public void Update(Appointment appointment)
         => _context.Appointments.Update(appointment);
+
+    public async Task<bool> HasConfirmedAsync(Guid clientId, Guid lawyerId)
+        => await _context.Appointments.AnyAsync(a =>
+            a.ClientId == clientId &&
+            a.LawyerId == lawyerId &&
+            a.Status == AppointmentStatus.Confirmed);
 }

@@ -25,7 +25,6 @@ public class CancelAppointmentCommandHandler
         if (appointment is null)
             throw new KeyNotFoundException($"Appointment with id {request.AppointmentId} not found");
 
-        // Отменить может клиент ИЛИ юрист
         if (appointment.ClientId != request.UserId && appointment.LawyerId != request.UserId)
             throw new InvalidOperationException("You are not authorized to cancel this appointment");
 
@@ -34,14 +33,23 @@ public class CancelAppointmentCommandHandler
 
         appointment.Cancel();
         _unitOfWork.Appointments.Update(appointment);
+
+        if (appointment.SlotId.HasValue)
+        {
+            var slot = await _unitOfWork.Slots.GetByIdAsync(appointment.SlotId.Value);
+            if (slot is not null)
+            {
+                slot.Unbook();
+                _unitOfWork.Slots.Update(slot);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Уведомляем противоположную сторону об отмене
         var isClientCancelling = appointment.ClientId == request.UserId;
 
         if (isClientCancelling)
         {
-            // Клиент отменил → уведомляем юриста
             await _mediator.Send(new CreateNotificationCommand(
                 UserId: appointment.Lawyer.UserId,
                 Title: "Appointment Cancelled",
@@ -50,7 +58,6 @@ public class CancelAppointmentCommandHandler
         }
         else
         {
-            // Юрист отменил → уведомляем клиента
             await _mediator.Send(new CreateNotificationCommand(
                 UserId: appointment.ClientId,
                 Title: "Appointment Cancelled",

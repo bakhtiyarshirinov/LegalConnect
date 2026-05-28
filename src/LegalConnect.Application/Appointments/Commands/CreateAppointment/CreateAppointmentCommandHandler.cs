@@ -18,7 +18,6 @@ public class CreateAppointmentCommandHandler
         CreateAppointmentCommand request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Проверяем что юрист существует и доступен
         var lawyer = await _unitOfWork.Lawyers.GetByIdAsync(request.LawyerId);
         if (lawyer is null)
             throw new KeyNotFoundException($"Lawyer with id {request.LawyerId} not found");
@@ -26,27 +25,49 @@ public class CreateAppointmentCommandHandler
         if (!lawyer.IsAvailable)
             throw new InvalidOperationException("Lawyer is not available");
 
-        // 2️⃣ Проверяем что клиент существует
         var client = await _unitOfWork.Users.GetByIdAsync(request.ClientId);
         if (client is null)
             throw new KeyNotFoundException($"User with id {request.ClientId} not found");
 
-        // 3️⃣ Считаем цену автоматически
-        var price = lawyer.HourlyRate * (request.DurationMinutes / 60m);
+        DateTime scheduledAt = request.ScheduledAt;
+        int durationMinutes = request.DurationMinutes;
+        Guid? slotId = request.SlotId;
+        AvailabilitySlot? slot = null;
 
-        // 4️⃣ Создаём запись через фабричный метод
+        if (request.SlotId.HasValue)
+        {
+            slot = await _unitOfWork.Slots.GetByIdAsync(request.SlotId.Value);
+            if (slot is null)
+                throw new KeyNotFoundException($"Slot with id {request.SlotId} not found");
+            if (slot.IsBooked)
+                throw new InvalidOperationException("This slot is already booked");
+
+            scheduledAt = slot.StartTime;
+            durationMinutes = (int)(slot.EndTime - slot.StartTime).TotalMinutes;
+            slotId = slot.Id;
+        }
+
+        var price = lawyer.HourlyRate * (durationMinutes / 60m);
+
         var appointment = Appointment.Create(
             clientId: request.ClientId,
             lawyerId: request.LawyerId,
-            scheduledAt: request.ScheduledAt,
-            durationMinutes: request.DurationMinutes,
+            scheduledAt: scheduledAt,
+            durationMinutes: durationMinutes,
             type: request.Type,
             price: price,
-            notes: request.Notes
+            notes: request.Notes,
+            slotId: slotId
         );
 
-        // 5️⃣ Сохраняем
         await _unitOfWork.Appointments.AddAsync(appointment);
+
+        if (slot is not null)
+        {
+            slot.Book(appointment.Id);
+            _unitOfWork.Slots.Update(slot);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return appointment.Id;

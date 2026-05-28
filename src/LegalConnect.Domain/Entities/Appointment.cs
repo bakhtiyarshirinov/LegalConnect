@@ -7,6 +7,7 @@ public class Appointment
     public Guid Id { get; private set; }
     public Guid ClientId { get; private set; }
     public Guid LawyerId { get; private set; }
+    public Guid? SlotId { get; private set; }
     public DateTime ScheduledAt { get; private set; }
     public int DurationMinutes { get; private set; }
     public AppointmentStatus Status { get; private set; }
@@ -15,8 +16,8 @@ public class Appointment
     public decimal Price { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public User Client { get; private set; }
-    public Lawyer Lawyer { get; private set; }
+    public User Client { get; private set; } = null!;
+    public Lawyer Lawyer { get; private set; } = null!;
     public Review? Review { get; private set; }
 
     private Appointment() { }
@@ -28,13 +29,15 @@ public class Appointment
         int durationMinutes,
         AppointmentType type,
         decimal price,
-        string? notes = null)
+        string? notes = null,
+        Guid? slotId = null)
     {
         return new Appointment
         {
             Id = Guid.NewGuid(),
             ClientId = clientId,
             LawyerId = lawyerId,
+            SlotId = slotId,
             ScheduledAt = scheduledAt,
             DurationMinutes = durationMinutes,
             Status = AppointmentStatus.Pending,

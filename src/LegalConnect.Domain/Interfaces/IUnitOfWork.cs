@@ -12,5 +12,6 @@ public interface IUnitOfWork
     ISpecializationRepository Specializations { get; }
     IOtpCodeRepository OtpCodes { get; }
     INotificationRepository Notifications { get; }
+    IAvailabilitySlotRepository Slots { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

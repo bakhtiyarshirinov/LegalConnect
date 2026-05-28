@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
+    public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
