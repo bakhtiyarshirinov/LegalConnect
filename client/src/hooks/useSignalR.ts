@@ -5,29 +5,30 @@ import type { MessageDto } from '../api/chats'
 
 interface UseSignalROptions {
   chatId: string | null
-  onReceiveMessage?: (msg: MessageDto) => void
-  onMessagesRead?: (data: { chatId: string; readBy: string }) => void
+  onMessage: (msg: MessageDto) => void
 }
 
-export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSignalROptions) {
+export function useSignalR({ chatId, onMessage }: UseSignalROptions) {
   const token = useAuthStore((s) => s.token)
   const connectionRef = useRef<HubConnection | null>(null)
-  const connectedRef = useRef(false)
 
-  const onReceiveRef = useRef(onReceiveMessage)
-  const onReadRef = useRef(onMessagesRead)
+  // Refs updated in render body — always current inside async callbacks
+  const onMessageRef = useRef(onMessage)
   const chatIdRef = useRef(chatId)
-
-  // Update refs in render so async callbacks always see latest values
-  onReceiveRef.current = onReceiveMessage
-  onReadRef.current = onMessagesRead
+  onMessageRef.current = onMessage
   chatIdRef.current = chatId
 
-  // Build connection ONCE per token — not per chatId
+  // ── Build connection ONCE per token ──────────────────────────────────────────
   useEffect(() => {
-    if (!token || connectedRef.current) return
+    if (!token) return
 
-    const connection = new HubConnectionBuilder()
+    // `active` prevents a stale .then() from winning the ref race in
+    // React StrictMode (effects run twice: mount → cleanup → mount).
+    // Without it, conn A's .then() can set connectionRef AFTER cleanup clears
+    // it and conn B has already set it correctly.
+    let active = true
+
+    const conn = new HubConnectionBuilder()
       .withUrl('http://localhost:5218/hubs/chat', {
         accessTokenFactory: () => token,
       })
@@ -35,53 +36,44 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
       .configureLogging(LogLevel.Warning)
       .build()
 
-    connection.serverTimeoutInMilliseconds = 60000
-    connection.keepAliveIntervalInMilliseconds = 15000
+    conn.serverTimeoutInMilliseconds = 60000
+    conn.keepAliveIntervalInMilliseconds = 15000
 
-    connection.on('ReceiveMessage', (msg: MessageDto) => {
-      onReceiveRef.current?.(msg)
-    })
-    connection.on('MessagesRead', (data: { chatId: string; readBy: string }) => {
-      onReadRef.current?.(data)
+    conn.on('ReceiveMessage', (msg: MessageDto) => {
+      onMessageRef.current(msg)
     })
 
-    // Re-join current chat after auto-reconnect
-    connection.onreconnected(async () => {
+    conn.onreconnected(async () => {
       if (chatIdRef.current) {
-        await connection.invoke('JoinChat', chatIdRef.current).catch(console.error)
+        await conn.invoke('JoinChat', chatIdRef.current).catch(console.error)
       }
     })
 
-    // Guard synchronously so StrictMode double-invoke doesn't build two connections
-    connectedRef.current = true
-
-    connection
-      .start()
+    conn.start()
       .then(async () => {
-        connectionRef.current = connection
-        // Join whichever chat was selected before connection finished
+        if (!active) return // cleanup already ran — don't touch the ref
+        connectionRef.current = conn
         if (chatIdRef.current) {
-          await connection.invoke('JoinChat', chatIdRef.current).catch(console.error)
+          await conn.invoke('JoinChat', chatIdRef.current).catch(console.error)
         }
       })
       .catch((err) => {
-        connectedRef.current = false
-        console.error(err)
+        if (active) console.error('[SignalR] connection failed', err)
       })
 
     return () => {
-      connectedRef.current = false
+      active = false
       connectionRef.current = null
-      connection.stop().catch(() => {})
+      conn.stop().catch(() => {})
     }
   }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Join/leave chat group when chatId changes
+  // ── Join / leave room when chatId changes ────────────────────────────────────
   useEffect(() => {
     if (!chatId) return
 
-    let timeoutId: ReturnType<typeof setTimeout> | undefined
     let cancelled = false
+    let retryId: ReturnType<typeof setTimeout>
 
     const tryJoin = () => {
       if (cancelled) return
@@ -89,7 +81,7 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
       if (conn?.state === 'Connected') {
         conn.invoke('JoinChat', chatId).catch(console.error)
       } else {
-        timeoutId = setTimeout(tryJoin, 500)
+        retryId = setTimeout(tryJoin, 300)
       }
     }
 
@@ -97,29 +89,17 @@ export function useSignalR({ chatId, onReceiveMessage, onMessagesRead }: UseSign
 
     return () => {
       cancelled = true
-      clearTimeout(timeoutId)
-      const conn = connectionRef.current
-      if (conn?.state === 'Connected') {
-        conn.invoke('LeaveChat', chatId).catch(() => {})
-      }
+      clearTimeout(retryId)
+      connectionRef.current?.invoke('LeaveChat', chatId).catch(() => {})
     }
   }, [chatId])
 
+  // ── Send ─────────────────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (cid: string, content: string) => {
     const conn = connectionRef.current
-    if (conn && conn.state === 'Connected') {
-      await conn.invoke('SendMessage', cid, content)
-    } else {
-      throw new Error('SignalR not connected')
-    }
+    if (!conn || conn.state !== 'Connected') throw new Error('Not connected')
+    await conn.invoke('SendMessage', cid, content)
   }, [])
 
-  const markAsRead = useCallback(async (cid: string) => {
-    const conn = connectionRef.current
-    if (conn && conn.state === 'Connected') {
-      await conn.invoke('MarkAsRead', cid)
-    }
-  }, [])
-
-  return { sendMessage, markAsRead }
+  return { sendMessage }
 }

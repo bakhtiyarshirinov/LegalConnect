@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -20,78 +20,78 @@ function formatTime(d: string) {
 
 export default function Chat() {
   const user = useAuthStore((s) => s.user)!
+  const userId = user.userId
   const qc = useQueryClient()
   const location = useLocation()
   const initialChatId = (location.state as { chatId?: string } | null)?.chatId ?? null
+
   const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId)
   const [messages, setMessages] = useState<MessageDto[]>([])
+  const [loadingMessages, setLoadingMessages] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const userId = useAuthStore((s) => s.user?.userId)
-
+  // ── Chats list ──────────────────────────────────────────────────────────────
   const { data: chats = [], isLoading: loadingChats } = useQuery({
     queryKey: ['chats', userId],
-    queryFn: () => chatsApi.getAll(userId!),
+    queryFn: () => chatsApi.getAll(userId),
     enabled: !!userId,
     refetchOnMount: 'always',
   })
 
-  const initializedRef = useRef(false)
-
-  const { data: fetchedMessages, isLoading: loadingMessages } = useQuery({
-    queryKey: ['messages', activeChatId],
-    queryFn: () => chatsApi.getMessages(activeChatId!),
-    enabled: !!activeChatId,
-    staleTime: Infinity,
-    gcTime: 0,
-  })
-
+  // ── Load messages when chat changes ─────────────────────────────────────────
+  // Direct API call — no useQuery — avoids staleTime/cache complexity
   useEffect(() => {
-    if (fetchedMessages && !initializedRef.current) {
-      setMessages(fetchedMessages)
-      initializedRef.current = true
+    if (!activeChatId) {
+      setMessages([])
+      return
     }
-  }, [fetchedMessages])
-
-  useEffect(() => {
+    let cancelled = false
     setMessages([])
-    initializedRef.current = false
+    setLoadingMessages(true)
+    chatsApi.getMessages(activeChatId)
+      .then((data) => { if (!cancelled) setMessages(data) })
+      .catch(() => { if (!cancelled) toast.error('Failed to load messages') })
+      .finally(() => { if (!cancelled) setLoadingMessages(false) })
+    return () => { cancelled = true }
   }, [activeChatId])
 
-  const { sendMessage } = useSignalR({
-    chatId: activeChatId,
-    onReceiveMessage: (msg: MessageDto) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev
-        return [...prev, msg]
-      })
-      qc.invalidateQueries({ queryKey: ['chats', userId] })
-    },
-  })
+  // ── SignalR ──────────────────────────────────────────────────────────────────
+  const handleMessage = useCallback((msg: MessageDto) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === msg.id)) return prev
+      return [...prev, msg]
+    })
+    qc.invalidateQueries({ queryKey: ['chats', userId] })
+  }, [qc, userId])
 
+  const { sendMessage } = useSignalR({ chatId: activeChatId, onMessage: handleMessage })
 
+  // ── Auto-scroll ──────────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // ── Send ─────────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim()
     if (!text || !activeChatId || sending) return
     setInput('')
     setSending(true)
     try {
+      // SignalR: server saves to DB and broadcasts to group (including sender)
+      // handleMessage will append the echo to state
       await sendMessage(activeChatId, text)
-      // Server broadcasts back to group including sender — onReceiveMessage adds it
       qc.invalidateQueries({ queryKey: ['chats', userId] })
     } catch {
+      // Fallback: REST
       try {
-        const msg = await chatsApi.sendMessage(activeChatId, user.userId, text)
+        const msg = await chatsApi.sendMessage(activeChatId, userId, text)
         setMessages((prev) => [...prev, msg])
         qc.invalidateQueries({ queryKey: ['chats', userId] })
       } catch (err: unknown) {
-        toast.error((err as Error).message || 'Failed to send')
+        toast.error((err as Error)?.message ?? 'Failed to send')
         setInput(text)
       }
     } finally {
@@ -100,13 +100,14 @@ export default function Chat() {
   }
 
   const activeChat = chats.find((c) => c.id === activeChatId)
+  const canSend = input.trim().length > 0 && !sending
 
   return (
     <motion.div
       initial="hidden" animate="visible" variants={pageVariant}
       style={{ display: 'flex', height: 'calc(100vh - 64px)', background: '#F5F5F5' }}
     >
-      {/* Sidebar */}
+      {/* Chats sidebar */}
       <div style={{
         width: 280, borderRight: '1px solid #E8E8E8', background: '#FFFFFF',
         display: 'flex', flexDirection: 'column', flexShrink: 0,
@@ -117,60 +118,60 @@ export default function Chat() {
         <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
           {loadingChats ? (
             <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {[1,2,3].map(i => <Skeleton key={i} height={64} borderRadius={10} />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} height={64} borderRadius={10} />)}
             </div>
           ) : chats.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#A3A3A3' }}>
               <MessageSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
               <p style={{ fontSize: 13 }}>No chats yet</p>
             </div>
-          ) : (
-            chats.map((chat) => {
-              const isActive = chat.id === activeChatId
-              const name = (user.role === 'Client' ? chat.lawyerFullName : chat.clientFullName) ?? ''
-              return (
-                <button
-                  key={chat.id}
-                  onClick={() => setActiveChatId(chat.id)}
-                  style={{
-                    width: '100%', padding: '12px 14px', borderRadius: 10,
-                    background: isActive ? '#F5F5F5' : 'transparent',
-                    border: isActive ? '1px solid #E8E8E8' : '1px solid transparent',
-                    cursor: 'pointer', textAlign: 'left', marginBottom: 4,
-                    transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5'
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
-                    }}>
-                      {name[0] ?? '?'}
-                    </div>
-                    <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-                      {chat.lastMessageAt && (
-                        <div style={{ fontSize: 11, color: '#A3A3A3', marginTop: 2 }}>
-                          {formatTime(chat.lastMessageAt)}
-                        </div>
-                      )}
-                    </div>
+          ) : chats.map((chat) => {
+            const isActive = chat.id === activeChatId
+            const name = (user.role === 'Client' ? chat.lawyerFullName : chat.clientFullName) ?? ''
+            return (
+              <button
+                key={chat.id}
+                onClick={() => setActiveChatId(chat.id)}
+                style={{
+                  width: '100%', padding: '12px 14px', borderRadius: 10,
+                  background: isActive ? '#F5F5F5' : 'transparent',
+                  border: isActive ? '1px solid #E8E8E8' : '1px solid transparent',
+                  cursor: 'pointer', textAlign: 'left', marginBottom: 4,
+                  transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
+                  }}>
+                    {name[0] ?? '?'}
                   </div>
-                </button>
-              )
-            })
-          )}
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {name}
+                    </div>
+                    {chat.lastMessageAt && (
+                      <div style={{ fontSize: 11, color: '#A3A3A3', marginTop: 2 }}>
+                        {formatTime(chat.lastMessageAt)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Chat Area */}
+      {/* Chat area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {!activeChatId ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: '#A3A3A3' }}>
@@ -180,7 +181,7 @@ export default function Chat() {
           </div>
         ) : (
           <>
-            {/* Chat Header */}
+            {/* Header */}
             <div style={{
               padding: '16px 24px', borderBottom: '1px solid #E8E8E8',
               background: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 12,
@@ -206,34 +207,37 @@ export default function Chat() {
             <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {loadingMessages ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[1,2,3].map(i => <Skeleton key={i} height={40} borderRadius={12} width={i % 2 === 0 ? '60%' : '40%'} style={{ alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end' }} />)}
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} height={40} borderRadius={12}
+                      width={i % 2 === 0 ? '60%' : '40%'}
+                      style={{ alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end' }}
+                    />
+                  ))}
                 </div>
-              ) : (
-                messages.map((msg) => {
-                  const isOwn = msg.senderId === user.userId
-                  return (
-                    <div key={msg.id} style={{
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: isOwn ? 'flex-end' : 'flex-start',
+              ) : messages.map((msg) => {
+                const isOwn = msg.senderId === userId
+                return (
+                  <div key={msg.id} style={{
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: isOwn ? 'flex-end' : 'flex-start',
+                  }}>
+                    <div style={{
+                      maxWidth: '65%', padding: '10px 14px',
+                      background: isOwn ? '#0A0A0A' : '#FFFFFF',
+                      color: isOwn ? '#FFFFFF' : '#0A0A0A',
+                      border: isOwn ? '1px solid #0A0A0A' : '1px solid #E8E8E8',
+                      borderRadius: isOwn ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                      fontSize: 14, lineHeight: 1.5,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                     }}>
-                      <div style={{
-                        maxWidth: '65%', padding: '10px 14px',
-                        background: isOwn ? '#0A0A0A' : '#FFFFFF',
-                        color: isOwn ? '#FFFFFF' : '#0A0A0A',
-                        border: isOwn ? '1px solid #0A0A0A' : '1px solid #E8E8E8',
-                        borderRadius: isOwn ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                        fontSize: 14, lineHeight: 1.5,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-                      }}>
-                        {msg.content}
-                      </div>
-                      <span style={{ fontSize: 11, color: '#A3A3A3', marginTop: 4 }}>
-                        {formatTime(msg.sentAt)}
-                      </span>
+                      {msg.content}
                     </div>
-                  )
-                })
-              )}
+                    <span style={{ fontSize: 11, color: '#A3A3A3', marginTop: 4 }}>
+                      {formatTime(msg.sentAt)}
+                    </span>
+                  </div>
+                )
+              })}
               <div ref={messagesEndRef} />
             </div>
 
@@ -258,12 +262,12 @@ export default function Chat() {
               />
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || sending}
+                disabled={!canSend}
                 style={{
                   width: 42, height: 42, borderRadius: 12, border: 'none',
-                  background: input.trim() && !sending ? '#0A0A0A' : '#E8E8E8',
-                  color: input.trim() && !sending ? '#FFFFFF' : '#A3A3A3',
-                  cursor: input.trim() && !sending ? 'pointer' : 'not-allowed',
+                  background: canSend ? '#0A0A0A' : '#E8E8E8',
+                  color: canSend ? '#FFFFFF' : '#A3A3A3',
+                  cursor: canSend ? 'pointer' : 'not-allowed',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.15s', flexShrink: 0,
                 }}
