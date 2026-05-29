@@ -14,6 +14,7 @@ export interface MessageDto {
   content: string
   isRead: boolean
   sentAt: string
+  type?: string
 }
 
 export const chatsApi = {

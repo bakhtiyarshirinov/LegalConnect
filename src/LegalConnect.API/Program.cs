@@ -85,7 +85,8 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-app.UseWebSockets(); 
+app.UseStaticFiles();
+app.UseWebSockets();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();

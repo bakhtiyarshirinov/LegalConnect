@@ -9,6 +9,7 @@ export interface IncomingMessage {
   content: string
   isRead: boolean
   sentAt: string
+  type?: string
 }
 
 export function useSignalR(onMessage: (msg: IncomingMessage) => void) {
@@ -82,10 +83,10 @@ export function useSignalR(onMessage: (msg: IncomingMessage) => void) {
   }, [])
 
   // Send via SignalR — throws if not connected so caller can fallback to REST
-  const sendMessage = useCallback(async (chatId: string, content: string) => {
+  const sendMessage = useCallback(async (chatId: string, content: string, messageType = 'Text') => {
     const conn = connectionRef.current
     if (!conn || conn.state !== 'Connected') throw new Error('Not connected')
-    await conn.invoke('SendMessage', chatId, content)
+    await conn.invoke('SendMessage', chatId, content, messageType)
   }, [])
 
   return { joinChat, leaveChat, sendMessage }

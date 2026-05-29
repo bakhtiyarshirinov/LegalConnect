@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LegalConnect.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4ab32c87c9b55f5a87d19e254d4f753c3d12c6e4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c2ab8b7a401f0b3e81efd5a106884d187fbfba08")]
 [assembly: System.Reflection.AssemblyProductAttribute("LegalConnect.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LegalConnect.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

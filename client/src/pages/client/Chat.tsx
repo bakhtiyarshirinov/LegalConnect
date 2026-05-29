@@ -3,11 +3,30 @@ import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Send, MessageSquare } from 'lucide-react'
+import { Send, MessageSquare, Paperclip, FileText, Download } from 'lucide-react'
 import { chatsApi, type MessageDto } from '../../api/chats'
+import { filesApi } from '../../api/files'
 import { useAuthStore } from '../../store/authStore'
 import { useSignalR } from '../../hooks/useSignalR'
 import { Skeleton } from '../../components/ui/Skeleton'
+
+const BACKEND = 'http://localhost:5218'
+const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp'])
+
+function isImage(url: string) {
+  const ext = url.split('.').pop()?.toLowerCase()
+  return ext ? IMAGE_EXTS.has('.' + ext) : false
+}
+
+function fileName(url: string) {
+  return url.split('/').pop() ?? url
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const pageVariant = {
   hidden: { opacity: 0 },
@@ -16,6 +35,40 @@ const pageVariant = {
 
 function formatTime(d: string) {
   return new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
+function FileMessage({ url, isOwn }: { url: string; isOwn: boolean }) {
+  const fullUrl = url.startsWith('http') ? url : `${BACKEND}${url}`
+  if (isImage(url)) {
+    return (
+      <a href={fullUrl} target="_blank" rel="noreferrer">
+        <img
+          src={fullUrl}
+          alt="attachment"
+          style={{
+            maxWidth: 220, maxHeight: 200, borderRadius: 8,
+            display: 'block', objectFit: 'cover', cursor: 'pointer',
+          }}
+        />
+      </a>
+    )
+  }
+  return (
+    <a
+      href={fullUrl}
+      download
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        color: isOwn ? '#FFFFFF' : '#0A0A0A', textDecoration: 'none',
+      }}
+    >
+      <FileText size={18} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 13, fontWeight: 500, wordBreak: 'break-all' }}>
+        {fileName(url)}
+      </span>
+      <Download size={14} style={{ flexShrink: 0, opacity: 0.7 }} />
+    </a>
+  )
 }
 
 export default function Chat() {
@@ -30,7 +83,9 @@ export default function Chat() {
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ── Chats list ──────────────────────────────────────────────────────────────
   const { data: chats = [], isLoading: loadingChats } = useQuery({
@@ -40,13 +95,9 @@ export default function Chat() {
     refetchOnMount: 'always',
   })
 
-  // ── Load messages when chat changes ─────────────────────────────────────────
-  // Direct API call — no useQuery — avoids staleTime/cache complexity
+  // ── Load messages on chat switch ────────────────────────────────────────────
   useEffect(() => {
-    if (!activeChatId) {
-      setMessages([])
-      return
-    }
+    if (!activeChatId) { setMessages([]); return }
     let cancelled = false
     setMessages([])
     setLoadingMessages(true)
@@ -57,7 +108,7 @@ export default function Chat() {
     return () => { cancelled = true }
   }, [activeChatId])
 
-  // ── SignalR ──────────────────────────────────────────────────────────────────
+  // ── SignalR ─────────────────────────────────────────────────────────────────
   const handleMessage = useCallback((msg: MessageDto) => {
     setMessages((prev) => {
       if (prev.some((m) => m.id === msg.id)) return prev
@@ -68,24 +119,21 @@ export default function Chat() {
 
   const { sendMessage } = useSignalR({ chatId: activeChatId, onMessage: handleMessage })
 
-  // ── Auto-scroll ──────────────────────────────────────────────────────────────
+  // ── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Send ─────────────────────────────────────────────────────────────────────
+  // ── Send text ───────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim()
     if (!text || !activeChatId || sending) return
     setInput('')
     setSending(true)
     try {
-      // SignalR: server saves to DB and broadcasts to group (including sender)
-      // handleMessage will append the echo to state
-      await sendMessage(activeChatId, text)
+      await sendMessage(activeChatId, text, 'Text')
       qc.invalidateQueries({ queryKey: ['chats', userId] })
     } catch {
-      // Fallback: REST
       try {
         const msg = await chatsApi.sendMessage(activeChatId, userId, text)
         setMessages((prev) => [...prev, msg])
@@ -96,6 +144,31 @@ export default function Chat() {
       }
     } finally {
       setSending(false)
+    }
+  }
+
+  // ── Upload file ─────────────────────────────────────────────────────────────
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !activeChatId) return
+    e.target.value = ''
+
+    setUploading(true)
+    try {
+      const { url, mimeType } = await filesApi.upload(file)
+      const msgType = mimeType.startsWith('image/') ? 'Image' : 'File'
+      try {
+        await sendMessage(activeChatId, url, msgType)
+        qc.invalidateQueries({ queryKey: ['chats', userId] })
+      } catch {
+        const msg = await chatsApi.sendMessage(activeChatId, userId, url)
+        setMessages((prev) => [...prev, { ...msg, type: msgType }])
+        qc.invalidateQueries({ queryKey: ['chats', userId] })
+      }
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message ?? 'Upload failed')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -139,12 +212,8 @@ export default function Chat() {
                   cursor: 'pointer', textAlign: 'left', marginBottom: 4,
                   transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
                 }}
-                onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5'
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5' }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
@@ -216,13 +285,15 @@ export default function Chat() {
                 </div>
               ) : messages.map((msg) => {
                 const isOwn = msg.senderId === userId
+                const isFile = msg.type === 'File' || msg.type === 'Image'
                 return (
                   <div key={msg.id} style={{
                     display: 'flex', flexDirection: 'column',
                     alignItems: isOwn ? 'flex-end' : 'flex-start',
                   }}>
                     <div style={{
-                      maxWidth: '65%', padding: '10px 14px',
+                      maxWidth: isFile && isImage(msg.content) ? 240 : '65%',
+                      padding: isFile && isImage(msg.content) ? 4 : '10px 14px',
                       background: isOwn ? '#0A0A0A' : '#FFFFFF',
                       color: isOwn ? '#FFFFFF' : '#0A0A0A',
                       border: isOwn ? '1px solid #0A0A0A' : '1px solid #E8E8E8',
@@ -230,7 +301,10 @@ export default function Chat() {
                       fontSize: 14, lineHeight: 1.5,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                     }}>
-                      {msg.content}
+                      {isFile
+                        ? <FileMessage url={msg.content} isOwn={isOwn} />
+                        : msg.content
+                      }
                     </div>
                     <span style={{ fontSize: 11, color: '#A3A3A3', marginTop: 4 }}>
                       {formatTime(msg.sentAt)}
@@ -244,13 +318,38 @@ export default function Chat() {
             {/* Input */}
             <div style={{
               padding: '14px 20px', borderTop: '1px solid #E8E8E8',
-              background: '#FFFFFF', display: 'flex', gap: 10, alignItems: 'center',
+              background: '#FFFFFF', display: 'flex', gap: 8, alignItems: 'center',
             }}>
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+              />
+
+              {/* Paperclip button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                title="Attach file"
+                style={{
+                  width: 38, height: 38, borderRadius: 10, border: '1px solid #E8E8E8',
+                  background: '#F5F5F5', cursor: uploading ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0, opacity: uploading ? 0.5 : 1, transition: 'all 0.15s',
+                }}
+              >
+                <Paperclip size={16} color="#6B6B6B" />
+              </button>
+
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder="Type a message..."
+                placeholder={uploading ? 'Uploading file…' : 'Type a message…'}
+                disabled={uploading}
                 style={{
                   flex: 1, border: '1px solid #E8E8E8', borderRadius: 12,
                   padding: '11px 16px', fontSize: 14, outline: 'none',
@@ -260,6 +359,7 @@ export default function Chat() {
                 onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
                 onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
               />
+
               <button
                 onClick={handleSend}
                 disabled={!canSend}

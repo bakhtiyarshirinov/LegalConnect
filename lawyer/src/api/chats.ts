@@ -13,6 +13,7 @@ export interface Message {
   senderId: string
   content: string
   sentAt: string
+  type?: string
 }
 
 export interface SendMessageRequest {

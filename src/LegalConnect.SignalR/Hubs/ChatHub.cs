@@ -1,5 +1,6 @@
 using LegalConnect.Application.Chat.Commands.MarkMessagesAsRead;
 using LegalConnect.Application.Chat.Commands.SendMessage;
+using LegalConnect.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -27,15 +28,19 @@ public class ChatHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatId.ToString());
     }
 
-    public async Task SendMessage(Guid chatId, string content)
+    public async Task SendMessage(Guid chatId, string content, string messageType = "Text")
     {
         var userId = GetUserId();
+
+        var type = Enum.TryParse<MessageType>(messageType, ignoreCase: true, out var parsed)
+            ? parsed
+            : MessageType.Text;
 
         using var scope = _scopeFactory.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
         var messageDto = await mediator.Send(
-            new SendMessageCommand(chatId, userId, content));
+            new SendMessageCommand(chatId, userId, content, type));
 
         await Clients.Group(chatId.ToString())
             .SendAsync("ReceiveMessage", messageDto);

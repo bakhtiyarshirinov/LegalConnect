@@ -1,43 +1,48 @@
 using LegalConnect.Application.Common.Interfaces;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
-using Resend;
+using MimeKit;
 
 namespace LegalConnect.Infrastructure.Services;
 
 public class EmailService : IEmailService
 {
-    private readonly IResend _resend;
+    private readonly string _host;
+    private readonly int _port;
+    private readonly string _username;
+    private readonly string _password;
+    private readonly string _fromName;
     private readonly string _fromEmail;
 
-    public EmailService(IResend resend, IConfiguration configuration)
+    public EmailService(IConfiguration configuration)
     {
-        _resend = resend;
-        _fromEmail = configuration["ResendSettings:FromEmail"]
-            ?? throw new InvalidOperationException("ResendSettings:FromEmail is not configured");
+        var s = configuration.GetSection("EmailSettings");
+        _host      = s["Host"]      ?? "smtp.gmail.com";
+        _port      = int.Parse(s["Port"] ?? "587");
+        _username  = s["Username"]  ?? throw new InvalidOperationException("EmailSettings:Username not configured");
+        _password  = s["Password"]  ?? throw new InvalidOperationException("EmailSettings:Password not configured");
+        _fromName  = s["FromName"]  ?? "LegalConnect";
+        _fromEmail = s["FromEmail"] ?? _username;
     }
 
     public async Task SendOtpAsync(string email, string fullName, string otp)
     {
-        var message = new EmailMessage
-        {
-            From = _fromEmail,
-            To = { email },
-            Subject = "Ваш код подтверждения — LegalConnect",
-            HtmlBody = $"""
-                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#f9f9f9;border-radius:8px;">
-                    <h2 style="color:#1a1a2e;margin-bottom:8px;">Подтверждение email</h2>
-                    <p style="color:#555;font-size:15px;">Привет, <strong>{fullName}</strong>!</p>
-                    <p style="color:#555;font-size:15px;">Используйте этот код для завершения регистрации:</p>
-                    <div style="text-align:center;margin:24px 0;">
-                        <span style="display:inline-block;font-size:36px;font-weight:700;letter-spacing:8px;color:#2563eb;background:#e8f0fe;padding:16px 32px;border-radius:8px;">{otp}</span>
-                    </div>
-                    <p style="color:#888;font-size:13px;">Код действителен в течение <strong>5 минут</strong>.</p>
-                    <p style="color:#888;font-size:13px;">Если вы не регистрировались в LegalConnect — просто проигнорируйте это письмо.</p>
-                </div>
-                """
-        };
+        var html = $"""
+            <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #E8E8E8;">
+              <div style="margin-bottom:24px;">
+                <span style="font-size:20px;font-weight:700;color:#0A0A0A;letter-spacing:-0.3px;">LegalConnect</span>
+              </div>
+              <h2 style="font-size:22px;font-weight:700;color:#0A0A0A;margin:0 0 8px;">Your verification code</h2>
+              <p style="color:#6B6B6B;font-size:15px;margin:0 0 24px;">Hi <strong style="color:#0A0A0A;">{fullName}</strong>, use the code below to complete your registration.</p>
+              <div style="text-align:center;margin:24px 0;">
+                <span style="display:inline-block;font-size:40px;font-weight:800;letter-spacing:10px;color:#0A0A0A;background:#F5F5F5;padding:16px 32px;border-radius:12px;border:1px solid #E8E8E8;">{otp}</span>
+              </div>
+              <p style="color:#A3A3A3;font-size:13px;margin:24px 0 0;">This code expires in <strong>5 minutes</strong>. If you didn't request this, ignore this email.</p>
+            </div>
+            """;
 
-        await _resend.EmailSendAsync(message);
+        await SendAsync(email, "Your LegalConnect verification code", html);
     }
 
     public async Task SendNewMessageNotificationAsync(
@@ -46,28 +51,39 @@ public class EmailService : IEmailService
         string senderName,
         string messagePreview)
     {
-        var preview = messagePreview.Length > 100
-            ? messagePreview[..100] + "..."
+        var preview = messagePreview.Length > 120
+            ? messagePreview[..120] + "…"
             : messagePreview;
 
-        var message = new EmailMessage
-        {
-            From = _fromEmail,
-            To = { email },
-            Subject = $"Новое сообщение от {senderName} — LegalConnect",
-            HtmlBody = $"""
-                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#f9f9f9;border-radius:8px;">
-                    <h2 style="color:#1a1a2e;margin-bottom:8px;">У вас новое сообщение</h2>
-                    <p style="color:#555;font-size:15px;">Привет, <strong>{fullName}</strong>!</p>
-                    <p style="color:#555;font-size:15px;"><strong>{senderName}</strong> написал вам:</p>
-                    <div style="background:#fff;border-left:4px solid #2563eb;padding:12px 16px;border-radius:4px;margin:16px 0;">
-                        <p style="color:#333;font-size:14px;margin:0;">{preview}</p>
-                    </div>
-                    <p style="color:#888;font-size:13px;">Войдите в LegalConnect, чтобы ответить.</p>
-                </div>
-                """
-        };
+        var html = $"""
+            <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #E8E8E8;">
+              <div style="margin-bottom:24px;">
+                <span style="font-size:20px;font-weight:700;color:#0A0A0A;letter-spacing:-0.3px;">LegalConnect</span>
+              </div>
+              <h2 style="font-size:22px;font-weight:700;color:#0A0A0A;margin:0 0 8px;">New message</h2>
+              <p style="color:#6B6B6B;font-size:15px;margin:0 0 16px;">Hi <strong style="color:#0A0A0A;">{fullName}</strong>, you have a new message from <strong style="color:#0A0A0A;">{senderName}</strong>.</p>
+              <div style="background:#F5F5F5;border-left:3px solid #0A0A0A;padding:14px 16px;border-radius:6px;margin:16px 0;">
+                <p style="color:#333;font-size:14px;margin:0;line-height:1.5;">{System.Net.WebUtility.HtmlEncode(preview)}</p>
+              </div>
+              <p style="color:#A3A3A3;font-size:13px;margin:20px 0 0;">Log in to LegalConnect to reply.</p>
+            </div>
+            """;
 
-        await _resend.EmailSendAsync(message);
+        await SendAsync(email, $"New message from {senderName}", html);
+    }
+
+    private async Task SendAsync(string toEmail, string subject, string htmlBody)
+    {
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_fromName, _fromEmail));
+        message.To.Add(MailboxAddress.Parse(toEmail));
+        message.Subject = subject;
+        message.Body = new TextPart("html") { Text = htmlBody };
+
+        using var client = new SmtpClient();
+        await client.ConnectAsync(_host, _port, SecureSocketOptions.StartTls);
+        await client.AuthenticateAsync(_username, _password);
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
     }
 }

@@ -95,10 +95,10 @@ export function useSignalR({ chatId, onMessage }: UseSignalROptions) {
   }, [chatId])
 
   // ── Send ─────────────────────────────────────────────────────────────────────
-  const sendMessage = useCallback(async (cid: string, content: string) => {
+  const sendMessage = useCallback(async (cid: string, content: string, messageType = 'Text') => {
     const conn = connectionRef.current
     if (!conn || conn.state !== 'Connected') throw new Error('Not connected')
-    await conn.invoke('SendMessage', cid, content)
+    await conn.invoke('SendMessage', cid, content, messageType)
   }, [])
 
   return { sendMessage }

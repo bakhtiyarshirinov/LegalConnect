@@ -32,6 +32,7 @@ public class GetChatMessagesQueryHandler
             SenderFullName: m.Sender.FullName,
             Content: m.Content,
             IsRead: m.IsRead,
-            SentAt: m.SentAt));
+            SentAt: m.SentAt,
+            Type: m.Type.ToString()));
     }
 }

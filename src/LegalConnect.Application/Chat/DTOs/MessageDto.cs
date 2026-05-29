@@ -6,5 +6,6 @@ public record MessageDto(
     string SenderFullName,
     string Content,
     bool IsRead,
-    DateTime SentAt
+    DateTime SentAt,
+    string Type = "Text"
 );

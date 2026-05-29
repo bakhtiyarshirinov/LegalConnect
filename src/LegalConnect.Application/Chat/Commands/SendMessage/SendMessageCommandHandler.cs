@@ -51,7 +51,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
         var message = Domain.Entities.Message.Create(
             chatId: request.ChatId,
             senderId: request.SenderId,
-            content: request.Content);
+            content: request.Content,
+            type: request.Type);
 
         // 5️⃣ Сохраняем сообщение и обновляем LastMessageAt
         await _unitOfWork.Chats.AddMessageAsync(message);
@@ -112,7 +113,8 @@ public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand, Mes
             SenderFullName: sender.FullName,
             Content: message.Content,
             IsRead: message.IsRead,
-            SentAt: message.SentAt);
+            SentAt: message.SentAt,
+            Type: message.Type.ToString());
     }
 
     private async Task CreateInAppNotificationAsync(

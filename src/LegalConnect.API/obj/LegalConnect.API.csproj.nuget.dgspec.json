@@ -295,6 +295,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "MailKit": {
+              "target": "Package",
+              "version": "[4.17.0, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[9.0.5, )"
@@ -312,10 +316,6 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[9.0.4, )"
-            },
-            "Resend": {
-              "target": "Package",
-              "version": "[0.4.0, )"
             },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
