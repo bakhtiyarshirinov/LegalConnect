@@ -2,6 +2,7 @@ import api from './axios'
 
 export interface ReviewDto {
   id: string
+  appointmentId: string
   clientFullName: string
   rating: number
   comment?: string
@@ -10,9 +11,7 @@ export interface ReviewDto {
 
 export const reviewsApi = {
   getByLawyer: (lawyerId: string) =>
-    api
-      .get<ReviewDto[]>(`/reviews/lawyer/${lawyerId}`)
-      .then((r) => r.data),
+    api.get<ReviewDto[]>(`/reviews/lawyer/${lawyerId}`).then((r) => r.data),
 
   create: (data: {
     clientId: string

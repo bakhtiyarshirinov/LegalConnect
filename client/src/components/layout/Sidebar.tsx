@@ -7,6 +7,7 @@ import {
   UserCircle,
   ShieldCheck,
   Bell,
+  User,
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 
@@ -18,6 +19,7 @@ interface NavItem {
 
 const clientNav: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: <LayoutDashboard size={16} /> },
+  { label: 'Profile', to: '/profile', icon: <User size={16} /> },
   { label: 'Find Lawyers', to: '/lawyers', icon: <Users size={16} /> },
   { label: 'Appointments', to: '/appointments', icon: <Calendar size={16} /> },
   { label: 'Chat', to: '/chat', icon: <MessageSquare size={16} /> },

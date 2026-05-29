@@ -19,6 +19,7 @@ import LawyerProfilePage from './pages/client/LawyerProfile'
 import Chat from './pages/client/Chat'
 import Notifications from './pages/client/Notifications'
 import ClientAppointments from './pages/client/Appointments'
+import ClientProfile from './pages/client/Profile'
 
 import LawyerDashboard from './pages/lawyer/Dashboard'
 import LawyerProfile from './pages/lawyer/Profile'
@@ -96,6 +97,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={['Client']}>
                 <ClientAppointments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute roles={['Client']}>
+                <ClientProfile />
               </ProtectedRoute>
             }
           />

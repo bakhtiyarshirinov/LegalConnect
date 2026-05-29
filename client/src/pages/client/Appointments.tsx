@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, XCircle } from 'lucide-react'
+import { Calendar, XCircle, Star } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi } from '../../api/appointments'
+import { reviewsApi } from '../../api/reviews'
 import { Badge } from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
 import { SkeletonCard } from '../../components/ui/Skeleton'
+import { ReviewModal } from '../../components/reviews/ReviewModal'
 
 const stagger = { visible: { transition: { staggerChildren: 0.07 } } }
 const item = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }
@@ -22,11 +25,32 @@ function formatDate(d: string) {
 export default function ClientAppointments() {
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
+  const [reviewTarget, setReviewTarget] = useState<{
+    appointmentId: string; lawyerId: string; lawyerName: string
+  } | null>(null)
 
   const { data: appointments = [], isLoading } = useQuery({
     queryKey: ['clientAppointments', user.userId],
     queryFn: () => appointmentsApi.getByClient(user.userId),
   })
+
+  const completedLawyerIds = [
+    ...new Set(
+      appointments.filter((a) => a.status === 'Completed').map((a) => a.lawyerId)
+    ),
+  ]
+
+  // Fetch reviews for all lawyers the client has completed appointments with
+  const { data: allReviews = [] } = useQuery({
+    queryKey: ['clientReviews', user.userId, completedLawyerIds.join(',')],
+    queryFn: async () => {
+      const results = await Promise.all(completedLawyerIds.map((id) => reviewsApi.getByLawyer(id)))
+      return results.flat()
+    },
+    enabled: completedLawyerIds.length > 0,
+  })
+
+  const reviewedApptIds = new Set(allReviews.map((r) => r.appointmentId))
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => appointmentsApi.cancel(id, user.userId),
@@ -81,13 +105,11 @@ export default function ClientAppointments() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                      <div
-                        style={{
-                          width: 36, height: 36, background: '#E8E8E8', borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 700, color: '#0A0A0A', fontSize: 14, flexShrink: 0,
-                        }}
-                      >
+                      <div style={{
+                        width: 36, height: 36, background: '#E8E8E8', borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, color: '#0A0A0A', fontSize: 14, flexShrink: 0,
+                      }}>
                         {appt.lawyerFullName[0]}
                       </div>
                       <div>
@@ -105,28 +127,68 @@ export default function ClientAppointments() {
                     </div>
                   </div>
 
-                  {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
-                    <button
-                      onClick={() => cancelMutation.mutate(appt.id)}
-                      disabled={cancelMutation.isPending}
-                      style={{
-                        background: '#FFF1F0', color: '#E03131',
-                        border: '1px solid #FFCCC7', borderRadius: 8,
-                        padding: '6px 14px', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        fontSize: 13, fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif',
-                        opacity: cancelMutation.isPending ? 0.6 : 1,
-                      }}
-                    >
-                      <XCircle size={14} /> Cancel
-                    </button>
-                  )}
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+                    {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
+                      <button
+                        onClick={() => cancelMutation.mutate(appt.id)}
+                        disabled={cancelMutation.isPending}
+                        style={{
+                          background: '#FFF1F0', color: '#E03131',
+                          border: '1px solid #FFCCC7', borderRadius: 8,
+                          padding: '6px 14px', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          fontSize: 13, fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                          opacity: cancelMutation.isPending ? 0.6 : 1,
+                        }}
+                      >
+                        <XCircle size={14} /> Cancel
+                      </button>
+                    )}
+
+                    {appt.status === 'Completed' && (
+                      reviewedApptIds.has(appt.id) ? (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 5,
+                          color: '#6B6B6B', fontSize: 13, fontWeight: 500,
+                        }}>
+                          <Star size={14} color="#f59e0b" fill="#f59e0b" />
+                          Reviewed
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setReviewTarget({
+                            appointmentId: appt.id,
+                            lawyerId: appt.lawyerId,
+                            lawyerName: appt.lawyerFullName,
+                          })}
+                          style={{
+                            background: '#FFFBEB', color: '#B45309',
+                            border: '1px solid #FDE68A', borderRadius: 8,
+                            padding: '6px 14px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            fontSize: 13, fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                          }}
+                        >
+                          <Star size={14} /> Leave Review
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               </Card>
             </motion.div>
           ))}
         </motion.div>
+      )}
+
+      {reviewTarget && (
+        <ReviewModal
+          open={!!reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          appointmentId={reviewTarget.appointmentId}
+          lawyerId={reviewTarget.lawyerId}
+          lawyerName={reviewTarget.lawyerName}
+        />
       )}
     </motion.div>
   )

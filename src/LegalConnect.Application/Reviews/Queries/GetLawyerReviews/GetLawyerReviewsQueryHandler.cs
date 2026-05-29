@@ -22,6 +22,7 @@ public class GetLawyerReviewsQueryHandler
 
         return reviews.Select(r => new ReviewDto(
             Id: r.Id,
+            AppointmentId: r.AppointmentId,
             ClientFullName: r.Client.FullName,
             Rating: r.Rating,
             Comment: r.Comment,

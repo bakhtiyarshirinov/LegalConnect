@@ -21,6 +21,7 @@ interface AuthState {
   user: AuthUser | null
   token: string | null
   setAuth: (result: AuthResult) => void
+  updateUser: (patch: Partial<Pick<AuthUser, 'fullName'>>) => void
   logout: () => void
 }
 
@@ -39,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
             role: result.role as AuthUser['role'],
           },
         }),
+      updateUser: (patch) => set((s) => ({ user: s.user ? { ...s.user, ...patch } : null })),
       logout: () => set({ user: null, token: null }),
     }),
     { name: 'auth-store' }
