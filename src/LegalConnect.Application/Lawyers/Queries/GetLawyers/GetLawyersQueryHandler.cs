@@ -20,7 +20,11 @@ public class GetLawyersQueryHandler
         var lawyers = await _unitOfWork.Lawyers.GetAllAsync(
             city: request.City,
             specializationId: request.SpecializationId,
-            maxRate: request.MaxRate
+            maxRate: request.MaxRate,
+            minRate: request.MinRate,
+            minExperience: request.MinExperience,
+            minRating: request.MinRating,
+            sortBy: request.SortBy
         );
 
         return lawyers.Select(l => new LawyerDto(

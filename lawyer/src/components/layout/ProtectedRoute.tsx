@@ -6,26 +6,15 @@ import { Sidebar } from './Sidebar'
 export default function ProtectedRoute() {
   const { token, user } = useAuthStore()
 
-  if (!token || !user) {
-    return <Navigate to="/login" replace />
-  }
-
-  if (user.role !== 'Lawyer') {
-    return <Navigate to="/login" replace />
-  }
+  if (!token || !user) return <Navigate to="/login" replace />
+  if (user.role !== 'Lawyer') return <Navigate to="/login" replace />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Navbar />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar />
-        <main
-          style={{
-            flex: 1,
-            overflow: 'auto',
-            background: '#FAFAFA',
-          }}
-        >
+        <main style={{ flex: 1, overflow: 'auto', background: '#FAFAFA' }}>
           <Outlet />
         </main>
       </div>

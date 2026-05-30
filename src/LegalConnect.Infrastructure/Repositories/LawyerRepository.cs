@@ -29,7 +29,11 @@ public class LawyerRepository : ILawyerRepository
     public async Task<IEnumerable<Lawyer>> GetAllAsync(
         string? city,
         int? specializationId,
-        decimal? maxRate)
+        decimal? maxRate,
+        decimal? minRate = null,
+        int? minExperience = null,
+        float? minRating = null,
+        string? sortBy = null)
     {
         var query = _context.Lawyers
             .Include(l => l.User)
@@ -40,17 +44,26 @@ public class LawyerRepository : ILawyerRepository
 
         if (!string.IsNullOrEmpty(city))
             query = query.Where(l => l.City == city);
-
         if (specializationId.HasValue)
-            query = query.Where(l =>
-                l.Specializations.Any(s => s.SpecializationId == specializationId));
-
+            query = query.Where(l => l.Specializations.Any(s => s.SpecializationId == specializationId));
         if (maxRate.HasValue)
             query = query.Where(l => l.HourlyRate <= maxRate);
+        if (minRate.HasValue)
+            query = query.Where(l => l.HourlyRate >= minRate);
+        if (minExperience.HasValue)
+            query = query.Where(l => l.ExperienceYears >= minExperience);
+        if (minRating.HasValue)
+            query = query.Where(l => l.Rating >= minRating);
 
-        return await query
-            .OrderByDescending(l => l.Rating)
-            .ToListAsync();
+        query = sortBy switch
+        {
+            "price_asc"  => query.OrderBy(l => l.HourlyRate),
+            "price_desc" => query.OrderByDescending(l => l.HourlyRate),
+            "experience" => query.OrderByDescending(l => l.ExperienceYears),
+            _            => query.OrderByDescending(l => l.Rating),
+        };
+
+        return await query.ToListAsync();
     }
 
     public async Task<IEnumerable<Lawyer>> GetPendingAsync()

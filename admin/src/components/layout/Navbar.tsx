@@ -8,10 +8,7 @@ export const Navbar: React.FC = () => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  const handleLogout = () => { logout(); navigate('/login') }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-[#F0F0F0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
@@ -24,7 +21,6 @@ export const Navbar: React.FC = () => {
           <span className="text-[#E8E8E8] text-sm">|</span>
           <span className="text-[#6B6B6B] text-xs font-medium uppercase tracking-wider">Admin</span>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F5F5F5] rounded-xl">
             <User className="w-3.5 h-3.5 text-[#6B6B6B]" />

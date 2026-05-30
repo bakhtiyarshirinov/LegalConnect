@@ -34,7 +34,7 @@ import NotFound from './pages/NotFound'
 // Layout wrapper for authenticated pages — stable across navigations
 function AppLayout() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F5F5' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
       <div style={{ display: 'flex', flex: 1 }}>
         <Sidebar />

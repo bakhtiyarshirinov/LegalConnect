@@ -31,9 +31,13 @@ public class LawyersController : ControllerBase
         [FromQuery] string? city,
         [FromQuery] int? specializationId,
         [FromQuery] decimal? maxRate,
+        [FromQuery] decimal? minRate,
+        [FromQuery] int? minExperience,
+        [FromQuery] float? minRating,
+        [FromQuery] string? sortBy,
         CancellationToken cancellationToken)
     {
-        var query = new GetLawyersQuery(city, specializationId, maxRate);
+        var query = new GetLawyersQuery(city, specializationId, maxRate, minRate, minExperience, minRating, sortBy);
         var result = await _mediator.Send(query, cancellationToken);
         return Ok(result);
     }

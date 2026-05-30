@@ -25,6 +25,10 @@ export interface LawyersFilter {
   city?: string
   specializationId?: number
   maxRate?: number
+  minRate?: number
+  minExperience?: number
+  minRating?: number
+  sortBy?: 'rating' | 'price_asc' | 'price_desc' | 'experience'
 }
 
 export interface UpdateProfilePayload {
