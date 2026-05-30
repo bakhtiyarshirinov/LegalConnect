@@ -3,6 +3,7 @@ namespace LegalConnect.Application.Lawyers.Queries.GetLawyers;
 public record LawyerDto(
     Guid Id,
     string FullName,
+    string? AvatarUrl,
     string City,
     string Bio,
     int ExperienceYears,

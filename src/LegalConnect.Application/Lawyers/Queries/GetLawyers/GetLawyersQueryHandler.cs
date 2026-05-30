@@ -26,6 +26,7 @@ public class GetLawyersQueryHandler
         return lawyers.Select(l => new LawyerDto(
             Id: l.Id,
             FullName: l.User.FullName,
+            AvatarUrl: l.User.AvatarUrl,
             City: l.City,
             Bio: l.Bio,
             ExperienceYears: l.ExperienceYears,
@@ -33,8 +34,7 @@ public class GetLawyersQueryHandler
             Rating: l.Rating,
             ReviewCount: l.ReviewCount,
             IsVerified: l.IsVerified,
-            Specializations: l.Specializations
-                .Select(s => s.Specialization.Name)
+            Specializations: l.Specializations.Select(s => s.Specialization.Name)
         ));
     }
 }

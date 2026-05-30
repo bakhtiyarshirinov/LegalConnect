@@ -43,22 +43,18 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
       {/* Avatar + Name + Price */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              background: '#0A0A0A',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 22,
-              fontWeight: 700,
-              color: '#fff',
-              flexShrink: 0,
-            }}
-          >
-            {lawyer.fullName[0]}
+          <div style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, overflow: 'hidden' }}>
+            {lawyer.avatarUrl ? (
+              <img src={lawyer.avatarUrl} alt={lawyer.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{
+                width: '100%', height: '100%', background: '#0A0A0A',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22, fontWeight: 700, color: '#fff',
+              }}>
+                {lawyer.fullName[0]}
+              </div>
+            )}
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>

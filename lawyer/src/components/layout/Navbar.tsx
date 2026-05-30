@@ -2,12 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, Scale, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
+import { getMyLawyerProfile } from '../../api/profile'
 
 export function Navbar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [dropOpen, setDropOpen] = useState(false)
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile-page', user?.userId],
+    queryFn: getMyLawyerProfile,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const handleLogout = () => {
     logout()
@@ -99,9 +108,15 @@ export function Navbar() {
               fontSize: 11,
               fontWeight: 700,
               color: '#fff',
+              overflow: 'hidden',
+              flexShrink: 0,
             }}
           >
-            {user?.fullName?.[0]?.toUpperCase() ?? '?'}
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              user?.fullName?.[0]?.toUpperCase() ?? '?'
+            )}
           </div>
           <span style={{ maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {user?.fullName}

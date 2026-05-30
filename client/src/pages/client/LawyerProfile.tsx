@@ -141,12 +141,18 @@ export default function LawyerProfile() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20 }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-            <div style={{
-              width: 72, height: 72, background: '#0A0A0A', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, fontWeight: 800, color: '#fff', flexShrink: 0,
-            }}>
-              {lawyer.fullName[0]}
+            <div style={{ width: 72, height: 72, borderRadius: '50%', flexShrink: 0, overflow: 'hidden' }}>
+              {lawyer.avatarUrl ? (
+                <img src={lawyer.avatarUrl} alt={lawyer.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{
+                  width: '100%', height: '100%', background: '#0A0A0A',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 28, fontWeight: 800, color: '#fff',
+                }}>
+                  {lawyer.fullName[0]}
+                </div>
+              )}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>

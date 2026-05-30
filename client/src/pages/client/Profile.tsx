@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { User, BadgeCheck, Calendar, CheckCircle, Clock } from 'lucide-react'
+import { User, BadgeCheck, Calendar, CheckCircle, Clock, Camera } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { usersApi } from '../../api/users'
 import { appointmentsApi } from '../../api/appointments'
@@ -28,6 +28,8 @@ export default function ClientProfile() {
   const user = useAuthStore((s) => s.user)!
   const updateUser = useAuthStore((s) => s.updateUser)
   const qc = useQueryClient()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['myProfile', user.userId],
@@ -58,6 +60,22 @@ export default function ClientProfile() {
     },
     onError: (err: Error) => toast.error(err.message),
   })
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingAvatar(true)
+    try {
+      await usersApi.uploadAvatar(file)
+      toast.success('Photo updated!')
+      qc.invalidateQueries({ queryKey: ['myProfile', user.userId] })
+    } catch {
+      toast.error('Failed to upload photo')
+    } finally {
+      setUploadingAvatar(false)
+      if (avatarInputRef.current) avatarInputRef.current.value = ''
+    }
+  }
 
   const totalAppts = appointments.length
   const completed = appointments.filter((a) => a.status === 'Completed').length
@@ -108,12 +126,40 @@ export default function ClientProfile() {
               </>
             ) : (
               <>
-                <div style={{
-                  width: 80, height: 80, background: '#0A0A0A', borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 32, fontWeight: 800, color: '#fff', margin: '0 auto 16px',
-                }}>
-                  {profile?.fullName?.[0]?.toUpperCase() ?? user.fullName[0]}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarChange}
+                />
+                <div
+                  style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 16px', cursor: 'pointer' }}
+                  onClick={() => !uploadingAvatar && avatarInputRef.current?.click()}
+                >
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{
+                      width: 80, height: 80, background: '#0A0A0A', borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 32, fontWeight: 800, color: '#fff',
+                    }}>
+                      {uploadingAvatar ? '...' : (profile?.fullName?.[0]?.toUpperCase() ?? user.fullName[0])}
+                    </div>
+                  )}
+                  <div style={{
+                    position: 'absolute', inset: 0, borderRadius: '50%',
+                    background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 2,
+                    opacity: 0, transition: 'opacity 0.2s',
+                  }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0' }}
+                  >
+                    <Camera size={18} color="#fff" />
+                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>Change</span>
+                  </div>
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 6 }}>
                   {profile?.fullName ?? user.fullName}

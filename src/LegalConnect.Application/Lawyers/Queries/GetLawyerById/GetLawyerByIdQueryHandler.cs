@@ -29,6 +29,9 @@ public class GetLawyerByIdQueryHandler
             Id: lawyer.Id,
             UserId: lawyer.UserId,
             FullName: lawyer.User.FullName,
+            Email: lawyer.User.Email,
+            Phone: lawyer.User.Phone,
+            AvatarUrl: lawyer.User.AvatarUrl,
             City: lawyer.City,
             Bio: lawyer.Bio,
             LicenseNumber: lawyer.LicenseNumber,
@@ -38,8 +41,8 @@ public class GetLawyerByIdQueryHandler
             ReviewCount: lawyer.ReviewCount,
             IsVerified: lawyer.IsVerified,
             IsAvailable: lawyer.IsAvailable,
-            Specializations: lawyer.Specializations
-                .Select(s => s.Specialization.Name),
+            Specializations: lawyer.Specializations.Select(s => s.Specialization.Name),
+            SpecializationIds: lawyer.Specializations.Select(s => s.SpecializationId),
             IsOnline: isOnline
         );
     }

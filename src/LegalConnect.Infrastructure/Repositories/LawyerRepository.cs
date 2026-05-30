@@ -67,4 +67,10 @@ public class LawyerRepository : ILawyerRepository
 
     public void Update(Lawyer lawyer)
         => _context.Lawyers.Update(lawyer);
+
+    public void RemoveSpecialization(LawyerSpecialization spec)
+        => _context.LawyerSpecializations.Remove(spec);
+
+    public async Task AddSpecializationAsync(LawyerSpecialization spec)
+        => await _context.LawyerSpecializations.AddAsync(spec);
 }

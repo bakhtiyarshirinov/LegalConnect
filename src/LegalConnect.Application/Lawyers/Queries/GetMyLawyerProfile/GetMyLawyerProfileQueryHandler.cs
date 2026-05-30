@@ -34,6 +34,9 @@ public class GetMyLawyerProfileQueryHandler
             Id: full.Id,
             UserId: full.UserId,
             FullName: full.User.FullName,
+            Email: full.User.Email,
+            Phone: full.User.Phone,
+            AvatarUrl: full.User.AvatarUrl,
             City: full.City,
             Bio: full.Bio,
             LicenseNumber: full.LicenseNumber,
@@ -44,6 +47,7 @@ public class GetMyLawyerProfileQueryHandler
             IsVerified: full.IsVerified,
             IsAvailable: full.IsAvailable,
             Specializations: full.Specializations.Select(s => s.Specialization.Name),
+            SpecializationIds: full.Specializations.Select(s => s.SpecializationId),
             IsOnline: isOnline
         );
     }

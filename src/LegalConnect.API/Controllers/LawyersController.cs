@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using LegalConnect.Application.Lawyers.Commands.CreateLawyerProfile;
 using LegalConnect.Application.Lawyers.Commands.UpdateLawyerProfile;
+using LegalConnect.Application.Lawyers.Commands.UpdateLawyerSpecializations;
 using LegalConnect.Application.Lawyers.Queries.GetLawyerById;
+using LegalConnect.Application.Lawyers.Queries.GetLawyerStats;
 using LegalConnect.Application.Lawyers.Queries.GetLawyers;
 using LegalConnect.Application.Lawyers.Queries.GetMyLawyerProfile;
 using MediatR;
@@ -76,6 +78,26 @@ public class LawyersController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>GET /api/lawyers/{lawyerId}/stats — lawyer stats (AllowAnonymous for public profile).</summary>
+    [AllowAnonymous]
+    [HttpGet("{lawyerId:guid}/stats")]
+    public async Task<IActionResult> GetLawyerStats(Guid lawyerId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetLawyerStatsQuery(lawyerId), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>PUT /api/lawyers/me/specializations — update authenticated lawyer's specializations.</summary>
+    [HttpPut("me/specializations")]
+    public async Task<IActionResult> UpdateMySpecializations(
+        [FromBody] UpdateSpecializationsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        await _mediator.Send(new UpdateLawyerSpecializationsCommand(userId, request.SpecializationIds), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>POST /api/lawyers — create a lawyer profile for a given user (admin / internal use).</summary>
     [HttpPost]
     public async Task<IActionResult> CreateLawyerProfile(
@@ -105,3 +127,6 @@ public record UpdateLawyerProfileRequest(
     int ExperienceYears,
     bool IsAvailable
 );
+
+/// <summary>Request body for PUT /api/lawyers/me/specializations.</summary>
+public record UpdateSpecializationsRequest(int[] SpecializationIds);

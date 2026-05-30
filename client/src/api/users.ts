@@ -22,4 +22,12 @@ export const usersApi = {
     api.put('/users/me', data),
   getStatus: (userId: string) =>
     api.get<UserStatusDto>(`/users/${userId}/status`).then((r) => r.data),
+  uploadAvatar: async (file: File): Promise<string> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await api.post<{ avatarUrl: string }>('/files/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data.avatarUrl
+  },
 }

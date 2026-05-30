@@ -5,6 +5,7 @@ import { Bell, LogOut, Scale, ChevronDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
 import { notificationsApi } from '../../api/notifications'
+import { usersApi } from '../../api/users'
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
@@ -17,6 +18,13 @@ export function Navbar() {
     queryFn: () => notificationsApi.getUnreadCount(user!.userId),
     enabled: !!user,
     refetchInterval: 60_000,
+  })
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['myProfile', user?.userId],
+    queryFn: usersApi.getMe,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   })
 
   const handleLogout = () => {
@@ -141,9 +149,15 @@ export function Navbar() {
                 fontSize: 11,
                 fontWeight: 700,
                 color: '#fff',
+                overflow: 'hidden',
+                flexShrink: 0,
               }}
             >
-              {user?.fullName?.[0]?.toUpperCase() ?? '?'}
+              {userProfile?.avatarUrl ? (
+                <img src={userProfile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                user?.fullName?.[0]?.toUpperCase() ?? '?'
+              )}
             </div>
             <span style={{ maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.fullName}

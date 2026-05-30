@@ -10,5 +10,6 @@ public interface ILawyerRepository
     Task<IEnumerable<Lawyer>> GetPendingAsync();
     Task AddAsync(Lawyer lawyer);
     void Update(Lawyer lawyer);
-   
+    void RemoveSpecialization(LawyerSpecialization spec);
+    Task AddSpecializationAsync(LawyerSpecialization spec);
 }

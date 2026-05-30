@@ -3,6 +3,7 @@ import api from './axios'
 export interface LawyerDto {
   id: string
   fullName: string
+  avatarUrl?: string
   city: string
   bio: string
   experienceYears: number
