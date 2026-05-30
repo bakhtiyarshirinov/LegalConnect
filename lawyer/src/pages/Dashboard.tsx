@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { getByLawyer, confirmAppointment, cancelAppointment, type Appointment } from '../api/appointments'
+import { getByLawyer, confirmAppointment, cancelAppointment, completeAppointment, type Appointment } from '../api/appointments'
 import { getMyLawyerProfile } from '../api/profile'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -84,6 +84,20 @@ export default function Dashboard() {
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch {
       toast.error('Failed to cancel appointment')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleComplete = async (a: Appointment) => {
+    if (!effectiveLawyerId) return
+    setActionLoading(a.id + 'complete')
+    try {
+      await completeAppointment(a.id, effectiveLawyerId)
+      toast.success('Appointment completed!')
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch {
+      toast.error('Failed to complete appointment')
     } finally {
       setActionLoading(null)
     }
@@ -289,6 +303,73 @@ export default function Dashboard() {
           </div>
         )}
       </motion.div>
+
+      {/* Confirmed appointments */}
+      {confirmed.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.35 }}
+          style={{ marginTop: 32 }}
+        >
+          <h2 style={{ fontSize: 17, fontWeight: 600, color: '#0A0A0A', marginBottom: 16 }}>
+            Confirmed Appointments
+            <span style={{ fontSize: 12, fontWeight: 600, background: '#EBFBEE', color: '#2F9E44', padding: '2px 8px', borderRadius: 100, marginLeft: 6 }}>
+              {confirmed.length}
+            </span>
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {confirmed.map((a, i) => (
+              <motion.div key={a.id} custom={i} variants={fadeUp} initial="hidden" animate="visible">
+                <Card>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#0A0A0A', flexShrink: 0 }}>
+                          {a.clientName?.[0] ?? '?'}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0A0A0A' }}>{a.clientName}</div>
+                          <div style={{ fontSize: 12, color: '#6B6B6B' }}>{formatDate(a.scheduledAt)}</div>
+                        </div>
+                        <Badge status={a.status} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#6B6B6B', flexWrap: 'wrap' }}>
+                        <span>📍 {a.type}</span>
+                        <span>⏱ {a.durationMinutes} min</span>
+                        <span>💰 ${a.price}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={actionLoading === a.id + 'complete'}
+                        onClick={() => handleComplete(a)}
+                        style={{
+                          background: '#EBFBEE', color: '#2F9E44',
+                          border: '1px solid #B2F2BB', borderRadius: 8,
+                          padding: '6px 14px', cursor: 'pointer',
+                          fontSize: 13, fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                          opacity: actionLoading === a.id + 'complete' ? 0.6 : 1,
+                        }}
+                      >
+                        Complete
+                      </button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        loading={actionLoading === a.id + 'cancel'}
+                        onClick={() => handleCancel(a)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }

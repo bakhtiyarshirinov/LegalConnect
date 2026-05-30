@@ -8,6 +8,7 @@ import {
   getByLawyer,
   confirmAppointment,
   cancelAppointment,
+  completeAppointment,
   type Appointment,
   type AppointmentStatus,
 } from '../api/appointments'
@@ -87,6 +88,20 @@ export default function Appointments() {
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch {
       toast.error('Failed to cancel appointment')
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const handleComplete = async (a: Appointment) => {
+    if (!effectiveLawyerId) return
+    setActionLoading(a.id + 'complete')
+    try {
+      await completeAppointment(a.id, effectiveLawyerId)
+      toast.success('Appointment completed!')
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch {
+      toast.error('Failed to complete appointment')
     } finally {
       setActionLoading(null)
     }
@@ -281,6 +296,31 @@ export default function Appointments() {
                       >
                         Confirm
                       </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        loading={actionLoading === a.id + 'cancel'}
+                        onClick={() => handleCancel(a)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                  {a.status === 'Confirmed' && (
+                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                      <button
+                        disabled={actionLoading === a.id + 'complete'}
+                        onClick={() => handleComplete(a)}
+                        style={{
+                          background: '#EBFBEE', color: '#2F9E44',
+                          border: '1px solid #B2F2BB', borderRadius: 8,
+                          padding: '6px 14px', cursor: 'pointer',
+                          fontSize: 13, fontWeight: 500, fontFamily: 'Inter, sans-serif',
+                          opacity: actionLoading === a.id + 'complete' ? 0.6 : 1,
+                        }}
+                      >
+                        Complete
+                      </button>
                       <Button
                         variant="danger"
                         size="sm"

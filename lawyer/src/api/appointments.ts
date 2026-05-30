@@ -28,3 +28,8 @@ export async function confirmAppointment(appointmentId: string, lawyerId: string
 export async function cancelAppointment(appointmentId: string, userId: string): Promise<void> {
   await api.put(`/appointments/${appointmentId}/cancel?userId=${userId}`)
 }
+
+
+export async function completeAppointment(appointmentId: string, lawyerId: string): Promise<void> {
+  await api.put(`/appointments/${appointmentId}/complete?lawyerId=${lawyerId}`)
+}
