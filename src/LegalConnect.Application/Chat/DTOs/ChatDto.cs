@@ -4,5 +4,6 @@ public record ChatDto(
     Guid Id,
     string LawyerFullName,
     string ClientFullName,
-    DateTime? LastMessageAt
+    DateTime? LastMessageAt,
+    Guid LawyerUserId
 );

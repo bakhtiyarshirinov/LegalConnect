@@ -30,7 +30,8 @@ public class GetCurrentUserQueryHandler
             AvatarUrl: user.AvatarUrl,
             Role: user.Role.ToString(),
             IsVerified: user.IsVerified,
-            CreatedAt: user.CreatedAt
+            CreatedAt: user.CreatedAt,
+            LastSeen: user.LastSeen
         );
     }
 }

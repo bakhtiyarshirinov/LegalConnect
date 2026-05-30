@@ -41,6 +41,7 @@ public class GetUserChatsQueryHandler
             Id: c.Id,
             LawyerFullName: c.Lawyer.User.FullName,
             ClientFullName: c.Client.FullName,
-            LastMessageAt: c.LastMessageAt));
+            LastMessageAt: c.LastMessageAt,
+            LawyerUserId: c.Lawyer.UserId));
     }
 }

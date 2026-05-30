@@ -89,5 +89,9 @@ export function useSignalR(onMessage: (msg: IncomingMessage) => void) {
     await conn.invoke('SendMessage', chatId, content, messageType)
   }, [])
 
-  return { joinChat, leaveChat, sendMessage }
+  const markAsRead = useCallback((chatId: string) => {
+    connectionRef.current?.invoke('MarkAsRead', chatId).catch(() => {})
+  }, [])
+
+  return { joinChat, leaveChat, sendMessage, markAsRead }
 }

@@ -149,7 +149,7 @@ export default function LawyerProfile() {
               {lawyer.fullName[0]}
             </div>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
                 <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.02em' }}>{lawyer.fullName}</h1>
                 {lawyer.isVerified && (
                   <span style={{
@@ -160,6 +160,16 @@ export default function LawyerProfile() {
                     <BadgeCheck size={12} /> Verified
                   </span>
                 )}
+                {lawyer.isOnline ? (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0',
+                    borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600,
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
+                    Online now
+                  </span>
+                ) : null}
               </div>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#6B6B6B', fontSize: 13 }}>
@@ -204,6 +214,24 @@ export default function LawyerProfile() {
             {reviews.length === 0 ? (
               <p style={{ color: '#A3A3A3', fontSize: 14 }}>No reviews yet.</p>
             ) : (
+              <>
+                {/* Rating distribution */}
+                <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[5, 4, 3, 2, 1].map((star) => {
+                    const count = reviews.filter((r) => r.rating === star).length
+                    const pct = reviews.length > 0 ? (count / reviews.length) * 100 : 0
+                    return (
+                      <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 12, color: '#6B6B6B', width: 14, textAlign: 'right' }}>{star}</span>
+                        <Star size={11} color="#f59e0b" fill="#f59e0b" />
+                        <div style={{ flex: 1, height: 6, background: '#F0F0F0', borderRadius: 4, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: '#f59e0b', borderRadius: 4, transition: 'width 0.3s' }} />
+                        </div>
+                        <span style={{ fontSize: 11, color: '#A3A3A3', width: 30 }}>{Math.round(pct)}%</span>
+                      </div>
+                    )
+                  })}
+                </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {reviews.map((r) => (
                   <div key={r.id} style={{
@@ -222,6 +250,7 @@ export default function LawyerProfile() {
                   </div>
                 ))}
               </div>
+              </>
             )}
           </div>
         </div>

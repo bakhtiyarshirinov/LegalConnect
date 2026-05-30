@@ -1,8 +1,10 @@
+using LegalConnect.Application.Auth.Commands.ForgotPassword;
 using LegalConnect.Application.Auth.Commands.Login;
 using LegalConnect.Application.Auth.Commands.Register;
 using LegalConnect.Application.Auth.Commands.RegisterClient;
 using LegalConnect.Application.Auth.Commands.RegisterLawyer;
 using LegalConnect.Application.Auth.Commands.ResendOtp;
+using LegalConnect.Application.Auth.Commands.ResetPassword;
 using LegalConnect.Application.Auth.Commands.VerifyOtp;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -78,5 +80,25 @@ public class AuthController : ControllerBase
     {
         await _mediator.Send(command, cancellationToken);
         return Ok(new { message = "OTP code has been sent to your email" });
+    }
+
+    /// <summary>POST /api/auth/forgot-password — send password reset code to email.</summary>
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordCommand command,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(command, cancellationToken);
+        return Ok(new { message = "If this email is registered, a reset code has been sent" });
+    }
+
+    /// <summary>POST /api/auth/reset-password — reset password using OTP code.</summary>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordCommand command,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(command, cancellationToken);
+        return Ok(new { message = "Password reset successfully" });
     }
 }

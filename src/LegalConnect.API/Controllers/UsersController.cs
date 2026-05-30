@@ -28,6 +28,19 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>GET /api/users/{userId}/status — online status and last seen.</summary>
+    [HttpGet("{userId:guid}/status")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserStatus(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = await _mediator.Send(new LegalConnect.Application.Users.Queries.GetCurrentUser.GetCurrentUserQuery(userId), cancellationToken);
+        return Ok(new
+        {
+            isOnline = user.LastSeen.HasValue && user.LastSeen.Value > DateTime.UtcNow.AddMinutes(-5),
+            lastSeen = user.LastSeen
+        });
+    }
+
     /// <summary>PUT /api/users/me — updates current user's profile fields.</summary>
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe(

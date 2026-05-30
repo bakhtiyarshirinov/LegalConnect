@@ -1,7 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Calendar, User, MessageSquare, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
+import { getUnreadCount } from '../../api/chats'
 
 const links = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,6 +15,13 @@ const links = [
 
 export function Sidebar() {
   const user = useAuthStore((s) => s.user)
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-count', user?.userId],
+    queryFn: () => getUnreadCount(user!.userId),
+    enabled: !!user,
+    refetchInterval: 30000,
+  })
 
   return (
     <motion.aside
@@ -32,46 +41,61 @@ export function Sidebar() {
         minHeight: '100%',
       }}
     >
-      {links.map(({ to, icon: Icon, label }) => (
-        <NavLink
-          key={to}
-          to={to}
-          style={({ isActive }) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '10px 12px',
-            borderRadius: 10,
-            fontSize: 14,
-            fontWeight: isActive ? 600 : 500,
-            color: isActive ? '#FFFFFF' : '#6B6B6B',
-            background: isActive ? '#0A0A0A' : 'transparent',
-            transition: 'all 0.15s',
-            textDecoration: 'none',
-          })}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLElement
-            if (!el.getAttribute('aria-current')) {
-              el.style.background = '#F5F5F5'
-              el.style.color = '#0A0A0A'
-            }
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLElement
-            if (!el.getAttribute('aria-current')) {
-              el.style.background = 'transparent'
-              el.style.color = '#6B6B6B'
-            }
-          }}
-        >
-          {({ isActive }) => (
-            <>
-              <Icon size={18} color={isActive ? '#FFFFFF' : '#6B6B6B'} />
-              {label}
-            </>
-          )}
-        </NavLink>
-      ))}
+      {links.map(({ to, icon: Icon, label }) => {
+        const isChat = to === '/chat'
+        const badge = isChat && unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '10px 12px',
+              borderRadius: 10,
+              fontSize: 14,
+              fontWeight: isActive ? 600 : 500,
+              color: isActive ? '#FFFFFF' : '#6B6B6B',
+              background: isActive ? '#0A0A0A' : 'transparent',
+              transition: 'all 0.15s',
+              textDecoration: 'none',
+            })}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement
+              if (!el.getAttribute('aria-current')) {
+                el.style.background = '#F5F5F5'
+                el.style.color = '#0A0A0A'
+              }
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement
+              if (!el.getAttribute('aria-current')) {
+                el.style.background = 'transparent'
+                el.style.color = '#6B6B6B'
+              }
+            }}
+          >
+            {({ isActive }) => (
+              <>
+                <Icon size={18} color={isActive ? '#FFFFFF' : '#6B6B6B'} />
+                <span style={{ flex: 1 }}>{label}</span>
+                {badge && (
+                  <span style={{
+                    background: '#EF4444', color: '#FFFFFF',
+                    borderRadius: '50%', fontSize: 10, fontWeight: 700,
+                    minWidth: 18, height: 18, display: 'inline-flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    padding: '0 4px', lineHeight: 1,
+                  }}>
+                    {badge}
+                  </span>
+                )}
+              </>
+            )}
+          </NavLink>
+        )
+      })}
 
       {/* User info at bottom */}
       {user && (

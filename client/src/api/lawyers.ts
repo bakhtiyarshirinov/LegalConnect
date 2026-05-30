@@ -17,6 +17,7 @@ export interface LawyerDetailDto extends LawyerDto {
   userId: string
   licenseNumber: string
   isAvailable: boolean
+  isOnline: boolean
 }
 
 export interface LawyersFilter {

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Send, MessageSquare, Search, Paperclip, FileText, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { getChats, getMessages, sendMessage as sendMessageRest, type Chat, type Message } from '../api/chats'
+import { getChats, getMessages, sendMessage as sendMessageRest, markAsRead as markAsReadApi, type Chat, type Message } from '../api/chats'
 import { uploadFile } from '../api/files'
 import { useSignalR, type IncomingMessage } from '../hooks/useSignalR'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -71,6 +71,7 @@ export default function Chat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const joinCleanupRef = useRef<(() => void) | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const selectedChatIdRef = useRef<string | null>(null)
 
   // Load chats
   useEffect(() => {
@@ -97,22 +98,40 @@ export default function Chat() {
     setMessages((prev) => {
       if (prev.some((m) => m.id === msg.id)) return prev
       return [...prev, {
-        id: msg.id, chatId: selectedChat?.id ?? '',
+        id: msg.id, chatId: selectedChatIdRef.current ?? '',
         senderId: msg.senderId, content: msg.content,
         sentAt: msg.sentAt, type: msg.type,
       }]
     })
     if (user) getChats(user.userId).then(setChats).catch(() => {})
-  }, [selectedChat?.id, user])
+    // Auto mark as read if chat is open and message is from the other party
+    const chatId = selectedChatIdRef.current
+    if (chatId && msg.senderId !== user?.userId) {
+      markAsReadApi(chatId, user?.userId ?? '').catch(() => {})
+      qc.invalidateQueries({ queryKey: ['unread-count', user?.userId] })
+    }
+  }, [user, qc]) // selectedChatIdRef is a ref — no stale closure
 
-  const { joinChat, leaveChat, sendMessage } = useSignalR(handleIncoming)
+  const { joinChat, leaveChat, sendMessage, markAsRead } = useSignalR(handleIncoming)
 
-  // Join/leave room
+  // Keep ref in sync with state for use in callbacks
+  selectedChatIdRef.current = selectedChat?.id ?? null
+
+  // Mark all incoming messages as read when chat is open
+  const markChatAsRead = useCallback((chatId: string) => {
+    if (!user) return
+    markAsReadApi(chatId, user.userId).catch(() => {})
+    markAsRead(chatId)
+    qc.invalidateQueries({ queryKey: ['unread-count', user.userId] })
+  }, [markAsRead, user, qc])
+
+  // Join/leave room + mark as read when opening a chat
   useEffect(() => {
     if (joinCleanupRef.current) { joinCleanupRef.current(); joinCleanupRef.current = null }
     if (!selectedChat) return
     const cleanup = joinChat(selectedChat.id)
     joinCleanupRef.current = cleanup ?? null
+    markChatAsRead(selectedChat.id)
     return () => {
       leaveChat(selectedChat.id)
       if (joinCleanupRef.current) { joinCleanupRef.current(); joinCleanupRef.current = null }

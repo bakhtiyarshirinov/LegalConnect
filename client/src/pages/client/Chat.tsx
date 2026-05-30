@@ -3,9 +3,10 @@ import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Send, MessageSquare, Paperclip, FileText, Download } from 'lucide-react'
+import { Send, MessageSquare, Paperclip, FileText, Download, Search } from 'lucide-react'
 import { chatsApi, type MessageDto } from '../../api/chats'
 import { filesApi } from '../../api/files'
+import { usersApi } from '../../api/users'
 import { useAuthStore } from '../../store/authStore'
 import { useSignalR } from '../../hooks/useSignalR'
 import { Skeleton } from '../../components/ui/Skeleton'
@@ -84,6 +85,7 @@ export default function Chat() {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -93,6 +95,23 @@ export default function Chat() {
     queryFn: () => chatsApi.getAll(userId),
     enabled: !!userId,
     refetchOnMount: 'always',
+  })
+
+  // ── Active lawyer status (online dot) ───────────────────────────────────────
+  const activeChat = chats.find((c) => c.id === activeChatId)
+  const lawyerUserId = user.role === 'Client' ? activeChat?.lawyerUserId : null
+  const { data: lawyerStatus } = useQuery({
+    queryKey: ['user-status', lawyerUserId],
+    queryFn: () => usersApi.getStatus(lawyerUserId!),
+    enabled: !!lawyerUserId,
+    refetchInterval: 30000,
+  })
+
+  // ── Search filter ───────────────────────────────────────────────────────────
+  const filteredChats = chats.filter((c) => {
+    if (!searchQuery) return true
+    const name = (user.role === 'Client' ? c.lawyerFullName : c.clientFullName) ?? ''
+    return name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
   // ── Load messages on chat switch ────────────────────────────────────────────
@@ -115,9 +134,31 @@ export default function Chat() {
       return [...prev, msg]
     })
     qc.invalidateQueries({ queryKey: ['chats', userId] })
-  }, [qc, userId])
+    // Auto mark as read if this chat is currently open
+    const chatId = activeChatIdRef.current
+    if (chatId && msg.senderId !== userId) {
+      chatsApi.markAsRead(chatId, userId).catch(() => {})
+      qc.invalidateQueries({ queryKey: ['unread-count', userId] })
+    }
+  }, [qc, userId]) // activeChatIdRef is a ref, no need in deps
 
-  const { sendMessage } = useSignalR({ chatId: activeChatId, onMessage: handleMessage })
+  const { sendMessage, markAsRead } = useSignalR({ chatId: activeChatId, onMessage: handleMessage })
+
+  // ── Mark as read helper ─────────────────────────────────────────────────────
+  const activeChatIdRef = useRef(activeChatId)
+  activeChatIdRef.current = activeChatId
+
+  const markChatAsRead = useCallback(async (chatId: string) => {
+    // REST guarantees DB update; SignalR additionally broadcasts to the other party
+    chatsApi.markAsRead(chatId, userId).catch(() => {})
+    markAsRead(chatId).catch(() => {})
+    qc.invalidateQueries({ queryKey: ['unread-count', userId] })
+  }, [markAsRead, userId, qc])
+
+  // ── Mark as read when opening a chat ────────────────────────────────────────
+  useEffect(() => {
+    if (activeChatId) markChatAsRead(activeChatId)
+  }, [activeChatId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -172,7 +213,6 @@ export default function Chat() {
     }
   }
 
-  const activeChat = chats.find((c) => c.id === activeChatId)
   const canSend = input.trim().length > 0 && !sending
 
   return (
@@ -185,20 +225,40 @@ export default function Chat() {
         width: 280, borderRight: '1px solid #E8E8E8', background: '#FFFFFF',
         display: 'flex', flexDirection: 'column', flexShrink: 0,
       }}>
-        <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid #E8E8E8' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A' }}>Messages</h2>
+        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #E8E8E8' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 10 }}>Messages</h2>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{
+              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+              color: '#A3A3A3', pointerEvents: 'none',
+            }} />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search conversations..."
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                border: '1px solid #E8E8E8', borderRadius: 10,
+                padding: '8px 12px 8px 30px', fontSize: 13,
+                outline: 'none', fontFamily: 'Inter, sans-serif',
+                background: '#FAFAFA', color: '#0A0A0A',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
+              onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
+            />
+          </div>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
           {loadingChats ? (
             <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[1, 2, 3].map((i) => <Skeleton key={i} height={64} borderRadius={10} />)}
             </div>
-          ) : chats.length === 0 ? (
+          ) : filteredChats.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#A3A3A3' }}>
               <MessageSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-              <p style={{ fontSize: 13 }}>No chats yet</p>
+              <p style={{ fontSize: 13 }}>{searchQuery ? 'No conversations found' : 'No chats yet'}</p>
             </div>
-          ) : chats.map((chat) => {
+          ) : filteredChats.map((chat) => {
             const isActive = chat.id === activeChatId
             const name = (user.role === 'Client' ? chat.lawyerFullName : chat.clientFullName) ?? ''
             return (
@@ -263,11 +323,22 @@ export default function Chat() {
                 {(user.role === 'Client' ? activeChat?.lawyerFullName : activeChat?.clientFullName)?.[0]}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#0A0A0A' }}>
-                  {user.role === 'Client' ? activeChat?.lawyerFullName : activeChat?.clientFullName}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: '#0A0A0A' }}>
+                    {user.role === 'Client' ? activeChat?.lawyerFullName : activeChat?.clientFullName}
+                  </span>
+                  {lawyerStatus?.isOnline && (
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: '#22C55E', border: '2px solid white',
+                      boxShadow: '0 0 0 1px #22C55E', flexShrink: 0,
+                    }} />
+                  )}
                 </div>
                 <div style={{ fontSize: 12, color: '#6B6B6B' }}>
-                  {user.role === 'Client' ? 'Lawyer' : 'Client'}
+                  {user.role === 'Client'
+                    ? lawyerStatus?.isOnline ? 'Online' : 'Lawyer'
+                    : 'Client'}
                 </div>
               </div>
             </div>

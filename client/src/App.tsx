@@ -12,6 +12,7 @@ import Register from './pages/auth/Register'
 import RegisterClient from './pages/auth/RegisterClient'
 import RegisterLawyer from './pages/auth/RegisterLawyer'
 import VerifyOtp from './pages/auth/VerifyOtp'
+import ForgotPassword from './pages/auth/ForgotPassword'
 
 import ClientDashboard from './pages/client/Dashboard'
 import Lawyers from './pages/client/Lawyers'
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/register/client" element={<RegisterClient />} />
         <Route path="/register/lawyer" element={<RegisterLawyer />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected — with layout */}
         <Route

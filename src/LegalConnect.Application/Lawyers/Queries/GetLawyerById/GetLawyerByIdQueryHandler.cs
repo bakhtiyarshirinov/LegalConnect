@@ -22,6 +22,9 @@ public class GetLawyerByIdQueryHandler
         if (lawyer is null)
             throw new KeyNotFoundException($"Lawyer with id {request.LawyerId} not found");
 
+        var isOnline = lawyer.User.LastSeen.HasValue
+            && lawyer.User.LastSeen.Value > DateTime.UtcNow.AddMinutes(-5);
+
         return new LawyerDetailDto(
             Id: lawyer.Id,
             UserId: lawyer.UserId,
@@ -36,7 +39,8 @@ public class GetLawyerByIdQueryHandler
             IsVerified: lawyer.IsVerified,
             IsAvailable: lawyer.IsAvailable,
             Specializations: lawyer.Specializations
-                .Select(s => s.Specialization.Name)
+                .Select(s => s.Specialization.Name),
+            IsOnline: isOnline
         );
     }
 }

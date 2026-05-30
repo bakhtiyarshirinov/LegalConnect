@@ -27,8 +27,11 @@ public class GetMyLawyerProfileQueryHandler
         // Re-fetch with all navigation props via GetByIdAsync
         var full = await _unitOfWork.Lawyers.GetByIdAsync(lawyer.Id);
 
+        var isOnline = full!.User.LastSeen.HasValue
+            && full.User.LastSeen.Value > DateTime.UtcNow.AddMinutes(-5);
+
         return new LawyerDetailDto(
-            Id: full!.Id,
+            Id: full.Id,
             UserId: full.UserId,
             FullName: full.User.FullName,
             City: full.City,
@@ -40,7 +43,8 @@ public class GetMyLawyerProfileQueryHandler
             ReviewCount: full.ReviewCount,
             IsVerified: full.IsVerified,
             IsAvailable: full.IsAvailable,
-            Specializations: full.Specializations.Select(s => s.Specialization.Name)
+            Specializations: full.Specializations.Select(s => s.Specialization.Name),
+            IsOnline: isOnline
         );
     }
 }

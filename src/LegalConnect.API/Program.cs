@@ -90,6 +90,8 @@ app.UseWebSockets();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+
 app.MapControllers();
 
 // ─── SignalR Hub ─────────────────────────────────────────────────────────────

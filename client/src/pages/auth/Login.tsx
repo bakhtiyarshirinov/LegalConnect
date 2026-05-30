@@ -166,7 +166,16 @@ export default function Login() {
             </Button>
           </form>
 
-          <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
+          <p style={{ textAlign: 'right', marginTop: 12, fontSize: 13 }}>
+            <Link
+              to="/forgot-password"
+              style={{ color: '#6B6B6B', textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
+              Forgot password?
+            </Link>
+          </p>
+
+          <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 12, fontSize: 14 }}>
             Don't have an account?{' '}
             <Link
               to="/register"

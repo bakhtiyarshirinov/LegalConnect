@@ -8,5 +8,6 @@ public record UserProfileDto(
     string? AvatarUrl,
     string Role,
     bool IsVerified,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    DateTime? LastSeen
 );

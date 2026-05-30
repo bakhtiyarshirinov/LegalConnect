@@ -101,5 +101,12 @@ export function useSignalR({ chatId, onMessage }: UseSignalROptions) {
     await conn.invoke('SendMessage', cid, content, messageType)
   }, [])
 
-  return { sendMessage }
+  // ── Mark as read ─────────────────────────────────────────────────────────────
+  const markAsRead = useCallback(async (cid: string) => {
+    const conn = connectionRef.current
+    if (!conn || conn.state !== 'Connected') throw new Error('Not connected')
+    await conn.invoke('MarkAsRead', cid)
+  }, [])
+
+  return { sendMessage, markAsRead }
 }

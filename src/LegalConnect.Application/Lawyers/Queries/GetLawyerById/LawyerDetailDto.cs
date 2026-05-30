@@ -13,5 +13,6 @@ public record LawyerDetailDto(
     int ReviewCount,
     bool IsVerified,
     bool IsAvailable,
-    IEnumerable<string> Specializations
+    IEnumerable<string> Specializations,
+    bool IsOnline
 );

@@ -1,6 +1,7 @@
 using LegalConnect.Application.Chat.Commands.MarkMessagesAsRead;
 using LegalConnect.Application.Chat.Commands.SendMessage;
 using LegalConnect.Domain.Enums;
+using LegalConnect.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -16,6 +17,28 @@ public class ChatHub : Hub
     public ChatHub(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        try
+        {
+            if (Guid.TryParse(Context.UserIdentifier, out var userId))
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                var user = await uow.Users.GetByIdAsync(userId);
+                if (user is not null)
+                {
+                    user.UpdateLastSeen();
+                    uow.Users.Update(user);
+                    await uow.SaveChangesAsync();
+                }
+            }
+        }
+        catch { /* non-critical */ }
+
+        await base.OnConnectedAsync();
     }
 
     public async Task JoinChat(Guid chatId)

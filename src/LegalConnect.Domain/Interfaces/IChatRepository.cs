@@ -15,4 +15,5 @@ public interface IChatRepository
     // Сообщения
     Task<IEnumerable<Message>> GetMessagesAsync(Guid chatId);
     Task AddMessageAsync(Message message);
+    Task<int> GetUnreadCountAsync(Guid userId);
 }

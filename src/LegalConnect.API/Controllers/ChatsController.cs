@@ -1,6 +1,8 @@
 using LegalConnect.Application.Chat.Commands.CreateChat;
+using LegalConnect.Application.Chat.Commands.MarkMessagesAsRead;
 using LegalConnect.Application.Chat.Commands.SendMessage;
 using LegalConnect.Application.Chat.Queries.GetChatMessages;
+using LegalConnect.Application.Chat.Queries.GetUnreadCount;
 using LegalConnect.Application.Chat.Queries.GetUserChats;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -56,6 +58,27 @@ public class ChatsController : ControllerBase
         var result = await _mediator.Send(
             new GetChatMessagesQuery(chatId), cancellationToken);
         return Ok(result);
+    }
+
+    /// <summary>GET /api/chats/unread-count — total unread message count for a user.</summary>
+    [HttpGet("unread-count")]
+    public async Task<IActionResult> GetUnreadCount(
+        [FromQuery] Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var count = await _mediator.Send(new GetUnreadCountQuery(userId), cancellationToken);
+        return Ok(new { count });
+    }
+
+    /// <summary>PUT /api/chats/{chatId}/read — mark all incoming messages as read.</summary>
+    [HttpPut("{chatId:guid}/read")]
+    public async Task<IActionResult> MarkAsRead(
+        Guid chatId,
+        [FromQuery] Guid userId,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new MarkMessagesAsReadCommand(chatId, userId), cancellationToken);
+        return NoContent();
     }
 
     /// <summary>

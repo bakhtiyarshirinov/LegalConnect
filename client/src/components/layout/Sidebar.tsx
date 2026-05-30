@@ -9,7 +9,9 @@ import {
   Bell,
   User,
 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
+import { chatsApi } from '../../api/chats'
 
 interface NavItem {
   label: string
@@ -44,6 +46,13 @@ export function Sidebar() {
   const navItems =
     role === 'Lawyer' ? lawyerNav : role === 'Admin' ? adminNav : clientNav
 
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-count', user?.userId],
+    queryFn: () => chatsApi.getUnreadCount(user!.userId),
+    enabled: !!user && role !== 'Admin',
+    refetchInterval: 30000,
+  })
+
   return (
     <aside
       style={{
@@ -59,42 +68,57 @@ export function Sidebar() {
       }}
     >
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 14px',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: isActive ? 600 : 500,
-              color: isActive ? '#FFFFFF' : '#6B6B6B',
-              background: isActive ? '#0A0A0A' : 'transparent',
-              textDecoration: 'none',
-              transition: 'all 0.15s',
-            })}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement
-              if (!el.getAttribute('aria-current')) {
-                el.style.background = '#F5F5F5'
-                el.style.color = '#0A0A0A'
-              }
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement
-              if (!el.getAttribute('aria-current')) {
-                el.style.background = 'transparent'
-                el.style.color = '#6B6B6B'
-              }
-            }}
-          >
-            {item.icon}
-            {item.label}
-          </NavLink>
-        ))}
+        {navItems.map((item) => {
+          const isChat = item.to === '/chat'
+          const badge = isChat && unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 14px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? '#FFFFFF' : '#6B6B6B',
+                background: isActive ? '#0A0A0A' : 'transparent',
+                textDecoration: 'none',
+                transition: 'all 0.15s',
+              })}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement
+                if (!el.getAttribute('aria-current')) {
+                  el.style.background = '#F5F5F5'
+                  el.style.color = '#0A0A0A'
+                }
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement
+                if (!el.getAttribute('aria-current')) {
+                  el.style.background = 'transparent'
+                  el.style.color = '#6B6B6B'
+                }
+              }}
+            >
+              {item.icon}
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {badge && (
+                <span style={{
+                  background: '#EF4444', color: '#FFFFFF',
+                  borderRadius: '50%', fontSize: 10, fontWeight: 700,
+                  minWidth: 18, height: 18, display: 'inline-flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  padding: '0 4px', lineHeight: 1,
+                }}>
+                  {badge}
+                </span>
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
 
       {/* User info at bottom */}

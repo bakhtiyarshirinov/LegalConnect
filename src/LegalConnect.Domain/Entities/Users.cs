@@ -13,6 +13,7 @@ public class User
     public string? AvatarUrl { get; private set; }
     public bool IsVerified { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public DateTime? LastSeen { get; private set; }
 
     // Navigation properties
     public Lawyer? LawyerProfile { get; private set; }
@@ -51,4 +52,6 @@ public class User
 
     public void UpdateAvatar(string avatarUrl) => AvatarUrl = avatarUrl;
     public void Verify() => IsVerified = true;
+    public void UpdateLastSeen() => LastSeen = DateTime.UtcNow;
+    public void UpdatePassword(string passwordHash) => PasswordHash = passwordHash;
 }

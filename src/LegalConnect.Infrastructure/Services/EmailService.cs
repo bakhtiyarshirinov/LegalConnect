@@ -72,6 +72,25 @@ public class EmailService : IEmailService
         await SendAsync(email, $"New message from {senderName}", html);
     }
 
+    public async Task SendPasswordResetAsync(string email, string fullName, string code)
+    {
+        var html = $"""
+            <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #E8E8E8;">
+              <div style="margin-bottom:24px;">
+                <span style="font-size:20px;font-weight:700;color:#0A0A0A;letter-spacing:-0.3px;">LegalConnect</span>
+              </div>
+              <h2 style="font-size:22px;font-weight:700;color:#0A0A0A;margin:0 0 8px;">Password Reset Code</h2>
+              <p style="color:#6B6B6B;font-size:15px;margin:0 0 24px;">Hi <strong style="color:#0A0A0A;">{fullName}</strong>, use the code below to reset your password.</p>
+              <div style="text-align:center;margin:24px 0;">
+                <span style="display:inline-block;font-size:40px;font-weight:800;letter-spacing:10px;color:#0A0A0A;background:#F5F5F5;padding:16px 32px;border-radius:12px;border:1px solid #E8E8E8;">{code}</span>
+              </div>
+              <p style="color:#A3A3A3;font-size:13px;margin:24px 0 0;">This code expires in <strong>5 minutes</strong>. If you didn't request a password reset, ignore this email.</p>
+            </div>
+            """;
+
+        await SendAsync(email, "Reset your LegalConnect password", html);
+    }
+
     private async Task SendAsync(string toEmail, string subject, string htmlBody)
     {
         var message = new MimeMessage();

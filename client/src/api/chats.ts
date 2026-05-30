@@ -5,6 +5,7 @@ export interface ChatDto {
   lawyerFullName: string
   clientFullName: string
   lastMessageAt: string
+  lawyerUserId: string
 }
 
 export interface MessageDto {
@@ -33,4 +34,10 @@ export const chatsApi = {
     api
       .post<MessageDto>(`/chats/${chatId}/messages`, { senderId, content })
       .then((r) => r.data),
+
+  getUnreadCount: (userId: string) =>
+    api.get<{ count: number }>('/chats/unread-count', { params: { userId } }).then((r) => r.data.count),
+
+  markAsRead: (chatId: string, userId: string) =>
+    api.put(`/chats/${chatId}/read`, null, { params: { userId } }).then(() => {}),
 }

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LegalConnect.SignalR")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+681b1aee9efb6f5fa2b7cb8be3b81dc0971251a1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3d32f767631cc89ec77ff63b4f7230d688e03e9f")]
 [assembly: System.Reflection.AssemblyProductAttribute("LegalConnect.SignalR")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LegalConnect.SignalR")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

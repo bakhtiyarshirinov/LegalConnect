@@ -39,3 +39,12 @@ export async function sendMessage(
   const res = await api.post<Message>(`/chats/${chatId}/messages`, { senderId, content })
   return res.data
 }
+
+export async function markAsRead(chatId: string, userId: string): Promise<void> {
+  await api.put(`/chats/${chatId}/read`, null, { params: { userId } })
+}
+
+export async function getUnreadCount(userId: string): Promise<number> {
+  const res = await api.get<{ count: number }>(`/chats/unread-count`, { params: { userId } })
+  return res.data.count
+}

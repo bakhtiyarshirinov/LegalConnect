@@ -55,4 +55,24 @@ public class ChatRepository : IChatRepository
 
     public async Task AddMessageAsync(Message message)
         => await _context.Messages.AddAsync(message);
+
+    public async Task<int> GetUnreadCountAsync(Guid userId)
+    {
+        var clientUnread = await _context.Messages
+            .Where(m => !m.IsRead && m.SenderId != userId && m.Chat.ClientId == userId)
+            .CountAsync();
+
+        var lawyerProfile = await _context.Lawyers
+            .FirstOrDefaultAsync(l => l.UserId == userId);
+
+        var lawyerUnread = 0;
+        if (lawyerProfile != null)
+        {
+            lawyerUnread = await _context.Messages
+                .Where(m => !m.IsRead && m.SenderId != userId && m.Chat.LawyerId == lawyerProfile.Id)
+                .CountAsync();
+        }
+
+        return clientUnread + lawyerUnread;
+    }
 }
