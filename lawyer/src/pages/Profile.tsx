@@ -6,6 +6,7 @@ import {
   Users, Calendar, CheckCircle, Star, Camera, BarChart2, History,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import {
   getMyLawyerProfile, updateProfile, getLawyerStats, updateSpecializations,
@@ -52,6 +53,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Profile() {
+  const { t } = useTranslation()
   const { user, lawyerId } = useAuthStore()
   const qc = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
@@ -148,7 +150,7 @@ export default function Profile() {
       : history.filter((a) => a.status === historyFilter)
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'profile', label: 'Profile', icon: <User size={14} /> },
+    { key: 'profile', label: t('profile.title'), icon: <User size={14} /> },
     { key: 'statistics', label: 'Statistics', icon: <BarChart2 size={14} /> },
     { key: 'history', label: 'History', icon: <History size={14} /> },
   ]
@@ -162,7 +164,7 @@ export default function Profile() {
     <div style={{ padding: 32, maxWidth: 860 }}>
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>Profile</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>{t('profile.title')}</h1>
         <p style={{ fontSize: 14, color: '#6B6B6B', marginTop: 4 }}>
           Manage your profile, statistics and appointment history
         </p>
@@ -235,9 +237,9 @@ export default function Profile() {
               {/* Personal info */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, flex: 1 }}>
                 {[
-                  { label: 'Full Name', value: profile?.fullName },
-                  { label: 'Email', value: profile?.email },
-                  { label: 'Phone', value: profile?.phone || '—' },
+                  { label: t('profile.fullName'), value: profile?.fullName },
+                  { label: t('profile.email'), value: profile?.email },
+                  { label: t('profile.phone'), value: profile?.phone || '—' },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <div style={{ fontSize: 11, color: '#6B6B6B', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
@@ -256,7 +258,7 @@ export default function Profile() {
               <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Briefcase size={16} color="#6B6B6B" />
               </div>
-              <h2 style={{ fontSize: 15, fontWeight: 600, color: '#0A0A0A' }}>Lawyer Profile</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 600, color: '#0A0A0A' }}>{t('profile.lawyer')}</h2>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -377,7 +379,7 @@ export default function Profile() {
               {/* Save */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button variant="primary" size="md" loading={saving} onClick={handleSave}>
-                  Save Changes
+                  {t('profile.saveChanges')}
                 </Button>
               </div>
             </div>

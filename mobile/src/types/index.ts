@@ -4,6 +4,7 @@ export interface User {
   fullName: string;
   role: string;
   token: string;
+  avatarUrl?: string;
 }
 
 export interface Lawyer {
@@ -38,10 +39,7 @@ export interface Chat {
   lawyerFullName: string;
   clientFullName: string;
   lastMessageAt?: string;
-  lastMessage?: string;
-  unreadCount?: number;
-  lawyerId?: string;
-  clientId?: string;
+  lawyerUserId: string;
 }
 
 export interface Message {
@@ -55,9 +53,10 @@ export interface Message {
 
 export interface Review {
   id: string;
+  appointmentId: string;
   clientFullName: string;
   rating: number;
-  comment: string;
+  comment?: string;
   createdAt: string;
 }
 

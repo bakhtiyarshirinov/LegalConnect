@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Calendar, XCircle, Star, List, CalendarDays } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi, type AppointmentDto } from '../../api/appointments'
 import { reviewsApi } from '../../api/reviews'
@@ -39,6 +40,7 @@ function formatTime(d: string) {
 }
 
 export default function ClientAppointments() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
   const [view, setView] = useState<View>('list')
@@ -127,20 +129,20 @@ export default function ClientAppointments() {
                 disabled={cancelMutation.isPending}
                 style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.6 : 1 }}
               >
-                <XCircle size={14} /> Cancel
+                <XCircle size={14} /> {t('appointments.cancel')}
               </button>
             )}
             {appt.status === 'Completed' && (
               reviewedApptIds.has(appt.id) ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-2)', fontSize: 13, fontWeight: 500 }}>
-                  <Star size={14} color="#f59e0b" fill="#f59e0b" /> Reviewed
+                  <Star size={14} color="#f59e0b" fill="#f59e0b" /> {t('reviews.reviewed')}
                 </div>
               ) : (
                 <button
                   onClick={() => setReviewTarget({ appointmentId: appt.id, lawyerId: appt.lawyerId, lawyerName: appt.lawyerFullName })}
                   style={{ background: '#FFFBEB', color: '#B45309', border: '1px solid #FDE68A', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}
                 >
-                  <Star size={14} /> Leave Review
+                  <Star size={14} /> {t('reviews.leaveReview')}
                 </button>
               )
             )}
@@ -160,9 +162,9 @@ export default function ClientAppointments() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>My Appointments</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>{t('appointments.title')}</h1>
           <p style={{ color: 'var(--text-2)', marginTop: 4 }}>
-            {appointments.length} total · {pendingCount} pending · {confirmedCount} confirmed
+            {appointments.length} {t('appointments.total')} · {pendingCount} {t('appointments.status.pending')} · {confirmedCount} {t('appointments.status.confirmed')}
           </p>
         </div>
         {/* View toggle */}
@@ -195,7 +197,7 @@ export default function ClientAppointments() {
         sorted.length === 0 ? (
           <Card padding={40} style={{ textAlign: 'center' }}>
             <Calendar size={40} style={{ margin: '0 auto 12px', opacity: 0.3, color: 'var(--text-2)' }} />
-            <p style={{ color: 'var(--text-2)' }}>No appointments yet</p>
+            <p style={{ color: 'var(--text-2)' }}>{t('appointments.noAppointments')}</p>
           </Card>
         ) : (
           <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

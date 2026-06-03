@@ -1,21 +1,21 @@
 import api from './axios';
 
 export const chatsApi = {
-  getMyChats: () =>
-    api.get('/chats'),
+  getMyChats: (userId: string) =>
+    api.get('/chats', { params: { userId } }),
 
-  getOrCreate: (lawyerId: string) =>
-    api.post('/chats', { lawyerId }),
+  getOrCreate: (data: { clientId: string; lawyerId: string }) =>
+    api.post('/chats', data),
 
   getMessages: (chatId: string) =>
     api.get(`/chats/${chatId}/messages`),
 
-  sendMessage: (chatId: string, content: string) =>
-    api.post(`/chats/${chatId}/messages`, { content }),
+  sendMessage: (chatId: string, senderId: string, content: string) =>
+    api.post(`/chats/${chatId}/messages`, { senderId, content }),
 
-  markAsRead: (chatId: string) =>
-    api.put(`/chats/${chatId}/read`),
+  markAsRead: (chatId: string, userId: string) =>
+    api.put(`/chats/${chatId}/read`, null, { params: { userId } }),
 
-  getUnreadCount: () =>
-    api.get('/chats/unread-count'),
+  getUnreadCount: (userId: string) =>
+    api.get('/chats/unread-count', { params: { userId } }),
 };

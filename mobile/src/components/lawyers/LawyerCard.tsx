@@ -46,7 +46,14 @@ export const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onPress }) => {
             <Text style={styles.city}>{lawyer.city}</Text>
           </View>
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={13} color="#F59E0B" />
+            {[1, 2, 3, 4, 5].map((s) => (
+              <Ionicons
+                key={s}
+                name={s <= Math.round(lawyer.rating) ? 'star' : 'star-outline'}
+                size={12}
+                color="#F59E0B"
+              />
+            ))}
             <Text style={styles.rating}>{lawyer.rating.toFixed(1)}</Text>
             <Text style={styles.reviewCount}>({lawyer.reviewCount})</Text>
           </View>

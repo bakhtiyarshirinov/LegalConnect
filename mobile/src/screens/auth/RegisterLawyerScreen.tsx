@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
@@ -18,6 +19,7 @@ import { specializationsApi } from '../../api/specializations';
 import { Specialization } from '../../types';
 
 export const RegisterLawyerScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -82,13 +84,13 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
             <Ionicons name="arrow-back" size={24} color="#0A0A0A" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>{t('auth.createAccount')}</Text>
           <Text style={styles.subtitle}>Register as a lawyer</Text>
 
-          <Input label="Full Name" placeholder="John Doe" value={fullName} onChangeText={setFullName} autoCapitalize="words" />
-          <Input label="Email" placeholder="your@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <Input label="Password" placeholder="Min 6 characters" value={password} onChangeText={setPassword} secureToggle />
-          <Input label="Phone" placeholder="+994 50 000 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+          <Input label={t('profile.fullName')} placeholder="John Doe" value={fullName} onChangeText={setFullName} autoCapitalize="words" />
+          <Input label={t('auth.email')} placeholder="your@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <Input label={t('auth.password')} placeholder="Min 6 characters" value={password} onChangeText={setPassword} secureToggle />
+          <Input label={t('profile.phone')} placeholder="+994 50 000 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <Input label="City" placeholder="Baku" value={city} onChangeText={setCity} />
           <Input label="License Number" placeholder="AZ-12345" value={licenseNumber} onChangeText={setLicenseNumber} />
           <Input label="Experience (years)" placeholder="5" value={experienceYears} onChangeText={setExperienceYears} keyboardType="numeric" />
@@ -125,7 +127,7 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
             </View>
           )}
 
-          <Button title="Register as Lawyer" onPress={handleRegister} loading={loading} style={styles.btn} />
+          <Button title={t('auth.registerLawyer')} onPress={handleRegister} loading={loading} style={styles.btn} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

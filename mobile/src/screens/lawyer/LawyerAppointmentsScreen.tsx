@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,13 +20,19 @@ import { Button } from '../../components/ui/Button';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Appointment } from '../../types';
 import { formatDate } from '../../utils/date';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 
 const FILTERS = ['All', 'Pending', 'Confirmed', 'Completed'];
+
 const statusVariant = (s: string): any =>
-  s === 'Confirmed' ? 'confirmed' : s === 'Completed' ? 'completed' : s === 'Cancelled' ? 'cancelled' : 'pending';
+  s === 'Confirmed' ? 'confirmed'
+  : s === 'Completed' ? 'completed'
+  : s === 'Cancelled' ? 'cancelled'
+  : 'pending';
 
 export const LawyerAppointmentsScreen = () => {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState('All');
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -34,17 +41,29 @@ export const LawyerAppointmentsScreen = () => {
 
   useEffect(() => {
     if (!lawyerProfileId) {
-      lawyersApi.getMyProfile().then((r) => setLawyerProfileId(r.data.id)).catch(() => {});
+      lawyersApi.getMyProfile()
+        .then((r) => {
+          console.log('Lawyer profile:', JSON.stringify(r.data, null, 2));
+          setLawyerProfileId(r.data.id);
+        })
+        .catch((e) => console.log('Failed to load lawyer profile:', e));
     }
   }, [lawyerProfileId]);
 
-  const { data, isLoading, refetch, isRefetching } = useQuery<Appointment[]>({
-    queryKey: ['lawyerAppointments', filter],
-    queryFn: () =>
-      appointmentsApi
-        .getLawyerAppointments(filter === 'All' ? undefined : filter)
-        .then((r) => r.data),
+  const { data: allAppointments, isLoading, refetch, isRefetching } = useQuery<Appointment[]>({
+    queryKey: ['lawyerAppointments', lawyerProfileId],
+    enabled: !!lawyerProfileId,
+    queryFn: async () => {
+      console.log('Fetching lawyer appointments for lawyerId:', lawyerProfileId);
+      const res = await appointmentsApi.getByLawyer(lawyerProfileId!);
+      console.log('Lawyer appointments response:', JSON.stringify(res.data, null, 2));
+      return res.data;
+    },
   });
+
+  const data = filter === 'All'
+    ? allAppointments
+    : (allAppointments || []).filter((a) => a.status === filter);
 
   const confirm = async (id: string) => {
     if (!lawyerProfileId) { Alert.alert('Error', 'Lawyer profile not loaded'); return; }
@@ -106,13 +125,13 @@ export const LawyerAppointmentsScreen = () => {
       {item.status === 'Pending' && (
         <View style={styles.actionRow}>
           <Button
-            title="Confirm"
+            title={t('appointments.confirm')}
             onPress={() => confirm(item.id)}
             style={{ flex: 1, height: 40, backgroundColor: '#10B981' } as any}
             textStyle={{ color: '#FFF' }}
           />
           <Button
-            title="Cancel"
+            title={t('appointments.cancel')}
             onPress={() => cancel(item.id)}
             variant="danger"
             style={styles.actionBtn}
@@ -122,13 +141,13 @@ export const LawyerAppointmentsScreen = () => {
       {item.status === 'Confirmed' && (
         <View style={styles.actionRow}>
           <Button
-            title="Mark Complete"
+            title={t('appointments.markComplete')}
             onPress={() => complete(item.id)}
             style={{ flex: 1, height: 40, backgroundColor: '#3B82F6' } as any}
             textStyle={{ color: '#FFF' }}
           />
           <Button
-            title="Cancel"
+            title={t('appointments.cancel')}
             onPress={() => cancel(item.id)}
             variant="danger"
             style={styles.actionBtn}
@@ -147,20 +166,22 @@ export const LawyerAppointmentsScreen = () => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Appointments</Text>
-        <View style={styles.filterRow}>
-          {FILTERS.map((f) => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[styles.filterTab, filter === f && styles.filterTabActive]}
-            >
-              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={styles.title}>{t('appointments.title')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.filterRow}>
+            {FILTERS.map((f) => (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setFilter(f)}
+                style={[styles.filterTab, filter === f && styles.filterTabActive]}
+              >
+                <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
       </View>
-      {isLoading ? (
+      {isLoading || !lawyerProfileId ? (
         <LoadingSpinner fullScreen />
       ) : (
         <FlatList
@@ -169,7 +190,11 @@ export const LawyerAppointmentsScreen = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          ListEmptyComponent={<Text style={styles.emptyText}>No appointments</Text>}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              {t('appointments.noAppointments')}
+            </Text>
+          }
         />
       )}
     </SafeAreaView>
@@ -180,9 +205,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FAFAFA' },
   header: { paddingHorizontal: 16, paddingTop: 16 },
   title: { fontSize: 22, fontWeight: '800', color: '#0A0A0A', marginBottom: 12 },
-  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 12, paddingRight: 16 },
   filterTab: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,

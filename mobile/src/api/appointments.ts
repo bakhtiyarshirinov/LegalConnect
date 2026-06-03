@@ -1,11 +1,11 @@
 import api from './axios';
 
 export const appointmentsApi = {
-  getMyAppointments: (status?: string) =>
-    api.get('/appointments/my', { params: status ? { status } : undefined }),
+  getByClient: (clientId: string) =>
+    api.get(`/appointments/client/${clientId}`),
 
-  getLawyerAppointments: (status?: string) =>
-    api.get('/appointments/lawyer', { params: status ? { status } : undefined }),
+  getByLawyer: (lawyerId: string) =>
+    api.get(`/appointments/lawyer/${lawyerId}`),
 
   book: (data: {
     clientId: string;
@@ -25,10 +25,4 @@ export const appointmentsApi = {
 
   complete: (id: string, lawyerId: string) =>
     api.put(`/appointments/${id}/complete`, null, { params: { lawyerId } }),
-
-  getStats: () =>
-    api.get('/appointments/stats'),
-
-  getLawyerStats: () =>
-    api.get('/appointments/lawyer/stats'),
 };

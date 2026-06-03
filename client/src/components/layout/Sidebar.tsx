@@ -4,35 +4,38 @@ import {
   UserCircle, ShieldCheck, Bell, User,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { chatsApi } from '../../api/chats'
 
 interface NavItem { label: string; to: string; icon: React.ReactNode }
 
-const clientNav: NavItem[] = [
-  { label: 'Dashboard',    to: '/dashboard',    icon: <LayoutDashboard size={16} /> },
-  { label: 'Profile',      to: '/profile',      icon: <User size={16} /> },
-  { label: 'Find Lawyers', to: '/lawyers',      icon: <Users size={16} /> },
-  { label: 'Appointments', to: '/appointments', icon: <Calendar size={16} /> },
-  { label: 'Chat',         to: '/chat',         icon: <MessageSquare size={16} /> },
-  { label: 'Notifications',to: '/notifications',icon: <Bell size={16} /> },
-]
-
-const lawyerNav: NavItem[] = [
-  { label: 'Dashboard',    to: '/lawyer/dashboard',    icon: <LayoutDashboard size={16} /> },
-  { label: 'Appointments', to: '/lawyer/appointments', icon: <Calendar size={16} /> },
-  { label: 'Chat',         to: '/chat',                icon: <MessageSquare size={16} /> },
-  { label: 'My Profile',   to: '/lawyer/profile',      icon: <UserCircle size={16} /> },
-]
-
-const adminNav: NavItem[] = [
-  { label: 'Dashboard',     to: '/admin/dashboard', icon: <LayoutDashboard size={16} /> },
-  { label: 'Verify Lawyers',to: '/admin/lawyers',   icon: <ShieldCheck size={16} /> },
-]
-
 export function Sidebar() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const role = user?.role
+
+  const clientNav: NavItem[] = [
+    { label: t('nav.dashboard'),     to: '/dashboard',    icon: <LayoutDashboard size={16} /> },
+    { label: t('nav.profile'),       to: '/profile',      icon: <User size={16} /> },
+    { label: t('nav.findLawyers'),   to: '/lawyers',      icon: <Users size={16} /> },
+    { label: t('nav.appointments'),  to: '/appointments', icon: <Calendar size={16} /> },
+    { label: t('nav.chat'),          to: '/chat',         icon: <MessageSquare size={16} /> },
+    { label: t('nav.notifications'), to: '/notifications',icon: <Bell size={16} /> },
+  ]
+
+  const lawyerNav: NavItem[] = [
+    { label: t('nav.dashboard'),    to: '/lawyer/dashboard',    icon: <LayoutDashboard size={16} /> },
+    { label: t('nav.appointments'), to: '/lawyer/appointments', icon: <Calendar size={16} /> },
+    { label: t('nav.chat'),         to: '/chat',                icon: <MessageSquare size={16} /> },
+    { label: t('nav.profile'),      to: '/lawyer/profile',      icon: <UserCircle size={16} /> },
+  ]
+
+  const adminNav: NavItem[] = [
+    { label: t('nav.dashboard'),  to: '/admin/dashboard', icon: <LayoutDashboard size={16} /> },
+    { label: 'Verify Lawyers',    to: '/admin/lawyers',   icon: <ShieldCheck size={16} /> },
+  ]
+
   const navItems = role === 'Lawyer' ? lawyerNav : role === 'Admin' ? adminNav : clientNav
 
   const { data: unreadCount = 0 } = useQuery({

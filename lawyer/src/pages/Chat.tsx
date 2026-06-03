@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Send, MessageSquare, Search, Paperclip, FileText, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { getChats, getMessages, sendMessage as sendMessageRest, markAsRead as markAsReadApi, type Chat, type Message } from '../api/chats'
 import { uploadFile } from '../api/files'
@@ -56,6 +57,7 @@ function FileMessage({ url, isOwn }: { url: string; isOwn: boolean }) {
 }
 
 export default function Chat() {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const qc = useQueryClient()
 
@@ -195,7 +197,7 @@ export default function Chat() {
         style={{ width: 280, borderRight: '1px solid #E8E8E8', background: '#FFFFFF', display: 'flex', flexDirection: 'column', flexShrink: 0 }}
       >
         <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid #F0F0F0' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Messages</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>{t('chat.title')}</h2>
           <div style={{ position: 'relative' }}>
             <Search size={14} color="#6B6B6B" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
             <input placeholder="Search clients..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -215,7 +217,7 @@ export default function Chat() {
               ))}
             </div>
           ) : filteredChats.length === 0 ? (
-            <div style={{ padding: 32, textAlign: 'center', color: '#6B6B6B', fontSize: 13 }}>No chats found</div>
+            <div style={{ padding: 32, textAlign: 'center', color: '#6B6B6B', fontSize: 13 }}>{t('chat.noChats')}</div>
           ) : filteredChats.map((chat) => (
             <button key={chat.id} onClick={() => setSelectedChat(chat)}
               style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: selectedChat?.id === chat.id ? '#F5F5F5' : 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid #F5F5F5', transition: 'background 0.1s' }}
@@ -260,7 +262,7 @@ export default function Chat() {
               ) : messages.length === 0 ? (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#6B6B6B', fontSize: 14, gap: 12 }}>
                   <MessageSquare size={32} color="#E8E8E8" />
-                  <span>No messages yet. Start the conversation!</span>
+                  <span>{t('chat.noMessages')}</span>
                 </div>
               ) : messages.map((msg) => {
                 const isOwn = msg.senderId === user?.userId
@@ -301,7 +303,7 @@ export default function Chat() {
                 <Paperclip size={16} color="#6B6B6B" />
               </button>
 
-              <input placeholder={uploading ? 'Uploading file…' : 'Type a message…'} value={input} onChange={(e) => setInput(e.target.value)} disabled={uploading}
+              <input placeholder={uploading ? 'Uploading file…' : t('chat.typeMessage')} value={input} onChange={(e) => setInput(e.target.value)} disabled={uploading}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 style={{ flex: 1, padding: '10px 16px', borderRadius: 24, border: '1px solid #E8E8E8', fontSize: 14, color: '#0A0A0A', outline: 'none', background: '#F5F5F5' }}
               />

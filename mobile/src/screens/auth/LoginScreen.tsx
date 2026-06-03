@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 export const LoginScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
           <View style={styles.form}>
             <Input
-              label="Email"
+              label={t('auth.email')}
               placeholder="your@email.com"
               value={email}
               onChangeText={setEmail}
@@ -67,7 +69,7 @@ export const LoginScreen = ({ navigation }: any) => {
               autoComplete="email"
             />
             <Input
-              label="Password"
+              label={t('auth.password')}
               placeholder="Enter password"
               value={password}
               onChangeText={setPassword}
@@ -75,7 +77,7 @@ export const LoginScreen = ({ navigation }: any) => {
             />
 
             <Button
-              title="Sign In"
+              title={t('auth.login')}
               onPress={handleLogin}
               loading={loading}
               style={styles.signInBtn}
@@ -83,7 +85,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>Don't have an account?</Text>
+              <Text style={styles.dividerText}>{t('auth.noAccount')}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -92,13 +94,13 @@ export const LoginScreen = ({ navigation }: any) => {
                 style={styles.registerBtn}
                 onPress={() => navigation.navigate('RegisterClient')}
               >
-                <Text style={styles.registerBtnText}>Join as Client</Text>
+                <Text style={styles.registerBtnText}>{t('auth.joinClient')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.registerBtn, styles.registerBtnOutline]}
                 onPress={() => navigation.navigate('RegisterLawyer')}
               >
-                <Text style={styles.registerBtnTextOutline}>Join as Lawyer</Text>
+                <Text style={styles.registerBtnTextOutline}>{t('auth.joinLawyer')}</Text>
               </TouchableOpacity>
             </View>
           </View>

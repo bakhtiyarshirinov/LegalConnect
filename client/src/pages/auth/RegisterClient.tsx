@@ -4,12 +4,14 @@ import { motion } from 'framer-motion'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { User, Mail, Lock, Phone, Scale, CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 
 export default function RegisterClient() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
 
@@ -146,7 +148,7 @@ export default function RegisterClient() {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Input
-              label="Full Name"
+              label={t('auth.fullName')}
               placeholder="John Smith"
               value={form.fullName}
               onChange={set('fullName')}
@@ -154,7 +156,7 @@ export default function RegisterClient() {
               icon={<User size={14} />}
             />
             <Input
-              label="Email"
+              label={t('auth.email')}
               type="email"
               placeholder="you@example.com"
               value={form.email}
@@ -163,7 +165,7 @@ export default function RegisterClient() {
               icon={<Mail size={14} />}
             />
             <Input
-              label="Phone (optional)"
+              label={t('auth.phone')}
               type="tel"
               placeholder="+994 XX XXX XX XX"
               value={form.phone}
@@ -171,7 +173,7 @@ export default function RegisterClient() {
               icon={<Phone size={14} />}
             />
             <Input
-              label="Password"
+              label={t('auth.password')}
               type="password"
               placeholder="••••••••"
               value={form.password}
@@ -189,12 +191,12 @@ export default function RegisterClient() {
               icon={<Lock size={14} />}
             />
             <Button type="submit" fullWidth loading={isPending} size="lg" style={{ marginTop: 4 }}>
-              Create Account
+              {t('auth.register')}
             </Button>
           </form>
 
           <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
-            Already have an account?{' '}
+            {t('auth.hasAccount')}{' '}
             <Link
               to="/login"
               style={{
@@ -204,7 +206,7 @@ export default function RegisterClient() {
                 textUnderlineOffset: 3,
               }}
             >
-              Sign in
+              {t('auth.login')}
             </Link>
           </p>
         </motion.div>

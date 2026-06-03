@@ -8,7 +8,7 @@ export const lawyersApi = {
     api.get(`/lawyers/${id}`),
 
   getReviews: (id: string) =>
-    api.get(`/lawyers/${id}/reviews`),
+    api.get(`/reviews/lawyer/${id}`),
 
   getUnverified: () =>
     api.get('/lawyers/unverified'),
@@ -18,6 +18,9 @@ export const lawyersApi = {
 
   getMyProfile: () =>
     api.get('/lawyers/me'),
+
+  getStats: (lawyerId: string) =>
+    api.get(`/lawyers/${lawyerId}/stats`),
 
   uploadAvatar: (formData: FormData) =>
     api.post('/lawyers/avatar', formData, {

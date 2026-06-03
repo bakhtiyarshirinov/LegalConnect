@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lawyersApi } from '../../api/lawyers';
 import { Button } from '../../components/ui/Button';
@@ -16,6 +17,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Lawyer } from '../../types';
 
 export const AdminDashboardScreen = () => {
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const { data: lawyers, isLoading, refetch, isRefetching } = useQuery<Lawyer[]>({
@@ -44,7 +46,7 @@ export const AdminDashboardScreen = () => {
           <Text style={styles.city}>{item.city}</Text>
         </View>
         <Button
-          title="Verify"
+          title={t('admin.verifyLawyer')}
           onPress={() => handleVerify(item.id)}
           style={styles.verifyBtn}
           textStyle={{ fontSize: 13 }}
@@ -65,9 +67,9 @@ export const AdminDashboardScreen = () => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Admin Panel</Text>
+        <Text style={styles.title}>{t('admin.title')}</Text>
         <Text style={styles.subtitle}>
-          {lawyers?.length ?? 0} pending verification
+          {lawyers?.length ?? 0} {t('admin.pendingVerification')}
         </Text>
       </View>
       {isLoading ? (
@@ -80,7 +82,7 @@ export const AdminDashboardScreen = () => {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No pending verifications</Text>
+            <Text style={styles.emptyText}>{t('admin.allVerified')}</Text>
           }
         />
       )}

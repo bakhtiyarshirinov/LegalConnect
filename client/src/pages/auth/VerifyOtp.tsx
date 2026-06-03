@@ -4,11 +4,13 @@ import { motion } from 'framer-motion'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Scale, Mail, RotateCcw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { Button } from '../../components/ui/Button'
 
 export default function VerifyOtp() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -92,10 +94,10 @@ export default function VerifyOtp() {
             <Mail size={24} color="#fff" />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 8 }}>
-            Check your email
+            {t('auth.checkEmail')}
           </h1>
           <p style={{ color: '#6B6B6B', fontSize: 14, lineHeight: 1.6 }}>
-            We sent a 6-digit code to<br />
+            {t('auth.otpSent')}<br />
             <strong style={{ color: '#0A0A0A' }}>{email}</strong>
           </p>
         </div>
@@ -153,7 +155,7 @@ export default function VerifyOtp() {
                   fontFamily: 'Inter, sans-serif', textDecoration: 'underline', textUnderlineOffset: 3,
                 }}
               >
-                <RotateCcw size={12} /> {isResending ? 'Sending...' : 'Resend OTP'}
+                <RotateCcw size={12} /> {isResending ? 'Sending...' : t('auth.resendCode')}
               </button>
             )}
           </div>

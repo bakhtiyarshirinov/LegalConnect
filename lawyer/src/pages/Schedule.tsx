@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { getLawyerSlots, createBulkSlots, deleteSlot, type SlotDto } from '../api/slots'
 import { getMyLawyerProfile } from '../api/profile'
@@ -39,6 +40,7 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 export default function Schedule() {
+  const { t } = useTranslation()
   const { user, lawyerId } = useAuthStore()
   const qc = useQueryClient()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
@@ -122,7 +124,7 @@ export default function Schedule() {
         style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>Schedule</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>{t('nav.schedule')}</h1>
           <p style={{ fontSize: 14, color: '#6B6B6B', marginTop: 4 }}>Manage your availability slots</p>
         </div>
         <Button onClick={() => setModalOpen(true)}>
@@ -225,10 +227,10 @@ export default function Schedule() {
       </div>
 
       {/* Add Day Schedule Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Add Day Schedule" width={420}>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={t('appointments.selectDate')} width={420}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Date</label>
+            <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('appointments.selectDate')}</label>
             <input
               type="date"
               value={form.date}
@@ -273,7 +275,7 @@ export default function Schedule() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Slot Duration</label>
+            <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('appointments.duration')}</label>
             <select
               value={form.slotDuration}
               onChange={(e) => setForm((f) => ({ ...f, slotDuration: parseInt(e.target.value) }))}
@@ -303,7 +305,7 @@ export default function Schedule() {
             disabled={!form.date || form.endHour <= form.startHour}
             onClick={() => bulkMutation.mutate()}
           >
-            Generate Slots
+            {t('appointments.confirm')}
           </Button>
         </div>
       </Modal>

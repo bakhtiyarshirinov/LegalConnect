@@ -2,18 +2,20 @@ import { NavLink } from 'react-router-dom'
 import { LayoutDashboard, Calendar, User, MessageSquare, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { getUnreadCount } from '../../api/chats'
 
-const links = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/appointments', icon: Calendar,         label: 'Appointments' },
-  { to: '/schedule',     icon: Clock,            label: 'Schedule' },
-  { to: '/profile',      icon: User,             label: 'Profile' },
-  { to: '/chat',         icon: MessageSquare,    label: 'Chat' },
-]
-
 export function Sidebar() {
+  const { t } = useTranslation()
+
+  const links = [
+    { to: '/dashboard',    icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/appointments', icon: Calendar,         label: t('nav.appointments') },
+    { to: '/schedule',     icon: Clock,            label: t('nav.schedule') },
+    { to: '/profile',      icon: User,             label: t('nav.profile') },
+    { to: '/chat',         icon: MessageSquare,    label: t('nav.chat') },
+  ]
   const user = useAuthStore((s) => s.user)
 
   const { data: unreadCount = 0 } = useQuery({
@@ -80,7 +82,7 @@ export function Sidebar() {
             </div>
             <div style={{ overflow: 'hidden', flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.fullName}</div>
-              <div style={{ fontSize: 10, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginTop: 1 }}>Lawyer</div>
+              <div style={{ fontSize: 10, color: '#6B6B6B', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginTop: 1 }}>{t('profile.lawyer')}</div>
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { lawyersApi } from '../../api/lawyers';
 import { specializationsApi } from '../../api/specializations';
@@ -19,6 +20,7 @@ import { LawyerCard } from '../../components/lawyers/LawyerCard';
 import { Lawyer, Specialization } from '../../types';
 
 export const LawyersScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [city, setCity] = useState('');
   const [selectedSpec, setSelectedSpec] = useState<string | null>(null);
   const [debouncedCity, setDebouncedCity] = useState('');
@@ -44,12 +46,12 @@ export const LawyersScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Find a Lawyer</Text>
+        <Text style={styles.title}>{t('lawyers.title')}</Text>
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={18} color="#6B6B6B" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by city..."
+            placeholder={t('lawyers.search')}
             placeholderTextColor="#9CA3AF"
             value={city}
             onChangeText={setCity}
@@ -102,7 +104,7 @@ export const LawyersScreen = ({ navigation }: any) => {
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No lawyers found</Text>
+            <Text style={styles.emptyText}>{t('lawyers.noLawyers')}</Text>
           }
         />
       )}

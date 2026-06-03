@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Briefcase, CheckCircle, ArrowRight, MapPin, Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getPendingLawyers, verifyLawyer } from '../api/admin'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -20,6 +21,7 @@ const fadeUp = {
 }
 
 export const Dashboard: React.FC = () => {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   const { data: pending = [], isLoading } = useQuery({
@@ -55,7 +57,7 @@ export const Dashboard: React.FC = () => {
         transition={{ duration: 0.3 }}
         className="mb-8"
       >
-        <h1 className="text-2xl font-bold text-[#0A0A0A]">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-[#0A0A0A]">{t('admin.title')}</h1>
         <p className="text-[#6B6B6B] text-sm mt-1">Overview of platform activity</p>
       </motion.div>
 
@@ -92,7 +94,7 @@ export const Dashboard: React.FC = () => {
       {/* Pending Verifications */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-[#0A0A0A]">Pending Verifications</h2>
+          <h2 className="text-lg font-semibold text-[#0A0A0A]">{t('admin.pendingVerification')}</h2>
           <p className="text-sm text-[#6B6B6B]">Lawyers awaiting approval</p>
         </div>
         <Link to="/lawyers">
@@ -116,8 +118,8 @@ export const Dashboard: React.FC = () => {
           <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4">
             <CheckCircle className="w-7 h-7 text-emerald-600" />
           </div>
-          <p className="text-lg font-semibold text-[#0A0A0A]">All caught up!</p>
-          <p className="text-sm text-[#6B6B6B] mt-1">No pending verifications</p>
+          <p className="text-lg font-semibold text-[#0A0A0A]">{t('admin.allVerified')}</p>
+          <p className="text-sm text-[#6B6B6B] mt-1">{t('admin.pendingVerification')}</p>
         </motion.div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -155,7 +157,7 @@ export const Dashboard: React.FC = () => {
                     loading={verifying}
                     onClick={() => verify(lawyer.id)}
                   >
-                    Verify
+                    {t('admin.verifyLawyer')}
                   </Button>
                 </div>
               </Card>

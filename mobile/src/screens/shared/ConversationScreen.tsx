@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,19 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatsApi } from '../../api/chats';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import { Message } from '../../types';
 import { formatTime } from '../../utils/date';
 
 export const ConversationScreen = ({ route, navigation }: any) => {
+  const { t } = useTranslation();
   const { chatId, name } = route.params;
   const user = useAuthStore((s) => s.user);
   const [text, setText] = useState('');
@@ -27,20 +29,36 @@ export const ConversationScreen = ({ route, navigation }: any) => {
   const flatRef = useRef<FlatList>(null);
   const qc = useQueryClient();
 
-  const { data: messages, refetch, isRefetching } = useQuery<Message[]>({
+  const { data: messages, refetch } = useQuery<Message[]>({
     queryKey: ['messages', chatId],
     queryFn: () => chatsApi.getMessages(chatId).then((r) => r.data),
     refetchInterval: 5000,
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      if (user?.userId) {
+        chatsApi.markAsRead(chatId, user.userId).catch(() => {});
+      }
+    }, [chatId, user?.userId])
+  );
+
+  const scrollToBottom = () => {
+    if (messages && messages.length > 0) {
+      flatRef.current?.scrollToEnd({ animated: true });
+    }
+  };
+
   const handleSend = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !user) return;
     const content = text.trim();
     setText('');
     setSending(true);
     try {
-      await chatsApi.sendMessage(chatId, content);
-      qc.invalidateQueries({ queryKey: ['messages', chatId] });
+      await chatsApi.sendMessage(chatId, user.userId, content);
+      await refetch();
+      setTimeout(scrollToBottom, 100);
     } catch {
       Alert.alert('Error', 'Failed to send message');
       setText(content);
@@ -53,6 +71,11 @@ export const ConversationScreen = ({ route, navigation }: any) => {
     const isOwn = item.senderId === user?.userId;
     return (
       <View style={[styles.messageRow, isOwn ? styles.messageRowOwn : styles.messageRowOther]}>
+        {!isOwn && (
+          <View style={styles.senderAvatar}>
+            <Text style={styles.senderAvatarText}>{item.senderFullName?.[0] ?? '?'}</Text>
+          </View>
+        )}
         <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
           <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
             {item.content}
@@ -80,21 +103,20 @@ export const ConversationScreen = ({ route, navigation }: any) => {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
       >
         <FlatList
           ref={flatRef}
-          data={[...(messages || [])].reverse()}
+          data={messages || []}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
-          inverted
           contentContainerStyle={styles.messageList}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
         />
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
-            placeholder="Type a message..."
+            placeholder={t('chat.typeMessage')}
             placeholderTextColor="#9CA3AF"
             value={text}
             onChangeText={setText}
@@ -139,9 +161,19 @@ const styles = StyleSheet.create({
   headerAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   headerName: { fontSize: 16, fontWeight: '700', color: '#0A0A0A' },
   messageList: { padding: 16, flexGrow: 1 },
-  messageRow: { marginBottom: 8 },
+  messageRow: { marginBottom: 10 },
   messageRowOwn: { alignItems: 'flex-end' },
-  messageRowOther: { alignItems: 'flex-start' },
+  messageRowOther: { alignItems: 'flex-start', flexDirection: 'row', gap: 8 },
+  senderAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+  },
+  senderAvatarText: { fontSize: 11, fontWeight: '700', color: '#374151' },
   bubble: {
     maxWidth: '75%',
     borderRadius: 16,
@@ -149,11 +181,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   bubbleOwn: { backgroundColor: '#0A0A0A', borderBottomRightRadius: 4 },
-  bubbleOther: { backgroundColor: '#F3F4F6', borderBottomLeftRadius: 4 },
+  bubbleOther: { backgroundColor: '#F5F5F5', borderBottomLeftRadius: 4 },
   messageText: { fontSize: 15, color: '#0A0A0A', lineHeight: 20 },
   messageTextOwn: { color: '#FFFFFF' },
-  messageTime: { fontSize: 10, color: '#6B6B6B', marginTop: 4, textAlign: 'right' },
-  messageTimeOwn: { color: 'rgba(255,255,255,0.6)' },
+  messageTime: { fontSize: 10, color: '#9CA3AF', marginTop: 4, textAlign: 'right' },
+  messageTimeOwn: { color: 'rgba(255,255,255,0.55)' },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',

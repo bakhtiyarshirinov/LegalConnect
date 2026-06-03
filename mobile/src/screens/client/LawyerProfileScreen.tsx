@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lawyersApi } from '../../api/lawyers';
 import { appointmentsApi } from '../../api/appointments';
 import { chatsApi } from '../../api/chats';
@@ -41,6 +41,7 @@ const formatSlotTime = (iso: string) => {
 export const LawyerProfileScreen = ({ route, navigation }: any) => {
   const { lawyerId } = route.params;
   const user = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
 
   const [bookingVisible, setBookingVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -58,7 +59,7 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
     queryFn: () => lawyersApi.getById(lawyerId).then((r) => r.data),
   });
 
-  const { data: reviews } = useQuery<Review[]>({
+  const { data: reviews, isLoading: reviewsLoading } = useQuery<Review[]>({
     queryKey: ['lawyerReviews', lawyerId],
     queryFn: () => lawyersApi.getReviews(lawyerId).then((r) => r.data),
   });
@@ -92,39 +93,68 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
       return;
     }
     if (!user) return;
+    if (!lawyer) return;
+
+    // Ensure scheduledAt is a valid UTC ISO string in the future
+    const scheduledAt = selectedSlot.startTime.endsWith('Z')
+      ? selectedSlot.startTime
+      : new Date(selectedSlot.startTime).toISOString();
+
+    if (new Date(scheduledAt) <= new Date()) {
+      Alert.alert('Error', 'Selected slot is in the past. Please choose a future date.');
+      return;
+    }
+
+    const durationMinutes = Math.round(
+      (new Date(selectedSlot.endTime).getTime() - new Date(selectedSlot.startTime).getTime()) / 60000
+    );
+
+    const payload = {
+      clientId: user.userId,
+      lawyerId: lawyer.id,
+      scheduledAt,
+      durationMinutes: Number(durationMinutes),
+      type: type === 'Online' ? 1 : 2,
+      notes: notes || undefined,
+      slotId: selectedSlot.id,
+    };
+
+    console.log('Booking payload:', JSON.stringify(payload, null, 2));
+
     setBooking(true);
     try {
-      await appointmentsApi.book({
-        clientId: user.userId,
-        lawyerId,
-        scheduledAt: selectedSlot.startTime,
-        durationMinutes: Math.round(
-          (new Date(selectedSlot.endTime).getTime() - new Date(selectedSlot.startTime).getTime()) / 60000
-        ),
-        type: type === 'Online' ? 1 : 2,
-        notes,
-        slotId: selectedSlot.id,
-      });
+      await appointmentsApi.book(payload);
       setBookingVisible(false);
       setSelectedSlot(null);
       setNotes('');
+      qc.invalidateQueries({ queryKey: ['myAppointments'] });
       Alert.alert('Booked!', 'Your appointment has been created.', [
-        { text: 'View Appointments', onPress: () => navigation.navigate('Appointments') },
+        {
+          text: 'View Appointments',
+          onPress: () => navigation.navigate('Appointments'),
+        },
         { text: 'OK' },
       ]);
     } catch (e: any) {
-      Alert.alert('Booking Failed', e.response?.data?.message || 'Failed to book appointment');
+      const msg =
+        e.response?.data?.message ||
+        e.response?.data?.errors?.[Object.keys(e.response?.data?.errors ?? {})[0]]?.[0] ||
+        JSON.stringify(e.response?.data) ||
+        'Failed to book appointment';
+      Alert.alert('Booking Failed', msg);
     } finally {
       setBooking(false);
     }
   };
 
   const handleMessage = async () => {
+    if (!user) return;
     try {
-      const res = await chatsApi.getOrCreate(lawyerId);
-      navigation.navigate('Conversation', { chatId: res.data.id, name: lawyer?.fullName });
-    } catch {
-      Alert.alert('Error', 'Failed to open chat');
+      const res = await chatsApi.getOrCreate({ clientId: user.userId, lawyerId: lawyer!.id });
+      const chatId = res.data.chatId ?? res.data.id;
+      navigation.navigate('Conversation', { chatId, name: lawyer?.fullName });
+    } catch (e: any) {
+      Alert.alert('Error', e.response?.data?.message || 'Failed to open chat');
     }
   };
 
@@ -204,25 +234,40 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
           </View>
         )}
 
-        {reviews && reviews.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
-            {reviews.map((r) => (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Reviews {lawyer.reviewCount > 0 ? `(${lawyer.reviewCount})` : ''}
+          </Text>
+          {reviewsLoading ? (
+            <ActivityIndicator color="#0A0A0A" style={{ marginVertical: 16 }} />
+          ) : !reviews || reviews.length === 0 ? (
+            <Text style={styles.noReviewsText}>No reviews yet. Be the first!</Text>
+          ) : (
+            reviews.map((r) => (
               <View key={r.id} style={styles.reviewCard}>
                 <View style={styles.reviewHeader}>
                   <Text style={styles.reviewName}>{r.clientFullName}</Text>
                   <View style={styles.reviewStars}>
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Ionicons key={s} name="star" size={12} color={s <= r.rating ? '#F59E0B' : '#E8E8E8'} />
+                      <Ionicons
+                        key={s}
+                        name={s <= r.rating ? 'star' : 'star-outline'}
+                        size={12}
+                        color={s <= r.rating ? '#F59E0B' : '#D1D5DB'}
+                      />
                     ))}
                   </View>
                 </View>
-                <Text style={styles.reviewComment}>{r.comment}</Text>
-                <Text style={styles.reviewDate}>{formatDate(r.createdAt)}</Text>
+                {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+                <Text style={styles.reviewDate}>
+                  {new Date(r.createdAt).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                  })}
+                </Text>
               </View>
-            ))}
-          </View>
-        )}
+            ))
+          )}
+        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -406,6 +451,7 @@ const styles = StyleSheet.create({
   reviewStars: { flexDirection: 'row', gap: 2 },
   reviewComment: { fontSize: 13, color: '#374151', lineHeight: 20, marginBottom: 4 },
   reviewDate: { fontSize: 11, color: '#9CA3AF' },
+  noReviewsText: { fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' },
   bottomBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,

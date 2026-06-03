@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
 
 export const RegisterClientScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,18 +54,18 @@ export const RegisterClientScreen = ({ navigation }: any) => {
             <Ionicons name="arrow-back" size={24} color="#0A0A0A" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>{t('auth.createAccount')}</Text>
           <Text style={styles.subtitle}>Join as a client</Text>
 
           <Input
-            label="Full Name"
+            label={t('profile.fullName')}
             placeholder="John Doe"
             value={fullName}
             onChangeText={setFullName}
             autoCapitalize="words"
           />
           <Input
-            label="Email"
+            label={t('auth.email')}
             placeholder="your@email.com"
             value={email}
             onChangeText={setEmail}
@@ -71,14 +73,14 @@ export const RegisterClientScreen = ({ navigation }: any) => {
             autoCapitalize="none"
           />
           <Input
-            label="Password"
+            label={t('auth.password')}
             placeholder="Min 6 characters"
             value={password}
             onChangeText={setPassword}
             secureToggle
           />
           <Input
-            label="Phone"
+            label={t('profile.phone')}
             placeholder="+994 50 000 00 00"
             value={phone}
             onChangeText={setPhone}
@@ -86,7 +88,7 @@ export const RegisterClientScreen = ({ navigation }: any) => {
           />
 
           <Button
-            title="Create Account"
+            title={t('auth.createAccount')}
             onPress={handleRegister}
             loading={loading}
             style={styles.btn}

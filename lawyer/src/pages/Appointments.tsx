@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Calendar, List, CalendarDays } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import {
   getByLawyer,
@@ -26,13 +27,7 @@ const STATUS_DOT: Record<string, string> = {
   Cancelled: '#9CA3AF',
 }
 
-const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
-  { label: 'All', value: 'All' },
-  { label: 'Pending', value: 'Pending' },
-  { label: 'Confirmed', value: 'Confirmed' },
-  { label: 'Cancelled', value: 'Cancelled' },
-  { label: 'Completed', value: 'Completed' },
-]
+// TABS is built inside the component to access t()
 
 type View = 'list' | 'calendar'
 
@@ -51,9 +46,18 @@ function formatTime(d: string) {
 }
 
 export default function Appointments() {
+  const { t } = useTranslation()
   const { user, lawyerId, setLawyerId } = useAuthStore()
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<AppointmentStatus | 'All'>('All')
+
+  const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
+    { label: t('appointments.status.all'), value: 'All' },
+    { label: t('appointments.status.pending'), value: 'Pending' },
+    { label: t('appointments.status.confirmed'), value: 'Confirmed' },
+    { label: t('appointments.status.cancelled'), value: 'Cancelled' },
+    { label: t('appointments.status.completed'), value: 'Completed' },
+  ]
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [view, setView] = useState<View>('list')
   const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null)
@@ -148,7 +152,7 @@ export default function Appointments() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Appointments</h1>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{t('appointments.title')}</h1>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>Manage all your client appointments</p>
           </div>
           {/* View toggle */}
@@ -212,7 +216,7 @@ export default function Appointments() {
             <Card style={{ textAlign: 'center', padding: '60px 24px' }}>
               <Calendar size={36} color="var(--border)" style={{ margin: '0 auto 16px' }} />
               <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>
-                No {activeTab === 'All' ? '' : activeTab.toLowerCase()} appointments found
+                {t('appointments.noAppointments')}
               </p>
             </Card>
           ) : (
@@ -240,8 +244,8 @@ export default function Appointments() {
                       <Badge status={a.status} />
                       {a.status === 'Pending' && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                          <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Confirm</Button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Cancel</Button>
+                          <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>{t('appointments.confirm')}</Button>
+                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>{t('appointments.cancel')}</Button>
                         </div>
                       )}
                       {a.status === 'Confirmed' && (
@@ -251,9 +255,9 @@ export default function Appointments() {
                             onClick={() => handleComplete(a)}
                             style={{ background: '#EBFBEE', color: '#2F9E44', border: '1px solid #B2F2BB', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: actionLoading === a.id + 'complete' ? 0.6 : 1 }}
                           >
-                            Complete
+                            {t('appointments.status.completed')}
                           </button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Cancel</Button>
+                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>{t('appointments.cancel')}</Button>
                         </div>
                       )}
                     </div>

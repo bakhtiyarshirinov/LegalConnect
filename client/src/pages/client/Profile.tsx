@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { User, BadgeCheck, Calendar, CheckCircle, Clock, Camera } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { usersApi } from '../../api/users'
 import { appointmentsApi } from '../../api/appointments'
@@ -25,6 +26,7 @@ function formatShort(d: string) {
 }
 
 export default function ClientProfile() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const updateUser = useAuthStore((s) => s.updateUser)
   const qc = useQueryClient()
@@ -85,9 +87,9 @@ export default function ClientProfile() {
     .slice(0, 3)
 
   const stats = [
-    { label: 'Total', value: totalAppts, icon: <Calendar size={16} /> },
-    { label: 'Completed', value: completed, icon: <CheckCircle size={16} /> },
-    { label: 'Upcoming', value: pending, icon: <Clock size={16} /> },
+    { label: t('appointments.total'), value: totalAppts, icon: <Calendar size={16} /> },
+    { label: t('dashboard.completed'), value: completed, icon: <CheckCircle size={16} /> },
+    { label: t('dashboard.upcoming'), value: pending, icon: <Clock size={16} /> },
   ]
 
   return (
@@ -96,7 +98,7 @@ export default function ClientProfile() {
       style={{ padding: '32px 36px', background: '#F5F5F5', minHeight: 'calc(100vh - 64px)' }}
     >
       <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 28 }}>
-        My Profile
+        {t('profile.title')}
       </h1>
 
       {/* Stats row */}
@@ -158,7 +160,7 @@ export default function ClientProfile() {
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0' }}
                   >
                     <Camera size={18} color="#fff" />
-                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>Change</span>
+                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>{t('profile.changePhoto')}</span>
                   </div>
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 6 }}>
@@ -214,7 +216,7 @@ export default function ClientProfile() {
 
         {/* Right — edit form */}
         <Card padding={28}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 20 }}>Edit Profile</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 20 }}>{t('profile.editProfile')}</h2>
           {loadingProfile ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[1, 2, 3].map((i) => <Skeleton key={i} height={46} borderRadius={10} />)}
@@ -223,7 +225,7 @@ export default function ClientProfile() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               {/* Full Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Full Name</label>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('profile.fullName')}</label>
                 <input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -240,7 +242,7 @@ export default function ClientProfile() {
               {/* Email — disabled */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>
-                  Email <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(cannot change)</span>
+                  {t('profile.email')} <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(cannot change)</span>
                 </label>
                 <input
                   value={profile?.email ?? user.email}
@@ -255,7 +257,7 @@ export default function ClientProfile() {
 
               {/* Phone */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Phone</label>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('profile.phone')}</label>
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -276,7 +278,7 @@ export default function ClientProfile() {
                 onClick={() => saveMutation.mutate()}
                 style={{ alignSelf: 'flex-start', minWidth: 160 }}
               >
-                Save Changes
+                {t('profile.saveChanges')}
               </Button>
             </div>
           )}

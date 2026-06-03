@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,20 +8,26 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { chatsApi } from '../../api/chats';
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Chat } from '../../types';
 import { formatDate } from '../../utils/date';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 
 export const ChatScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
 
   const { data, isLoading, refetch, isRefetching } = useQuery<Chat[]>({
-    queryKey: ['chats'],
-    queryFn: () => chatsApi.getMyChats().then((r) => r.data),
+    queryKey: ['chats', user?.userId],
+    enabled: !!user?.userId,
+    queryFn: () => chatsApi.getMyChats(user!.userId).then((r) => r.data),
   });
+
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
 
   const getOtherName = (chat: Chat) => {
     if (user?.role === 'Client') return chat.lawyerFullName;
@@ -34,12 +40,7 @@ export const ChatScreen = ({ navigation }: any) => {
     return (
       <TouchableOpacity
         style={styles.chatItem}
-        onPress={() =>
-          navigation.navigate('Conversation', {
-            chatId: item.id,
-            name,
-          })
-        }
+        onPress={() => navigation.navigate('Conversation', { chatId: item.id, name })}
         activeOpacity={0.7}
       >
         <View style={styles.avatar}>
@@ -47,20 +48,12 @@ export const ChatScreen = ({ navigation }: any) => {
         </View>
         <View style={styles.chatInfo}>
           <Text style={styles.chatName}>{name}</Text>
-          {item.lastMessage && (
+          {item.lastMessageAt && (
             <Text style={styles.lastMsg} numberOfLines={1}>
-              {item.lastMessage}
+              {formatDate(item.lastMessageAt)}
             </Text>
           )}
         </View>
-        {item.lastMessageAt && (
-          <Text style={styles.time}>{formatDate(item.lastMessageAt)}</Text>
-        )}
-        {(item.unreadCount ?? 0) > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{item.unreadCount}</Text>
-          </View>
-        )}
       </TouchableOpacity>
     );
   };
@@ -68,7 +61,7 @@ export const ChatScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Messages</Text>
+        <Text style={styles.title}>{t('chat.title')}</Text>
       </View>
       {isLoading ? (
         <LoadingSpinner fullScreen />
@@ -79,7 +72,7 @@ export const ChatScreen = ({ navigation }: any) => {
           renderItem={renderItem}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No conversations yet</Text>
+            <Text style={styles.emptyText}>{t('chat.noChats')}</Text>
           }
         />
       )}
@@ -113,17 +106,5 @@ const styles = StyleSheet.create({
   chatInfo: { flex: 1 },
   chatName: { fontSize: 15, fontWeight: '600', color: '#0A0A0A' },
   lastMsg: { fontSize: 13, color: '#6B6B6B', marginTop: 2 },
-  time: { fontSize: 11, color: '#9CA3AF', marginLeft: 8 },
-  badge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-    paddingHorizontal: 5,
-  },
-  badgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
   emptyText: { textAlign: 'center', color: '#6B6B6B', fontSize: 15, marginTop: 60 },
 });

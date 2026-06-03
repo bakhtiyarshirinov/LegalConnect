@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Send, MessageSquare, Paperclip, FileText, Download, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { chatsApi, type MessageDto } from '../../api/chats'
 import { filesApi } from '../../api/files'
 import { usersApi } from '../../api/users'
@@ -73,6 +74,7 @@ function FileMessage({ url, isOwn }: { url: string; isOwn: boolean }) {
 }
 
 export default function Chat() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const userId = user.userId
   const qc = useQueryClient()
@@ -226,7 +228,7 @@ export default function Chat() {
         display: 'flex', flexDirection: 'column', flexShrink: 0,
       }}>
         <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #E8E8E8' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 10 }}>Messages</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 10 }}>{t('chat.title')}</h2>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{
               position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
@@ -256,7 +258,7 @@ export default function Chat() {
           ) : filteredChats.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#A3A3A3' }}>
               <MessageSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-              <p style={{ fontSize: 13 }}>{searchQuery ? 'No conversations found' : 'No chats yet'}</p>
+              <p style={{ fontSize: 13 }}>{searchQuery ? 'No conversations found' : t('chat.noChats')}</p>
             </div>
           ) : filteredChats.map((chat) => {
             const isActive = chat.id === activeChatId
@@ -419,7 +421,7 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder={uploading ? 'Uploading file…' : 'Type a message…'}
+                placeholder={uploading ? 'Uploading file…' : t('chat.typeMessage')}
                 disabled={uploading}
                 style={{
                   flex: 1, border: '1px solid #E8E8E8', borderRadius: 12,

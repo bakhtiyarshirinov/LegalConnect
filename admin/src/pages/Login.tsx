@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { ShieldCheck, Mail, Lock, CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { Input } from '../components/ui/Input'
@@ -10,6 +11,7 @@ import { Button } from '../components/ui/Button'
 
 export const Login: React.FC = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { setAuth } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -112,7 +114,7 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
-              label="Email"
+              label={t('auth.email')}
               type="email"
               placeholder="admin@legalconnect.com"
               value={email}
@@ -122,7 +124,7 @@ export const Login: React.FC = () => {
               autoComplete="email"
             />
             <Input
-              label="Password"
+              label={t('auth.password')}
               type="password"
               placeholder="••••••••"
               value={password}
@@ -136,7 +138,7 @@ export const Login: React.FC = () => {
               loading={loading}
               className="w-full mt-2 py-3"
             >
-              Sign in
+              {t('auth.login')}
             </Button>
           </form>
 

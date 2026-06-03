@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Scale, CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Login() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { handleLogin, loading } = useAuth()
@@ -45,9 +47,9 @@ export default function Login() {
             <p style={{ color: '#6B6B6B', fontSize: 14 }}>Sign in to your LegalConnect account</p>
           </div>
           <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-            <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>Sign In</Button>
+            <Input label={t('auth.email')} type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+            <Input label={t('auth.password')} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>{t('auth.login')}</Button>
           </form>
           <p style={{ textAlign: 'center', fontSize: 12, color: '#6B6B6B', marginTop: 24 }}>Access restricted to verified lawyers only</p>
         </motion.div>

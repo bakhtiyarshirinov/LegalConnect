@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import { getByLawyer, confirmAppointment, cancelAppointment, completeAppointment, type Appointment } from '../api/appointments'
 import { getMyLawyerProfile } from '../api/profile'
@@ -31,6 +32,7 @@ function formatDate(dateStr: string) {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation()
   const { user, lawyerId, setLawyerId } = useAuthStore()
   const qc = useQueryClient()
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -104,10 +106,10 @@ export default function Dashboard() {
   }
 
   const stats = [
-    { label: 'Total Appointments', value: appointments.length },
-    { label: 'Pending', value: pending.length },
-    { label: 'Confirmed', value: confirmed.length },
-    { label: 'Rating', value: lawyerProfile?.rating?.toFixed(1) ?? '—' },
+    { label: t('dashboard.totalAppointments'), value: appointments.length },
+    { label: t('dashboard.pending'), value: pending.length },
+    { label: t('dashboard.confirmed'), value: confirmed.length },
+    { label: t('dashboard.rating'), value: lawyerProfile?.rating?.toFixed(1) ?? '—' },
   ]
 
   return (
@@ -119,7 +121,7 @@ export default function Dashboard() {
         style={{ marginBottom: 32 }}
       >
         <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>
-          Welcome back, {user?.fullName?.split(' ')[0]} 👋
+          {t('dashboard.welcome')}, {user?.fullName?.split(' ')[0]} 👋
         </h1>
         <p style={{ fontSize: 14, color: '#6B6B6B', marginTop: 4 }}>
           Here's what's happening with your practice today.
@@ -178,7 +180,7 @@ export default function Dashboard() {
           }}
         >
           <h2 style={{ fontSize: 17, fontWeight: 600, color: '#0A0A0A' }}>
-            Pending Requests{' '}
+            {t('dashboard.pendingRequests')}{' '}
             {pending.length > 0 && (
               <span
                 style={{
@@ -206,7 +208,7 @@ export default function Dashboard() {
         ) : pending.length === 0 ? (
           <Card style={{ textAlign: 'center', padding: '40px 24px' }}>
             <Calendar size={32} color="#E8E8E8" style={{ margin: '0 auto 12px' }} />
-            <p style={{ color: '#6B6B6B', fontSize: 14 }}>No pending appointments</p>
+            <p style={{ color: '#6B6B6B', fontSize: 14 }}>{t('dashboard.noUpcoming')}</p>
           </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -285,7 +287,7 @@ export default function Dashboard() {
                         loading={actionLoading === a.id + 'confirm'}
                         onClick={() => handleConfirm(a)}
                       >
-                        Confirm
+                        {t('appointments.confirm')}
                       </Button>
                       <Button
                         variant="danger"
@@ -293,7 +295,7 @@ export default function Dashboard() {
                         loading={actionLoading === a.id + 'cancel'}
                         onClick={() => handleCancel(a)}
                       >
-                        Cancel
+                        {t('appointments.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -313,7 +315,7 @@ export default function Dashboard() {
           style={{ marginTop: 32 }}
         >
           <h2 style={{ fontSize: 17, fontWeight: 600, color: '#0A0A0A', marginBottom: 16 }}>
-            Confirmed Appointments
+            {t('dashboard.confirmed')}
             <span style={{ fontSize: 12, fontWeight: 600, background: '#EBFBEE', color: '#2F9E44', padding: '2px 8px', borderRadius: 100, marginLeft: 6 }}>
               {confirmed.length}
             </span>
@@ -352,7 +354,7 @@ export default function Dashboard() {
                           opacity: actionLoading === a.id + 'complete' ? 0.6 : 1,
                         }}
                       >
-                        Complete
+                        {t('appointments.status.completed')}
                       </button>
                       <Button
                         variant="danger"
@@ -360,7 +362,7 @@ export default function Dashboard() {
                         loading={actionLoading === a.id + 'cancel'}
                         onClick={() => handleCancel(a)}
                       >
-                        Cancel
+                        {t('appointments.cancel')}
                       </Button>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import { appointmentsApi } from '../../api/appointments';
 import { Card } from '../../components/ui/Card';
@@ -19,26 +20,26 @@ import { Appointment } from '../../types';
 import { formatDate } from '../../utils/date';
 
 const statusVariant = (s: string): any =>
-  s === 'Confirmed' ? 'confirmed' : s === 'Completed' ? 'completed' : s === 'Cancelled' ? 'cancelled' : 'pending';
+  s === 'Confirmed' ? 'confirmed'
+  : s === 'Completed' ? 'completed'
+  : s === 'Cancelled' ? 'cancelled'
+  : 'pending';
 
 export const HomeScreen = ({ navigation }: any) => {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
 
-  const { data: stats, refetch: refetchStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['appointmentStats'],
-    queryFn: () => appointmentsApi.getStats().then((r) => r.data),
+  const { data: appointments, isLoading, refetch, isRefetching } = useQuery<Appointment[]>({
+    queryKey: ['myAppointments', user?.userId],
+    enabled: !!user?.userId,
+    queryFn: () => appointmentsApi.getByClient(user!.userId).then((r) => r.data),
   });
 
-  const { data: appointments, refetch: refetchAppts, isRefetching } = useQuery({
-    queryKey: ['recentAppointments'],
-    queryFn: () => appointmentsApi.getMyAppointments().then((r) => r.data),
-  });
+  const onRefresh = useCallback(() => { refetch(); }, []);
 
-  const onRefresh = useCallback(() => {
-    refetchStats();
-    refetchAppts();
-  }, []);
-
+  const total = appointments?.length ?? 0;
+  const upcoming = (appointments || []).filter((a) => a.status === 'Confirmed').length;
+  const completed = (appointments || []).filter((a) => a.status === 'Completed').length;
   const recent: Appointment[] = (appointments || []).slice(0, 3);
 
   return (
@@ -48,25 +49,25 @@ export const HomeScreen = ({ navigation }: any) => {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
       >
         <View style={styles.header}>
-          <Text style={styles.greeting}>Welcome back, {user?.fullName?.split(' ')[0]}! 👋</Text>
+          <Text style={styles.greeting}>{t('dashboard.welcome')}, {user?.fullName?.split(' ')[0]}! 👋</Text>
           <Text style={styles.greetingSub}>Here's your overview</Text>
         </View>
 
-        {statsLoading ? (
+        {isLoading ? (
           <LoadingSpinner />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
-            <StatCard label="Total" value={stats?.total ?? 0} icon="layers-outline" />
-            <StatCard label="Upcoming" value={stats?.upcoming ?? stats?.confirmed ?? 0} icon="calendar-outline" />
-            <StatCard label="Completed" value={stats?.completed ?? 0} icon="checkmark-circle-outline" />
+            <StatCard label={t('dashboard.totalAppointments')} value={total} icon="layers-outline" />
+            <StatCard label={t('dashboard.upcoming')} value={upcoming} icon="calendar-outline" />
+            <StatCard label={t('dashboard.completed')} value={completed} icon="checkmark-circle-outline" />
           </ScrollView>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Appointments</Text>
+          <Text style={styles.sectionTitle}>{t('appointments.title')}</Text>
           {recent.length === 0 ? (
             <Card>
-              <Text style={styles.emptyText}>No appointments yet</Text>
+              <Text style={styles.emptyText}>{t('appointments.noAppointments')}</Text>
             </Card>
           ) : (
             recent.map((appt) => (
@@ -94,7 +95,7 @@ export const HomeScreen = ({ navigation }: any) => {
           activeOpacity={0.8}
         >
           <Ionicons name="search-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-          <Text style={styles.findBtnText}>Find a Lawyer</Text>
+          <Text style={styles.findBtnText}>{t('dashboard.findLawyer')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 28, fontWeight: '800', color: '#0A0A0A' },
   statLabel: { fontSize: 13, color: '#6B6B6B', marginTop: 2 },
   section: { paddingHorizontal: 16, marginBottom: 24 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0A0A0A', marginBottom: 12, paddingHorizontal: 0 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0A0A0A', marginBottom: 12 },
   apptCard: { marginBottom: 10 },
   apptRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   apptAvatar: {

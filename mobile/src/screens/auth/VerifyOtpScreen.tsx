@@ -10,11 +10,13 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 export const VerifyOtpScreen = ({ route, navigation }: any) => {
+  const { t } = useTranslation();
   const { email } = route.params;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -102,7 +104,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.container}>
-          <Text style={styles.title}>Check your email</Text>
+          <Text style={styles.title}>{t('auth.checkEmail')}</Text>
           <Text style={styles.subtitle}>
             We sent a 6-digit code to{'\n'}
             <Text style={styles.email}>{email}</Text>
@@ -126,7 +128,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
           </View>
 
           <Button
-            title="Verify"
+            title={t('auth.verify')}
             onPress={handleVerify}
             loading={loading}
             style={styles.btn}
@@ -134,7 +136,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
 
           <TouchableOpacity onPress={handleResend} disabled={!canResend} style={styles.resendBtn}>
             <Text style={[styles.resendText, !canResend && styles.resendDisabled]}>
-              {canResend ? 'Resend code' : `Resend code in ${countdown}s`}
+              {canResend ? t('auth.resendCode') : `${t('auth.resendCode')} in ${countdown}s`}
             </Text>
           </TouchableOpacity>
         </View>

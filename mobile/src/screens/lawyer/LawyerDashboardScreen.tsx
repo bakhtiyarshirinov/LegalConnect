@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '../../api/appointments';
 import { lawyersApi } from '../../api/lawyers';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -20,6 +21,7 @@ import { Appointment } from '../../types';
 import { formatDate } from '../../utils/date';
 
 export const LawyerDashboardScreen = () => {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const lawyerProfileId = useAuthStore((s) => s.lawyerProfileId);
   const setLawyerProfileId = useAuthStore((s) => s.setLawyerProfileId);
@@ -27,23 +29,29 @@ export const LawyerDashboardScreen = () => {
 
   useEffect(() => {
     if (!lawyerProfileId) {
-      lawyersApi.getMyProfile().then((r) => setLawyerProfileId(r.data.id)).catch(() => {});
+      lawyersApi.getMyProfile()
+        .then((r) => setLawyerProfileId(r.data.id))
+        .catch(() => {});
     }
   }, [lawyerProfileId]);
 
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
-    queryKey: ['lawyerStats'],
-    queryFn: () => appointmentsApi.getLawyerStats().then((r) => r.data),
+    queryKey: ['lawyerStats', lawyerProfileId],
+    enabled: !!lawyerProfileId,
+    queryFn: () => lawyersApi.getStats(lawyerProfileId!).then((r) => r.data),
   });
 
-  const { data: pending, isLoading: pendingLoading, refetch: refetchPending, isRefetching } = useQuery<Appointment[]>({
-    queryKey: ['lawyerAppointments', 'Pending'],
-    queryFn: () => appointmentsApi.getLawyerAppointments('Pending').then((r) => r.data),
+  const { data: allAppointments, isLoading: apptLoading, refetch: refetchAppts, isRefetching } = useQuery<Appointment[]>({
+    queryKey: ['lawyerAppointments', lawyerProfileId],
+    enabled: !!lawyerProfileId,
+    queryFn: () => appointmentsApi.getByLawyer(lawyerProfileId!).then((r) => r.data),
   });
+
+  const pending = (allAppointments || []).filter((a) => a.status === 'Pending');
 
   const onRefresh = useCallback(() => {
     refetchStats();
-    refetchPending();
+    refetchAppts();
   }, []);
 
   const handleConfirm = async (id: string) => {
@@ -68,9 +76,9 @@ export const LawyerDashboardScreen = () => {
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return t('dashboard.goodMorning');
+    if (h < 17) return t('dashboard.goodAfternoon');
+    return t('dashboard.goodEvening');
   };
 
   return (
@@ -88,23 +96,23 @@ export const LawyerDashboardScreen = () => {
           <LoadingSpinner />
         ) : (
           <View style={styles.statsGrid}>
-            <StatCard label="Total" value={stats?.total ?? stats?.totalAppointments ?? 0} icon="layers-outline" />
-            <StatCard label="Pending" value={stats?.pending ?? stats?.pendingAppointments ?? 0} icon="time-outline" />
-            <StatCard label="Confirmed" value={stats?.confirmed ?? stats?.confirmedAppointments ?? 0} icon="checkmark-outline" />
-            <StatCard label="Rating" value={stats?.rating?.toFixed(1) ?? '—'} icon="star-outline" />
+            <StatCard label={t('dashboard.totalAppointments')} value={stats?.totalAppointments ?? 0} icon="layers-outline" />
+            <StatCard label={t('dashboard.pending')} value={stats?.pendingAppointments ?? 0} icon="time-outline" />
+            <StatCard label={t('dashboard.completed')} value={stats?.completedAppointments ?? 0} icon="checkmark-outline" />
+            <StatCard label={t('dashboard.rating')} value={stats?.averageRating?.toFixed(1) ?? '—'} icon="star-outline" />
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pending Requests</Text>
-          {pendingLoading ? (
+          <Text style={styles.sectionTitle}>{t('dashboard.pendingRequests')}</Text>
+          {apptLoading ? (
             <LoadingSpinner />
-          ) : (pending || []).length === 0 ? (
+          ) : pending.length === 0 ? (
             <Card>
-              <Text style={styles.emptyText}>No pending requests</Text>
+              <Text style={styles.emptyText}>{t('dashboard.noUpcoming')}</Text>
             </Card>
           ) : (
-            (pending || []).map((appt) => (
+            pending.map((appt) => (
               <Card key={appt.id} style={styles.apptCard}>
                 <View style={styles.apptHeader}>
                   <View style={styles.clientAvatar}>
@@ -117,19 +125,19 @@ export const LawyerDashboardScreen = () => {
                 </View>
                 <View style={styles.apptDetails}>
                   <Text style={styles.apptDetail}>
-                    <Ionicons name="time-outline" size={13} /> {appt.durationMinutes} min • {appt.type}
+                    {appt.durationMinutes} min • {appt.type}
                   </Text>
                   <Text style={styles.apptPrice}>${appt.price.toFixed(2)}</Text>
                 </View>
                 <View style={styles.actionRow}>
                   <Button
-                    title="Confirm"
+                    title={t('appointments.confirm')}
                     onPress={() => handleConfirm(appt.id)}
                     style={{ flex: 1, height: 40, backgroundColor: '#10B981' } as any}
                     textStyle={{ color: '#FFFFFF' }}
                   />
                   <Button
-                    title="Cancel"
+                    title={t('appointments.cancel')}
                     onPress={() => handleCancel(appt.id)}
                     variant="danger"
                     style={styles.actionBtn}

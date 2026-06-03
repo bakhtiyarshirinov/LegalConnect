@@ -4,12 +4,14 @@ import { motion } from 'framer-motion'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Mail, Lock, Scale, CheckCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { Input } from '../../components/ui/Input'
 import { Button } from '../../components/ui/Button'
 
 export default function Login() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
   const [email, setEmail] = useState('')
@@ -73,16 +75,16 @@ export default function Login() {
             <p style={{ color: '#6B6B6B', fontSize: 14 }}>Sign in to your LegalConnect account</p>
           </div>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Input label="Email address" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail size={14} />} autoComplete="email" />
-            <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock size={14} />} autoComplete="current-password" />
-            <Button type="submit" fullWidth loading={isPending} size="lg" style={{ marginTop: 4 }}>Sign In</Button>
+            <Input label={t('auth.email')} type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail size={14} />} autoComplete="email" />
+            <Input label={t('auth.password')} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock size={14} />} autoComplete="current-password" />
+            <Button type="submit" fullWidth loading={isPending} size="lg" style={{ marginTop: 4 }}>{t('auth.login')}</Button>
           </form>
           <p style={{ textAlign: 'right', marginTop: 12, fontSize: 13 }}>
-            <Link to="/forgot-password" style={{ color: '#6B6B6B', textDecoration: 'underline', textUnderlineOffset: 3 }}>Forgot password?</Link>
+            <Link to="/forgot-password" style={{ color: '#6B6B6B', textDecoration: 'underline', textUnderlineOffset: 3 }}>{t('auth.forgotPassword')}</Link>
           </p>
           <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 12, fontSize: 14 }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: '#0A0A0A', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>Create account</Link>
+            {t('auth.noAccount')}{' '}
+            <Link to="/register" style={{ color: '#0A0A0A', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>{t('auth.joinAsClient')}</Link>
           </p>
         </motion.div>
       </div>

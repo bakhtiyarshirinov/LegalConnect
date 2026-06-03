@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { lawyersApi, type LawyersFilter } from '../../api/lawyers'
 import { LawyerCard } from '../../components/lawyers/LawyerCard'
 import { LawyerFilters } from '../../components/lawyers/LawyerFilters'
@@ -18,6 +19,7 @@ const pageVariant = {
 }
 
 export default function Lawyers() {
+  const { t } = useTranslation()
   const [filters, setFilters] = useState<LawyersFilter>({})
 
   const { data: lawyers = [], isLoading } = useQuery({
@@ -32,9 +34,9 @@ export default function Lawyers() {
     >
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>
-          Find a Lawyer
+          {t('lawyers.title')}
         </h1>
-        <p style={{ color: '#6B6B6B', fontSize: 15 }}>Browse verified legal professionals in Azerbaijan</p>
+        <p style={{ color: '#6B6B6B', fontSize: 15 }}>{t('lawyers.subtitle')}</p>
       </div>
 
       <div style={{ marginBottom: 24 }}>
@@ -60,7 +62,7 @@ export default function Lawyers() {
           }}
         >
           <Search size={40} color="#A3A3A3" style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 8 }}>No lawyers found</h3>
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 8 }}>{t('lawyers.noLawyers')}</h3>
           <p style={{ color: '#6B6B6B', fontSize: 14 }}>Try adjusting your filters to find more results.</p>
         </motion.div>
       ) : (

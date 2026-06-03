@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Scale, ArrowRight, Shield, Star, Zap, MessageSquare, Calendar, CheckCircle, Users } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../components/ui/Button'
 
 const fadeUp = {
@@ -13,6 +14,7 @@ const fadeUp = {
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 
 export default function Landing() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   return (
@@ -56,24 +58,22 @@ export default function Landing() {
             fontSize: 'clamp(40px, 7vw, 70px)', fontWeight: 800,
             lineHeight: 1.06, letterSpacing: '-0.04em', color: '#0A0A0A', marginBottom: 24,
           }}>
-            Find Your Legal<br />
-            <span style={{ color: '#6B6B6B' }}>Expert in Azerbaijan</span>
+            {t('landing.hero')}
           </motion.h1>
 
           <motion.p variants={fadeUp} custom={2} style={{
             fontSize: 18, color: '#6B6B6B', lineHeight: 1.65,
             maxWidth: 520, margin: '0 auto 44px', fontWeight: 400,
           }}>
-            Connect with verified lawyers instantly. Book consultations, get legal advice,
-            and resolve your issues — all in one place.
+            {t('landing.subtitle')}
           </motion.p>
 
           <motion.div variants={fadeUp} custom={3} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button size="lg" onClick={() => navigate('/lawyers')} style={{ gap: 8 }}>
-              Find a Lawyer <ArrowRight size={16} />
+              {t('landing.findLawyer')} <ArrowRight size={16} />
             </Button>
             <Button size="lg" variant="secondary" onClick={() => { window.location.href = 'http://localhost:5174' }}>
-              Join as Lawyer
+              {t('landing.joinAsLawyer')}
             </Button>
           </motion.div>
         </motion.div>
@@ -114,7 +114,7 @@ export default function Landing() {
       <section style={{ maxWidth: 920, margin: '0 auto', padding: '88px 24px' }}>
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
           <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 64 }}>
-            <h2 style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>How it works</h2>
+            <h2 style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>{t('landing.howItWorks')}</h2>
             <p style={{ color: '#6B6B6B', fontSize: 16 }}>Three simple steps to get legal help</p>
           </motion.div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>

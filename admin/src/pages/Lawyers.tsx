@@ -10,6 +10,7 @@ import {
   Hash,
   Star,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getPendingLawyers, verifyLawyer } from '../api/admin'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -27,6 +28,7 @@ const fadeUp = {
 }
 
 export const Lawyers: React.FC = () => {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   const { data: lawyers = [], isLoading } = useQuery({
@@ -53,7 +55,7 @@ export const Lawyers: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-2xl font-bold text-[#0A0A0A]">Lawyer Verification</h1>
+        <h1 className="text-2xl font-bold text-[#0A0A0A]">{t('lawyers.title')}</h1>
         <p className="text-[#6B6B6B] text-sm mt-1">
           Review and approve pending lawyer registrations
         </p>
@@ -90,7 +92,7 @@ export const Lawyers: React.FC = () => {
           <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-5">
             <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
-          <p className="text-xl font-semibold text-[#0A0A0A] mb-1">All lawyers verified ✓</p>
+          <p className="text-xl font-semibold text-[#0A0A0A] mb-1">{t('admin.allVerified')} ✓</p>
           <p className="text-sm text-[#6B6B6B]">No pending verifications at the moment</p>
         </motion.div>
       )}
@@ -171,7 +173,7 @@ export const Lawyers: React.FC = () => {
                       onClick={() => verify(lawyer.id)}
                     >
                       <CheckCircle className="w-4 h-4" />
-                      Verify
+                      {t('admin.verifyLawyer')}
                     </Button>
                   </div>
                 </div>
