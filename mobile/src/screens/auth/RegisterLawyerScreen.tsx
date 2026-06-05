@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
@@ -19,7 +18,6 @@ import { specializationsApi } from '../../api/specializations';
 import { Specialization } from '../../types';
 
 export const RegisterLawyerScreen = ({ navigation }: any) => {
-  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,26 +43,20 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
 
   const handleRegister = async () => {
     if (!fullName.trim() || !email.trim() || !password.trim() || !phone.trim() || !city.trim()) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      Alert.alert('Xəta', 'Bütün tələb olunan sahələri doldurun');
       return;
     }
     setLoading(true);
     try {
       await authApi.registerLawyer({
-        fullName,
-        email,
-        password,
-        phone,
-        bio,
-        city,
-        licenseNumber,
+        fullName, email, password, phone, bio, city, licenseNumber,
         experienceYears: parseInt(experienceYears) || 0,
         hourlyRate: parseFloat(hourlyRate) || 0,
         specializationIds: selectedSpecs,
       });
       navigation.navigate('VerifyOtp', { email });
     } catch (e: any) {
-      Alert.alert('Registration Failed', e.response?.data?.message || 'Something went wrong');
+      Alert.alert('Qeydiyyat alınmadı', e.response?.data?.message || 'Xəta baş verdi');
     } finally {
       setLoading(false);
     }
@@ -72,32 +64,26 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
             <Ionicons name="arrow-back" size={24} color="#0A0A0A" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('auth.createAccount')}</Text>
-          <Text style={styles.subtitle}>Register as a lawyer</Text>
+          <Text style={styles.title}>Hesab yarat</Text>
+          <Text style={styles.subtitle}>Vəkil kimi qeydiyyat</Text>
 
-          <Input label={t('profile.fullName')} placeholder="John Doe" value={fullName} onChangeText={setFullName} autoCapitalize="words" />
-          <Input label={t('auth.email')} placeholder="your@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <Input label={t('auth.password')} placeholder="Min 6 characters" value={password} onChangeText={setPassword} secureToggle />
-          <Input label={t('profile.phone')} placeholder="+994 50 000 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          <Input label="City" placeholder="Baku" value={city} onChangeText={setCity} />
-          <Input label="License Number" placeholder="AZ-12345" value={licenseNumber} onChangeText={setLicenseNumber} />
-          <Input label="Experience (years)" placeholder="5" value={experienceYears} onChangeText={setExperienceYears} keyboardType="numeric" />
-          <Input label="Hourly Rate ($)" placeholder="50" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="decimal-pad" />
+          <Input label="Ad Soyad" placeholder="Əli Həsənov" value={fullName} onChangeText={setFullName} autoCapitalize="words" />
+          <Input label="E-poçt ünvanı" placeholder="siz@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <Input label="Şifrə" placeholder="Minimum 6 simvol" value={password} onChangeText={setPassword} secureToggle />
+          <Input label="Telefon" placeholder="+994 50 000 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+          <Input label="Şəhər" placeholder="Bakı" value={city} onChangeText={setCity} />
+          <Input label="Lisenziya nömrəsi" placeholder="AZ-12345" value={licenseNumber} onChangeText={setLicenseNumber} />
+          <Input label="Təcrübə (il)" placeholder="5" value={experienceYears} onChangeText={setExperienceYears} keyboardType="numeric" />
+          <Input label="Saatlıq qiymət ($)" placeholder="50" value={hourlyRate} onChangeText={setHourlyRate} keyboardType="decimal-pad" />
           <Input
             label="Bio"
-            placeholder="Tell clients about yourself..."
+            placeholder="Müştərilərə özünüz haqqında məlumat verin..."
             value={bio}
             onChangeText={setBio}
             multiline
@@ -107,7 +93,7 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
 
           {specializations.length > 0 && (
             <View style={styles.specsSection}>
-              <Text style={styles.specsLabel}>Specializations</Text>
+              <Text style={styles.specsLabel}>İxtisaslar</Text>
               <View style={styles.specsList}>
                 {specializations.map((spec) => {
                   const selected = selectedSpecs.includes(spec.id);
@@ -127,7 +113,7 @@ export const RegisterLawyerScreen = ({ navigation }: any) => {
             </View>
           )}
 
-          <Button title={t('auth.registerLawyer')} onPress={handleRegister} loading={loading} style={styles.btn} />
+          <Button title="Vəkil kimi qoşul" onPress={handleRegister} loading={loading} style={styles.btn} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -143,14 +129,7 @@ const styles = StyleSheet.create({
   specsSection: { marginBottom: 16 },
   specsLabel: { fontSize: 14, fontWeight: '500', color: '#0A0A0A', marginBottom: 10 },
   specsList: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  specChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFFFFF',
-  },
+  specChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' },
   specChipSelected: { borderColor: '#0A0A0A', backgroundColor: '#0A0A0A' },
   specChipText: { fontSize: 13, color: '#374151', fontWeight: '500' },
   specChipTextSelected: { color: '#FFFFFF' },

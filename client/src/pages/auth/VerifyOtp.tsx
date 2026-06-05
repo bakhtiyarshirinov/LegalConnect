@@ -4,13 +4,11 @@ import { motion } from 'framer-motion'
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Scale, Mail, RotateCcw } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { authApi } from '../../api/auth'
 import { useAuthStore } from '../../store/authStore'
 import { Button } from '../../components/ui/Button'
 
 export default function VerifyOtp() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -33,7 +31,7 @@ export default function VerifyOtp() {
     mutationFn: authApi.verifyOtp,
     onSuccess: (data) => {
       setAuth(data)
-      toast.success('Email verified! Welcome to LegalConnect.')
+      toast.success('E-poçt təsdiqləndi! LegalConnect-ə xoş gəldiniz.')
       navigate('/dashboard')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -41,7 +39,7 @@ export default function VerifyOtp() {
 
   const { mutate: resend, isPending: isResending } = useMutation({
     mutationFn: () => authApi.resendOtp(email),
-    onSuccess: () => { toast.success('OTP sent!'); setTimer(60) },
+    onSuccess: () => { toast.success('Kod göndərildi!'); setTimer(60) },
     onError: (err: Error) => toast.error(err.message),
   })
 
@@ -70,7 +68,7 @@ export default function VerifyOtp() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const code = digits.join('')
-    if (code.length < 6) { toast.error('Enter all 6 digits'); return }
+    if (code.length < 6) { toast.error('6 rəqəmi daxil edin'); return }
     verify({ email, code })
   }
 
@@ -94,10 +92,10 @@ export default function VerifyOtp() {
             <Mail size={24} color="#fff" />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 8 }}>
-            {t('auth.checkEmail')}
+            E-poçtu təsdiqlə
           </h1>
           <p style={{ color: '#6B6B6B', fontSize: 14, lineHeight: 1.6 }}>
-            {t('auth.otpSent')}<br />
+            E-poçtunuzu yoxlayın<br />
             <strong style={{ color: '#0A0A0A' }}>{email}</strong>
           </p>
         </div>
@@ -107,7 +105,6 @@ export default function VerifyOtp() {
           padding: 28, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
         }}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* OTP Inputs */}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               {digits.map((digit, i) => (
                 <input
@@ -135,14 +132,14 @@ export default function VerifyOtp() {
             </div>
 
             <Button type="submit" fullWidth loading={isPending} size="lg">
-              Verify Email
+              E-poçtu təsdiqlə
             </Button>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: 20 }}>
             {timer > 0 ? (
               <p style={{ fontSize: 13, color: '#6B6B6B' }}>
-                Resend code in <strong style={{ color: '#0A0A0A' }}>{timer}s</strong>
+                Kodu yenidən göndər <strong style={{ color: '#0A0A0A' }}>{timer}s</strong>
               </p>
             ) : (
               <button
@@ -155,7 +152,7 @@ export default function VerifyOtp() {
                   fontFamily: 'Inter, sans-serif', textDecoration: 'underline', textUnderlineOffset: 3,
                 }}
               >
-                <RotateCcw size={12} /> {isResending ? 'Sending...' : t('auth.resendCode')}
+                <RotateCcw size={12} /> {isResending ? 'Göndərilir...' : 'Kodu yenidən göndər'}
               </button>
             )}
           </div>

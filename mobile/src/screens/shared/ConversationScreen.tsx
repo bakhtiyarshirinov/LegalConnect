@@ -15,13 +15,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { chatsApi } from '../../api/chats';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import { Message } from '../../types';
 import { formatTime } from '../../utils/date';
 
 export const ConversationScreen = ({ route, navigation }: any) => {
-  const { t } = useTranslation();
   const { chatId, name } = route.params;
   const user = useAuthStore((s) => s.user);
   const [text, setText] = useState('');
@@ -38,16 +36,12 @@ export const ConversationScreen = ({ route, navigation }: any) => {
   useFocusEffect(
     useCallback(() => {
       refetch();
-      if (user?.userId) {
-        chatsApi.markAsRead(chatId, user.userId).catch(() => {});
-      }
+      if (user?.userId) { chatsApi.markAsRead(chatId, user.userId).catch(() => {}); }
     }, [chatId, user?.userId])
   );
 
   const scrollToBottom = () => {
-    if (messages && messages.length > 0) {
-      flatRef.current?.scrollToEnd({ animated: true });
-    }
+    if (messages && messages.length > 0) { flatRef.current?.scrollToEnd({ animated: true }); }
   };
 
   const handleSend = async () => {
@@ -60,7 +54,7 @@ export const ConversationScreen = ({ route, navigation }: any) => {
       await refetch();
       setTimeout(scrollToBottom, 100);
     } catch {
-      Alert.alert('Error', 'Failed to send message');
+      Alert.alert('Xəta', 'Mesaj göndərilmədi');
       setText(content);
     } finally {
       setSending(false);
@@ -77,12 +71,8 @@ export const ConversationScreen = ({ route, navigation }: any) => {
           </View>
         )}
         <View style={[styles.bubble, isOwn ? styles.bubbleOwn : styles.bubbleOther]}>
-          <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>
-            {item.content}
-          </Text>
-          <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
-            {formatTime(item.sentAt)}
-          </Text>
+          <Text style={[styles.messageText, isOwn && styles.messageTextOwn]}>{item.content}</Text>
+          <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>{formatTime(item.sentAt)}</Text>
         </View>
       </View>
     );
@@ -100,10 +90,7 @@ export const ConversationScreen = ({ route, navigation }: any) => {
         <Text style={styles.headerName}>{name}</Text>
       </View>
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <FlatList
           ref={flatRef}
           data={messages || []}
@@ -116,7 +103,7 @@ export const ConversationScreen = ({ route, navigation }: any) => {
         <View style={styles.inputBar}>
           <TextInput
             style={styles.textInput}
-            placeholder={t('chat.typeMessage')}
+            placeholder="Mesaj yazın..."
             placeholderTextColor="#9CA3AF"
             value={text}
             onChangeText={setText}
@@ -138,81 +125,26 @@ export const ConversationScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-    paddingTop: Platform.OS === 'ios' ? 52 : 16,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E8E8E8', paddingTop: Platform.OS === 'ios' ? 52 : 16 },
   backBtn: { marginRight: 12 },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#0A0A0A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
+  headerAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#0A0A0A', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   headerAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   headerName: { fontSize: 16, fontWeight: '700', color: '#0A0A0A' },
   messageList: { padding: 16, flexGrow: 1 },
   messageRow: { marginBottom: 10 },
   messageRowOwn: { alignItems: 'flex-end' },
   messageRowOther: { alignItems: 'flex-start', flexDirection: 'row', gap: 8 },
-  senderAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#E5E7EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-end',
-  },
+  senderAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },
   senderAvatarText: { fontSize: 11, fontWeight: '700', color: '#374151' },
-  bubble: {
-    maxWidth: '75%',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
+  bubble: { maxWidth: '75%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleOwn: { backgroundColor: '#0A0A0A', borderBottomRightRadius: 4 },
   bubbleOther: { backgroundColor: '#F5F5F5', borderBottomLeftRadius: 4 },
   messageText: { fontSize: 15, color: '#0A0A0A', lineHeight: 20 },
   messageTextOwn: { color: '#FFFFFF' },
   messageTime: { fontSize: 10, color: '#9CA3AF', marginTop: 4, textAlign: 'right' },
   messageTimeOwn: { color: 'rgba(255,255,255,0.55)' },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
-    gap: 10,
-  },
-  textInput: {
-    flex: 1,
-    maxHeight: 100,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#0A0A0A',
-  },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0A0A0A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E8E8E8', gap: 10 },
+  textInput: { flex: 1, maxHeight: 100, backgroundColor: '#F3F4F6', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#0A0A0A' },
+  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#0A0A0A', alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled: { backgroundColor: '#D1D5DB' },
 });

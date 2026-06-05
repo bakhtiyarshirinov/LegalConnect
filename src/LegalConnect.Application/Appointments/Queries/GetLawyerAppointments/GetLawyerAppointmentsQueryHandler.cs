@@ -29,6 +29,7 @@ public class GetLawyerAppointmentsQueryHandler
             Status: a.Status.ToString(),
             Type: a.Type.ToString(),
             Price: a.Price,
-            Notes: a.Notes));
+            Notes: a.Notes,
+            MeetingUrl: a.MeetingUrl));
     }
 }

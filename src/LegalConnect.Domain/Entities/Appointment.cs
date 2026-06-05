@@ -14,6 +14,7 @@ public class Appointment
     public AppointmentType Type { get; private set; }
     public string? Notes { get; private set; }
     public decimal Price { get; private set; }
+    public string? MeetingUrl { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
     public User Client { get; private set; } = null!;
@@ -51,4 +52,5 @@ public class Appointment
     public void Confirm() => Status = AppointmentStatus.Confirmed;
     public void Cancel() => Status = AppointmentStatus.Cancelled;
     public void Complete() => Status = AppointmentStatus.Completed;
+    public void SetMeetingUrl(string url) => MeetingUrl = url;
 }

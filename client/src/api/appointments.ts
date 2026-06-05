@@ -10,6 +10,7 @@ export interface AppointmentDto {
   type: string
   price: number
   notes?: string
+  meetingUrl?: string
 }
 
 export interface LawyerAppointmentDto {
@@ -22,6 +23,7 @@ export interface LawyerAppointmentDto {
   type: string
   price: number
   notes?: string
+  meetingUrl?: string
 }
 
 export interface CreateAppointmentPayload {
@@ -57,4 +59,7 @@ export const appointmentsApi = {
     api.put(`/appointments/${id}/cancel`, null, {
       params: { userId },
     }),
+
+  createMeeting: (id: string) =>
+    api.post<{ meetingUrl: string }>(`/appointments/${id}/create-meeting`).then((r) => r.data),
 }

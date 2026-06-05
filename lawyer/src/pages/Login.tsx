@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Scale, CheckCircle } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Login() {
-  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { handleLogin, loading } = useAuth()
@@ -26,12 +24,12 @@ export default function Login() {
             <div style={{ fontSize: 10, color: '#6B6B6B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pro</div>
           </div>
         </div>
-        <h2 style={{ fontSize: 34, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 16 }}>Grow Your<br />Legal Practice</h2>
+        <h2 style={{ fontSize: 34, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 16 }}>Hüquq Təcrübənizi<br />İnkişaf Etdirin</h2>
         <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65, marginBottom: 48 }}>
-          Manage appointments, connect with clients, and build your reputation — all in one place.
+          Görüşləri idarə edin, müştərilərlə əlaqə saxlayın və reputasiyanızı qurun — hamısı bir yerdə.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {['Access your appointments dashboard', 'Chat with clients in real time', 'Manage your professional profile'].map((item) => (
+          {['Görüşlər panelinə daxil olun', 'Müştərilərlə real vaxtda söhbət edin', 'Peşəkar profilinizi idarə edin'].map((item) => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <CheckCircle size={15} color="#6B6B6B" style={{ flexShrink: 0 }} />
               <span style={{ color: '#D4D4D4', fontSize: 14 }}>{item}</span>
@@ -43,15 +41,15 @@ export default function Login() {
       <div style={{ flex: 1, background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 48 }}>
         <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }} style={{ width: '100%', maxWidth: 360 }}>
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 6 }}>Lawyer Portal</h1>
-            <p style={{ color: '#6B6B6B', fontSize: 14 }}>Sign in to your LegalConnect account</p>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 6 }}>Vəkil Portalı</h1>
+            <p style={{ color: '#6B6B6B', fontSize: 14 }}>LegalConnect hesabınıza daxil olun</p>
           </div>
           <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Input label={t('auth.email')} type="email" placeholder="your@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-            <Input label={t('auth.password')} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>{t('auth.login')}</Button>
+            <Input label="E-poçt ünvanı" type="email" placeholder="siz@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+            <Input label="Şifrə" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+            <Button type="submit" variant="primary" size="lg" loading={loading} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>Daxil ol</Button>
           </form>
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#6B6B6B', marginTop: 24 }}>Access restricted to verified lawyers only</p>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#6B6B6B', marginTop: 24 }}>Giriş yalnız təsdiqlənmiş vəkillər üçündür</p>
         </motion.div>
       </div>
     </div>

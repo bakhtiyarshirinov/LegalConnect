@@ -91,6 +91,39 @@ public class EmailService : IEmailService
         await SendAsync(email, "Reset your LegalConnect password", html);
     }
 
+    public async Task SendMeetingLinkAsync(
+        string email,
+        string fullName,
+        string otherPartyName,
+        string meetingUrl,
+        DateTime scheduledAt)
+    {
+        var formattedDate = scheduledAt.ToString("dddd, MMMM d, yyyy 'at' h:mm tt") + " UTC";
+
+        var html = $"""
+            <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#ffffff;border-radius:12px;border:1px solid #E8E8E8;">
+              <div style="margin-bottom:24px;">
+                <span style="font-size:20px;font-weight:700;color:#0A0A0A;letter-spacing:-0.3px;">LegalConnect</span>
+              </div>
+              <h2 style="font-size:22px;font-weight:700;color:#0A0A0A;margin:0 0 8px;">Your meeting is ready</h2>
+              <p style="color:#6B6B6B;font-size:15px;margin:0 0 16px;">Hi <strong style="color:#0A0A0A;">{fullName}</strong>, your video meeting with <strong style="color:#0A0A0A;">{otherPartyName}</strong> has been created.</p>
+              <div style="background:#F5F5F5;border-radius:10px;padding:16px 20px;margin:16px 0;">
+                <p style="color:#6B6B6B;font-size:13px;margin:0 0 4px;">Scheduled for</p>
+                <p style="color:#0A0A0A;font-size:15px;font-weight:600;margin:0;">📅 {formattedDate}</p>
+              </div>
+              <div style="text-align:center;margin:28px 0;">
+                <a href="{meetingUrl}" style="display:inline-block;background:#0A0A0A;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;letter-spacing:-0.2px;">
+                  🎥 Join Meeting
+                </a>
+              </div>
+              <p style="color:#A3A3A3;font-size:12px;margin:16px 0 0;text-align:center;">Or copy this link: <a href="{meetingUrl}" style="color:#0A0A0A;">{meetingUrl}</a></p>
+              <p style="color:#A3A3A3;font-size:12px;margin:16px 0 0;">The meeting link will be active for 2 hours from creation time. If you didn't request this, ignore this email.</p>
+            </div>
+            """;
+
+        await SendAsync(email, $"Your LegalConnect meeting with {otherPartyName}", html);
+    }
+
     private async Task SendAsync(string toEmail, string subject, string htmlBody)
     {
         var message = new MimeMessage();

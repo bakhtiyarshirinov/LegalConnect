@@ -11,10 +11,10 @@ export const lawyersApi = {
     api.get(`/reviews/lawyer/${id}`),
 
   getUnverified: () =>
-    api.get('/lawyers/unverified'),
+    api.get('/admin/lawyers/pending'),
 
   verify: (id: string) =>
-    api.post(`/lawyers/${id}/verify`),
+    api.put(`/admin/lawyers/${id}/verify`),
 
   getMyProfile: () =>
     api.get('/lawyers/me'),
@@ -23,7 +23,7 @@ export const lawyersApi = {
     api.get(`/lawyers/${lawyerId}/stats`),
 
   uploadAvatar: (formData: FormData) =>
-    api.post('/lawyers/avatar', formData, {
+    api.post('/files/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 };

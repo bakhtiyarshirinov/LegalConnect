@@ -3,18 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { LogOut, Scale, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { getMyLawyerProfile } from '../../api/profile'
-
-const LANGS = ['EN', 'AZ', 'RU'] as const
 
 export function Navbar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [dropOpen, setDropOpen] = useState(false)
-  const { t, i18n } = useTranslation()
-  const activeLang = i18n.language?.slice(0, 2).toUpperCase()
 
   const { data: profile } = useQuery({
     queryKey: ['profile-page', user?.userId],
@@ -48,73 +43,51 @@ export function Navbar() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Language switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#F5F5F5', borderRadius: 8, padding: 3, gap: 2 }}>
-          {LANGS.map((lang) => {
-            const isActive = activeLang === lang
-            return (
-              <button
-                key={lang}
-                onClick={() => i18n.changeLanguage(lang.toLowerCase())}
-                style={{
-                  padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                  fontSize: 11, fontWeight: 600, letterSpacing: '0.03em',
-                  background: isActive ? '#0A0A0A' : 'transparent',
-                  color: isActive ? '#FFFFFF' : '#6B6B6B',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {lang}
-              </button>
-            )
-          })}
-        </div>
-
         <div style={{ position: 'relative' }}>
-        <button
-          onClick={() => setDropOpen((p) => !p)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F5F5F5', border: '1px solid #F0F0F0', borderRadius: 10, padding: '6px 12px 6px 8px', cursor: 'pointer', color: '#0A0A0A', fontSize: 13, fontWeight: 500 }}
-          onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#EFEFEF')}
-          onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5')}
-        >
-          <div style={{ width: 26, height: 26, background: '#0A0A0A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', overflow: 'hidden', flexShrink: 0 }}>
-            {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              user?.fullName?.[0]?.toUpperCase() ?? '?'
-            )}
-          </div>
-          <span style={{ maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName}</span>
-          <ChevronDown size={14} color="#6B6B6B" />
-        </button>
+          <button
+            onClick={() => setDropOpen((p) => !p)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F5F5F5', border: '1px solid #F0F0F0', borderRadius: 10, padding: '6px 12px 6px 8px', cursor: 'pointer', color: '#0A0A0A', fontSize: 13, fontWeight: 500 }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#EFEFEF')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5')}
+          >
+            <div style={{ width: 26, height: 26, background: '#0A0A0A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', overflow: 'hidden', flexShrink: 0 }}>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                user?.fullName?.[0]?.toUpperCase() ?? '?'
+              )}
+            </div>
+            <span style={{ maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.fullName}</span>
+            <ChevronDown size={14} color="#6B6B6B" />
+          </button>
 
-        <AnimatePresence>
-          {dropOpen && (
-            <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 59 }} onClick={() => setDropOpen(false)} />
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                transition={{ duration: 0.12 }}
-                style={{ position: 'absolute', right: 0, top: '110%', background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 12, minWidth: 180, overflow: 'hidden', zIndex: 60, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
-              >
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F0F0' }}>
-                  <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('profile.lawyer')}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', marginTop: 2 }}>{user?.email}</div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', fontFamily: 'Inter, sans-serif' }}
-                  onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#fef2f2')}
-                  onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
+          <AnimatePresence>
+            {dropOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 59 }} onClick={() => setDropOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.12 }}
+                  style={{ position: 'absolute', right: 0, top: '110%', background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 12, minWidth: 180, overflow: 'hidden', zIndex: 60, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
                 >
-                  <LogOut size={14} /> {t('auth.logout')}
-                </button>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+                  <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F0F0' }}>
+                    <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vəkil</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', marginTop: 2 }}>{user?.email}</div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    style={{ width: '100%', padding: '10px 16px', background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', fontFamily: 'Inter, sans-serif' }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#fef2f2')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
+                  >
+                    <LogOut size={14} /> Çıxış
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.header>

@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { Calendar, List, CalendarDays } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
 import toast from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import {
   getByLawyer,
@@ -27,8 +26,6 @@ const STATUS_DOT: Record<string, string> = {
   Cancelled: '#9CA3AF',
 }
 
-// TABS is built inside the component to access t()
-
 type View = 'list' | 'calendar'
 
 function toLocalKey(isoStr: string): string {
@@ -45,19 +42,18 @@ function formatTime(d: string) {
   return new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
+const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
+  { label: 'Hamısı', value: 'All' },
+  { label: 'Gözləyir', value: 'Pending' },
+  { label: 'Təsdiqləndi', value: 'Confirmed' },
+  { label: 'Ləğv edildi', value: 'Cancelled' },
+  { label: 'Tamamlandı', value: 'Completed' },
+]
+
 export default function Appointments() {
-  const { t } = useTranslation()
   const { user, lawyerId, setLawyerId } = useAuthStore()
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<AppointmentStatus | 'All'>('All')
-
-  const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
-    { label: t('appointments.status.all'), value: 'All' },
-    { label: t('appointments.status.pending'), value: 'Pending' },
-    { label: t('appointments.status.confirmed'), value: 'Confirmed' },
-    { label: t('appointments.status.cancelled'), value: 'Cancelled' },
-    { label: t('appointments.status.completed'), value: 'Completed' },
-  ]
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [view, setView] = useState<View>('list')
   const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null)
@@ -69,9 +65,7 @@ export default function Appointments() {
   })
 
   useEffect(() => {
-    if (profile?.id && !lawyerId) {
-      setLawyerId(profile.id)
-    }
+    if (profile?.id && !lawyerId) { setLawyerId(profile.id) }
   }, [profile?.id, lawyerId, setLawyerId])
 
   const effectiveLawyerId = lawyerId ?? profile?.id
@@ -82,10 +76,8 @@ export default function Appointments() {
     enabled: !!effectiveLawyerId,
   })
 
-  const filtered =
-    activeTab === 'All' ? appointments : appointments.filter((a) => a.status === activeTab)
+  const filtered = activeTab === 'All' ? appointments : appointments.filter((a) => a.status === activeTab)
 
-  // Build date → appointments map
   const dateMap = appointments.reduce<Record<string, Appointment[]>>((acc, a) => {
     const key = toLocalKey(a.scheduledAt)
     if (!acc[key]) acc[key] = []
@@ -99,43 +91,22 @@ export default function Appointments() {
   const handleConfirm = async (a: Appointment) => {
     if (!effectiveLawyerId) return
     setActionLoading(a.id + 'confirm')
-    try {
-      await confirmAppointment(a.id, effectiveLawyerId)
-      toast.success('Appointment confirmed!')
-      qc.invalidateQueries({ queryKey: ['appointments'] })
-    } catch {
-      toast.error('Failed to confirm appointment')
-    } finally {
-      setActionLoading(null)
-    }
+    try { await confirmAppointment(a.id, effectiveLawyerId); toast.success('Görüş təsdiqləndi!'); qc.invalidateQueries({ queryKey: ['appointments'] }) }
+    catch { toast.error('Görüşü təsdiqləmək alınmadı') } finally { setActionLoading(null) }
   }
 
   const handleCancel = async (a: Appointment) => {
     if (!effectiveLawyerId) return
     setActionLoading(a.id + 'cancel')
-    try {
-      await cancelAppointment(a.id, effectiveLawyerId)
-      toast.success('Appointment cancelled')
-      qc.invalidateQueries({ queryKey: ['appointments'] })
-    } catch {
-      toast.error('Failed to cancel appointment')
-    } finally {
-      setActionLoading(null)
-    }
+    try { await cancelAppointment(a.id, effectiveLawyerId); toast.success('Görüş ləğv edildi'); qc.invalidateQueries({ queryKey: ['appointments'] }) }
+    catch { toast.error('Görüşü ləğv etmək alınmadı') } finally { setActionLoading(null) }
   }
 
   const handleComplete = async (a: Appointment) => {
     if (!effectiveLawyerId) return
     setActionLoading(a.id + 'complete')
-    try {
-      await completeAppointment(a.id, effectiveLawyerId)
-      toast.success('Appointment completed!')
-      qc.invalidateQueries({ queryKey: ['appointments'] })
-    } catch {
-      toast.error('Failed to complete appointment')
-    } finally {
-      setActionLoading(null)
-    }
+    try { await completeAppointment(a.id, effectiveLawyerId); toast.success('Görüş tamamlandı!'); qc.invalidateQueries({ queryKey: ['appointments'] }) }
+    catch { toast.error('Görüşü tamamlamaq alınmadı') } finally { setActionLoading(null) }
   }
 
   const tabCounts = TABS.reduce(
@@ -148,28 +119,16 @@ export default function Appointments() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1100 }}>
-      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>{t('appointments.title')}</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>Manage all your client appointments</p>
+            <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--text-primary)' }}>Görüşlər</h1>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4 }}>Bütün müştəri görüşlərini idarə edin</p>
           </div>
-          {/* View toggle */}
           <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', padding: 4, borderRadius: 10 }}>
-            {([['list', <List size={14} />, 'List'], ['calendar', <CalendarDays size={14} />, 'Calendar']] as const).map(([v, icon, label]) => (
-              <button
-                key={v}
-                onClick={() => setView(v as View)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
-                  borderRadius: 7, border: 'none',
-                  background: view === v ? 'var(--bg)' : 'transparent',
-                  color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontWeight: view === v ? 600 : 500, fontSize: 13, cursor: 'pointer',
-                  boxShadow: view === v ? 'var(--shadow)' : 'none',
-                  fontFamily: 'Inter, sans-serif',
-                }}
+            {([['list', <List size={14} />, 'Siyahı'], ['calendar', <CalendarDays size={14} />, 'Təqvim']] as const).map(([v, icon, label]) => (
+              <button key={v} onClick={() => setView(v as View)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, border: 'none', background: view === v ? 'var(--bg)' : 'transparent', color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: view === v ? 600 : 500, fontSize: 13, cursor: 'pointer', boxShadow: view === v ? 'var(--shadow)' : 'none', fontFamily: 'Inter, sans-serif' }}
               >
                 {icon}{label}
               </button>
@@ -180,29 +139,16 @@ export default function Appointments() {
 
       {view === 'list' ? (
         <>
-          {/* Tabs */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
             style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'var(--surface)', padding: 4, borderRadius: 12, width: 'fit-content' }}
           >
             {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveTab(tab.value)}
-                style={{
-                  padding: '7px 14px', borderRadius: 9, border: 'none',
-                  background: activeTab === tab.value ? 'var(--bg)' : 'transparent',
-                  color: activeTab === tab.value ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontWeight: activeTab === tab.value ? 600 : 500,
-                  fontSize: 13, cursor: 'pointer',
-                  boxShadow: activeTab === tab.value ? 'var(--shadow)' : 'none',
-                  transition: 'all 0.15s', whiteSpace: 'nowrap',
-                }}
+              <button key={tab.value} onClick={() => setActiveTab(tab.value)}
+                style={{ padding: '7px 14px', borderRadius: 9, border: 'none', background: activeTab === tab.value ? 'var(--bg)' : 'transparent', color: activeTab === tab.value ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: activeTab === tab.value ? 600 : 500, fontSize: 13, cursor: 'pointer', boxShadow: activeTab === tab.value ? 'var(--shadow)' : 'none', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
               >
                 {tab.label}
                 {tabCounts[tab.value] > 0 && (
-                  <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    {tabCounts[tab.value]}
-                  </span>
+                  <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>{tabCounts[tab.value]}</span>
                 )}
               </button>
             ))}
@@ -215,9 +161,7 @@ export default function Appointments() {
           ) : filtered.length === 0 ? (
             <Card style={{ textAlign: 'center', padding: '60px 24px' }}>
               <Calendar size={36} color="var(--border)" style={{ margin: '0 auto 16px' }} />
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>
-                {t('appointments.noAppointments')}
-              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500 }}>Görüş tapılmadı</p>
             </Card>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -238,26 +182,24 @@ export default function Appointments() {
                             {a.type}
                           </span>
                         </span>
-                        <span>⏱ {a.durationMinutes} min</span>
+                        <span>⏱ {a.durationMinutes} dəq</span>
                         <span>💰 ${a.price}</span>
                       </div>
                       <Badge status={a.status} />
                       {a.status === 'Pending' && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                          <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>{t('appointments.confirm')}</Button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>{t('appointments.cancel')}</Button>
+                          <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Təsdiqlə</Button>
+                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
                         </div>
                       )}
                       {a.status === 'Confirmed' && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                          <button
-                            disabled={actionLoading === a.id + 'complete'}
-                            onClick={() => handleComplete(a)}
+                          <button disabled={actionLoading === a.id + 'complete'} onClick={() => handleComplete(a)}
                             style={{ background: '#EBFBEE', color: '#2F9E44', border: '1px solid #B2F2BB', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: actionLoading === a.id + 'complete' ? 0.6 : 1 }}
                           >
-                            {t('appointments.status.completed')}
+                            Tamamla
                           </button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>{t('appointments.cancel')}</Button>
+                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
                         </div>
                       )}
                     </div>
@@ -268,7 +210,6 @@ export default function Appointments() {
           )}
         </>
       ) : (
-        /* ── Calendar View ── */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <ReactCalendar
             onChange={(val) => setSelectedCalDate(val as Date)}
@@ -288,7 +229,6 @@ export default function Appointments() {
             }}
           />
 
-          {/* Legend */}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {Object.entries(STATUS_DOT).map(([status, color]) => (
               <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -303,13 +243,11 @@ export default function Appointments() {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
                 {selectedCalDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginLeft: 8 }}>
-                  {selectedDayAppts.length} appointment{selectedDayAppts.length !== 1 ? 's' : ''}
+                  {selectedDayAppts.length} görüş
                 </span>
               </h3>
               {selectedDayAppts.length === 0 ? (
-                <Card style={{ textAlign: 'center', padding: 24, color: 'var(--text-secondary)', fontSize: 14 }}>
-                  No appointments on this day
-                </Card>
+                <Card style={{ textAlign: 'center', padding: 24, color: 'var(--text-secondary)', fontSize: 14 }}>Bu gündə görüş yoxdur</Card>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {selectedDayAppts.map((a) => (
@@ -318,7 +256,7 @@ export default function Appointments() {
                         <div>
                           <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{a.clientName}</div>
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                            {formatTime(a.scheduledAt)} · {a.durationMinutes} min · {a.type}
+                            {formatTime(a.scheduledAt)} · {a.durationMinutes} dəq · {a.type}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -18,7 +18,7 @@ public class AppointmentRepository : IAppointmentRepository
     public async Task<Appointment?> GetByIdAsync(Guid id)
         => await _context.Appointments
             .Include(a => a.Client)
-            .Include(a => a.Lawyer)
+            .Include(a => a.Lawyer).ThenInclude(l => l.User)
             .FirstOrDefaultAsync(a => a.Id == id);
 
     public async Task<IEnumerable<Appointment>> GetByClientIdAsync(Guid clientId)

@@ -8,7 +8,6 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lawyersApi } from '../../api/lawyers';
 import { Button } from '../../components/ui/Button';
@@ -17,7 +16,6 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
 import { Lawyer } from '../../types';
 
 export const AdminDashboardScreen = () => {
-  const { t } = useTranslation();
   const qc = useQueryClient();
 
   const { data: lawyers, isLoading, refetch, isRefetching } = useQuery<Lawyer[]>({
@@ -29,9 +27,9 @@ export const AdminDashboardScreen = () => {
     try {
       await lawyersApi.verify(id);
       qc.invalidateQueries({ queryKey: ['unverifiedLawyers'] });
-      Alert.alert('Verified', 'Lawyer has been verified');
+      Alert.alert('Təsdiqləndi', 'Vəkil təsdiqləndi');
     } catch {
-      Alert.alert('Error', 'Failed to verify lawyer');
+      Alert.alert('Xəta', 'Vəkili təsdiqləmək alınmadı');
     }
   };
 
@@ -45,12 +43,7 @@ export const AdminDashboardScreen = () => {
           <Text style={styles.name}>{item.fullName}</Text>
           <Text style={styles.city}>{item.city}</Text>
         </View>
-        <Button
-          title={t('admin.verifyLawyer')}
-          onPress={() => handleVerify(item.id)}
-          style={styles.verifyBtn}
-          textStyle={{ fontSize: 13 }}
-        />
+        <Button title="Təsdiqlə" onPress={() => handleVerify(item.id)} style={styles.verifyBtn} textStyle={{ fontSize: 13 }} />
       </View>
       {item.specializations?.length > 0 && (
         <View style={styles.specs}>
@@ -67,9 +60,9 @@ export const AdminDashboardScreen = () => {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('admin.title')}</Text>
+        <Text style={styles.title}>Admin Paneli</Text>
         <Text style={styles.subtitle}>
-          {lawyers?.length ?? 0} {t('admin.pendingVerification')}
+          {lawyers?.length ?? 0} Təsdiq gözləyir
         </Text>
       </View>
       {isLoading ? (
@@ -81,9 +74,7 @@ export const AdminDashboardScreen = () => {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>{t('admin.allVerified')}</Text>
-          }
+          ListEmptyComponent={<Text style={styles.emptyText}>Bütün vəkillər təsdiqləndi</Text>}
         />
       )}
     </SafeAreaView>

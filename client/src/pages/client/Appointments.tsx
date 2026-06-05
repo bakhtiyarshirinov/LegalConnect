@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, XCircle, Star, List, CalendarDays } from 'lucide-react'
+import { Calendar, XCircle, Star, List, CalendarDays, Video } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi, type AppointmentDto } from '../../api/appointments'
 import { reviewsApi } from '../../api/reviews'
@@ -40,7 +39,6 @@ function formatTime(d: string) {
 }
 
 export default function ClientAppointments() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
   const [view, setView] = useState<View>('list')
@@ -70,14 +68,32 @@ export default function ClientAppointments() {
   const cancelMutation = useMutation({
     mutationFn: (id: string) => appointmentsApi.cancel(id, user.userId),
     onSuccess: () => {
-      toast.success('Appointment cancelled')
+      toast.success('Görüş ləğv edildi')
       qc.invalidateQueries({ queryKey: ['clientAppointments', user.userId] })
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     },
     onError: (err: Error) => toast.error(err.message),
   })
 
-  // Build date → appointments map for calendar dots
+  const joinMeeting = async (appt: AppointmentDto) => {
+    if (appt.meetingUrl) {
+      window.open(appt.meetingUrl, '_blank')
+      return
+    }
+    try {
+      const { meetingUrl } = await appointmentsApi.createMeeting(appt.id)
+      window.open(meetingUrl, '_blank')
+      qc.invalidateQueries({ queryKey: ['clientAppointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Görüşə qoşulmaq alınmadı')
+    }
+  }
+
+  function isWithin24Hours(scheduledAt: string) {
+    const diff = new Date(scheduledAt).getTime() - Date.now()
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000
+  }
+
   const dateMap = appointments.reduce<Record<string, AppointmentDto[]>>((acc, a) => {
     const key = toLocalKey(a.scheduledAt)
     if (!acc[key]) acc[key] = []
@@ -118,31 +134,39 @@ export default function ClientAppointments() {
             </div>
             <div style={{ color: 'var(--text-2)', fontSize: 13, paddingLeft: 46, display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span>📅 {formatDate(appt.scheduledAt)}</span>
-              <span>⏱ {appt.durationMinutes} minutes · ${appt.price}</span>
+              <span>⏱ {appt.durationMinutes} dəqiqə · ${appt.price}</span>
               {appt.notes && <span style={{ fontStyle: 'italic' }}>"{appt.notes}"</span>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+            {appt.status === 'Confirmed' && isWithin24Hours(appt.scheduledAt) && (
+              <button
+                onClick={() => joinMeeting(appt)}
+                style={{ background: '#1C7ED6', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}
+              >
+                <Video size={14} /> Görüşə qoşul
+              </button>
+            )}
             {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
               <button
                 onClick={() => cancelMutation.mutate(appt.id)}
                 disabled={cancelMutation.isPending}
                 style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.6 : 1 }}
               >
-                <XCircle size={14} /> {t('appointments.cancel')}
+                <XCircle size={14} /> Ləğv et
               </button>
             )}
             {appt.status === 'Completed' && (
               reviewedApptIds.has(appt.id) ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-2)', fontSize: 13, fontWeight: 500 }}>
-                  <Star size={14} color="#f59e0b" fill="#f59e0b" /> {t('reviews.reviewed')}
+                  <Star size={14} color="#f59e0b" fill="#f59e0b" /> Rəy yazıldı ✓
                 </div>
               ) : (
                 <button
                   onClick={() => setReviewTarget({ appointmentId: appt.id, lawyerId: appt.lawyerId, lawyerName: appt.lawyerFullName })}
                   style={{ background: '#FFFBEB', color: '#B45309', border: '1px solid #FDE68A', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}
                 >
-                  <Star size={14} /> {t('reviews.leaveReview')}
+                  <Star size={14} /> Rəy yaz
                 </button>
               )
             )}
@@ -162,14 +186,14 @@ export default function ClientAppointments() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>{t('appointments.title')}</h1>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>Görüşlər</h1>
           <p style={{ color: 'var(--text-2)', marginTop: 4 }}>
-            {appointments.length} {t('appointments.total')} · {pendingCount} {t('appointments.status.pending')} · {confirmedCount} {t('appointments.status.confirmed')}
+            {appointments.length} Cəmi · {pendingCount} Gözləyir · {confirmedCount} Təsdiqləndi
           </p>
         </div>
         {/* View toggle */}
         <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', padding: 4, borderRadius: 10 }}>
-          {([['list', <List size={14} />, 'List'], ['calendar', <CalendarDays size={14} />, 'Calendar']] as const).map(([v, icon, label]) => (
+          {([['list', <List size={14} />, 'Siyahı'], ['calendar', <CalendarDays size={14} />, 'Təqvim']] as const).map(([v, icon, label]) => (
             <button
               key={v}
               onClick={() => setView(v as View)}
@@ -197,7 +221,7 @@ export default function ClientAppointments() {
         sorted.length === 0 ? (
           <Card padding={40} style={{ textAlign: 'center' }}>
             <Calendar size={40} style={{ margin: '0 auto 12px', opacity: 0.3, color: 'var(--text-2)' }} />
-            <p style={{ color: 'var(--text-2)' }}>{t('appointments.noAppointments')}</p>
+            <p style={{ color: 'var(--text-2)' }}>Görüş tapılmadı</p>
           </Card>
         ) : (
           <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -229,7 +253,6 @@ export default function ClientAppointments() {
             }}
           />
 
-          {/* Legend */}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {Object.entries(STATUS_DOT).map(([status, color]) => (
               <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-2)' }}>
@@ -239,18 +262,17 @@ export default function ClientAppointments() {
             ))}
           </div>
 
-          {/* Selected day appointments */}
           {selectedCalDate && (
             <div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>
                 {selectedCalDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', marginLeft: 8 }}>
-                  {selectedDayAppts.length} appointment{selectedDayAppts.length !== 1 ? 's' : ''}
+                  {selectedDayAppts.length} görüş
                 </span>
               </h3>
               {selectedDayAppts.length === 0 ? (
                 <Card padding={24} style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 14 }}>
-                  No appointments on this day
+                  Bu gündə görüş yoxdur
                 </Card>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -260,7 +282,7 @@ export default function ClientAppointments() {
                         <div>
                           <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>{appt.lawyerFullName}</div>
                           <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
-                            {formatTime(appt.scheduledAt)} · {appt.durationMinutes} min · {appt.type}
+                            {formatTime(appt.scheduledAt)} · {appt.durationMinutes} dəq · {appt.type}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

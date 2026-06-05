@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { ShieldCheck, Mail, Lock, CheckCircle } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { login } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 import { Input } from '../components/ui/Input'
@@ -11,7 +10,6 @@ import { Button } from '../components/ui/Button'
 
 export const Login: React.FC = () => {
   const navigate = useNavigate()
-  const { t } = useTranslation()
   const { setAuth } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,8 +18,8 @@ export const Login: React.FC = () => {
 
   const validate = () => {
     const e: typeof errors = {}
-    if (!email) e.email = 'Email is required'
-    if (!password) e.password = 'Password is required'
+    if (!email) e.email = 'E-poçt tələb olunur'
+    if (!password) e.password = 'Şifrə tələb olunur'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -35,27 +33,21 @@ export const Login: React.FC = () => {
       const data = await login(email, password)
 
       if (data.role !== 'Admin') {
-        toast.error('Access denied. Admin only.')
+        toast.error('Giriş rədd edildi. Yalnız adminlər üçün.')
         return
       }
 
       setAuth(
-        {
-          id: data.userId,
-          email: data.email,
-          fullName: data.fullName,
-          role: data.role,
-          token: data.token,
-        },
+        { id: data.userId, email: data.email, fullName: data.fullName, role: data.role, token: data.token },
         data.token
       )
 
-      toast.success('Welcome back!')
+      toast.success('Xoş gəldiniz!')
       navigate('/dashboard')
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Invalid credentials'
+        'Yanlış məlumatlar'
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -77,17 +69,17 @@ export const Login: React.FC = () => {
         </div>
 
         <h2 className="text-[34px] font-extrabold text-white leading-tight tracking-tighter mb-4">
-          Platform<br />Administration
+          Platform<br />İdarəetməsi
         </h2>
         <p className="text-[#A3A3A3] text-[15px] leading-relaxed mb-12">
-          Manage and monitor the LegalConnect platform with full administrative control.
+          LegalConnect platformasını tam administrativ nəzarətlə idarə edin.
         </p>
 
         <div className="flex flex-col gap-4">
           {[
-            'Verify and approve new lawyers',
-            'Monitor all platform users',
-            'Maintain platform integrity',
+            'Yeni vəkilləri yoxlayın və təsdiqləyin',
+            'Bütün platforma istifadəçilərini izləyin',
+            'Platform bütövlüyünü qoruyun',
           ].map((item) => (
             <div key={item} className="flex items-center gap-3">
               <CheckCircle className="w-[15px] h-[15px] text-[#6B6B6B] flex-shrink-0" />
@@ -106,45 +98,17 @@ export const Login: React.FC = () => {
           className="w-full max-w-[360px]"
         >
           <div className="mb-8">
-            <h1 className="text-[28px] font-extrabold text-[#0A0A0A] tracking-tight mb-1.5">
-              Admin Portal
-            </h1>
-            <p className="text-sm text-[#6B6B6B]">Sign in to your administrator account</p>
+            <h1 className="text-[28px] font-extrabold text-[#0A0A0A] tracking-tight mb-1.5">Admin Portalı</h1>
+            <p className="text-sm text-[#6B6B6B]">Administrator hesabınıza daxil olun</p>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              label={t('auth.email')}
-              type="email"
-              placeholder="admin@legalconnect.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
-              icon={<Mail className="w-4 h-4" />}
-              autoComplete="email"
-            />
-            <Input
-              label={t('auth.password')}
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={errors.password}
-              icon={<Lock className="w-4 h-4" />}
-              autoComplete="current-password"
-            />
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full mt-2 py-3"
-            >
-              {t('auth.login')}
-            </Button>
+            <Input label="E-poçt ünvanı" type="email" placeholder="admin@legalconnect.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} icon={<Mail className="w-4 h-4" />} autoComplete="email" />
+            <Input label="Şifrə" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} icon={<Lock className="w-4 h-4" />} autoComplete="current-password" />
+            <Button type="submit" loading={loading} className="w-full mt-2 py-3">Daxil ol</Button>
           </form>
 
-          <p className="text-center text-xs text-[#6B6B6B] mt-6">
-            Access restricted to administrators only
-          </p>
+          <p className="text-center text-xs text-[#6B6B6B] mt-6">Giriş yalnız administratorlar üçündür</p>
         </motion.div>
       </div>
     </div>

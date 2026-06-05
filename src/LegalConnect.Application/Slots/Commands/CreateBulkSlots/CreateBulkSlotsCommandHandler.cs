@@ -17,25 +17,24 @@ public class CreateBulkSlotsCommandHandler : IRequestHandler<CreateBulkSlotsComm
         CreateBulkSlotsCommand request,
         CancellationToken cancellationToken)
     {
-        var dateUtc = DateTime.SpecifyKind(request.Date.Date, DateTimeKind.Utc);
-        var dayStart = dateUtc.AddHours(request.StartHour);
-        var dayEnd = dateUtc.AddHours(request.EndHour);
+        var date = request.Date.Date;
+        var slotStart = new DateTime(date.Year, date.Month, date.Day, request.StartHour, 0, 0, DateTimeKind.Utc);
+        var dayEnd = new DateTime(date.Year, date.Month, date.Day, request.EndHour, 0, 0, DateTimeKind.Utc);
 
         var existing = await _unitOfWork.Slots
-            .GetByLawyerIdAsync(request.LawyerId, dayStart, dayEnd);
+            .GetByLawyerIdAsync(request.LawyerId, slotStart, dayEnd);
         var existingSet = existing.Select(s => s.StartTime).ToHashSet();
 
         var slots = new List<AvailabilitySlot>();
-        var current = dayStart;
 
-        while (current.AddMinutes(request.SlotDurationMinutes) <= dayEnd)
+        while (slotStart.AddMinutes(request.SlotDurationMinutes) <= dayEnd)
         {
-            var end = current.AddMinutes(request.SlotDurationMinutes);
-            if (!existingSet.Contains(current))
+            var slotEnd = slotStart.AddMinutes(request.SlotDurationMinutes);
+            if (!existingSet.Contains(slotStart))
             {
-                slots.Add(AvailabilitySlot.Create(request.LawyerId, current, end));
+                slots.Add(AvailabilitySlot.Create(request.LawyerId, slotStart, slotEnd));
             }
-            current = end;
+            slotStart = slotEnd;
         }
 
         if (slots.Count > 0)

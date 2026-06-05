@@ -20,6 +20,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddHttpClient("Daily");
+        services.AddScoped<IDailyService, DailyService>();
 
         return services;
     }

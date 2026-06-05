@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Send, MessageSquare, Paperclip, FileText, Download, Search } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { chatsApi, type MessageDto } from '../../api/chats'
 import { filesApi } from '../../api/files'
 import { usersApi } from '../../api/users'
@@ -44,37 +43,20 @@ function FileMessage({ url, isOwn }: { url: string; isOwn: boolean }) {
   if (isImage(url)) {
     return (
       <a href={fullUrl} target="_blank" rel="noreferrer">
-        <img
-          src={fullUrl}
-          alt="attachment"
-          style={{
-            maxWidth: 220, maxHeight: 200, borderRadius: 8,
-            display: 'block', objectFit: 'cover', cursor: 'pointer',
-          }}
-        />
+        <img src={fullUrl} alt="attachment" style={{ maxWidth: 220, maxHeight: 200, borderRadius: 8, display: 'block', objectFit: 'cover', cursor: 'pointer' }} />
       </a>
     )
   }
   return (
-    <a
-      href={fullUrl}
-      download
-      style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        color: isOwn ? '#FFFFFF' : '#0A0A0A', textDecoration: 'none',
-      }}
-    >
+    <a href={fullUrl} download style={{ display: 'flex', alignItems: 'center', gap: 8, color: isOwn ? '#FFFFFF' : '#0A0A0A', textDecoration: 'none' }}>
       <FileText size={18} style={{ flexShrink: 0 }} />
-      <span style={{ fontSize: 13, fontWeight: 500, wordBreak: 'break-all' }}>
-        {fileName(url)}
-      </span>
+      <span style={{ fontSize: 13, fontWeight: 500, wordBreak: 'break-all' }}>{fileName(url)}</span>
       <Download size={14} style={{ flexShrink: 0, opacity: 0.7 }} />
     </a>
   )
 }
 
 export default function Chat() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const userId = user.userId
   const qc = useQueryClient()
@@ -91,7 +73,6 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Chats list ──────────────────────────────────────────────────────────────
   const { data: chats = [], isLoading: loadingChats } = useQuery({
     queryKey: ['chats', userId],
     queryFn: () => chatsApi.getAll(userId),
@@ -99,7 +80,6 @@ export default function Chat() {
     refetchOnMount: 'always',
   })
 
-  // ── Active lawyer status (online dot) ───────────────────────────────────────
   const activeChat = chats.find((c) => c.id === activeChatId)
   const lawyerUserId = user.role === 'Client' ? activeChat?.lawyerUserId : null
   const { data: lawyerStatus } = useQuery({
@@ -109,14 +89,12 @@ export default function Chat() {
     refetchInterval: 30000,
   })
 
-  // ── Search filter ───────────────────────────────────────────────────────────
   const filteredChats = chats.filter((c) => {
     if (!searchQuery) return true
     const name = (user.role === 'Client' ? c.lawyerFullName : c.clientFullName) ?? ''
     return name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
-  // ── Load messages on chat switch ────────────────────────────────────────────
   useEffect(() => {
     if (!activeChatId) { setMessages([]); return }
     let cancelled = false
@@ -124,50 +102,43 @@ export default function Chat() {
     setLoadingMessages(true)
     chatsApi.getMessages(activeChatId)
       .then((data) => { if (!cancelled) setMessages(data) })
-      .catch(() => { if (!cancelled) toast.error('Failed to load messages') })
+      .catch(() => { if (!cancelled) toast.error('Mesajlar yüklənə bilmədi') })
       .finally(() => { if (!cancelled) setLoadingMessages(false) })
     return () => { cancelled = true }
   }, [activeChatId])
 
-  // ── SignalR ─────────────────────────────────────────────────────────────────
   const handleMessage = useCallback((msg: MessageDto) => {
     setMessages((prev) => {
       if (prev.some((m) => m.id === msg.id)) return prev
       return [...prev, msg]
     })
     qc.invalidateQueries({ queryKey: ['chats', userId] })
-    // Auto mark as read if this chat is currently open
     const chatId = activeChatIdRef.current
     if (chatId && msg.senderId !== userId) {
       chatsApi.markAsRead(chatId, userId).catch(() => {})
       qc.invalidateQueries({ queryKey: ['unread-count', userId] })
     }
-  }, [qc, userId]) // activeChatIdRef is a ref, no need in deps
+  }, [qc, userId])
 
   const { sendMessage, markAsRead } = useSignalR({ chatId: activeChatId, onMessage: handleMessage })
 
-  // ── Mark as read helper ─────────────────────────────────────────────────────
   const activeChatIdRef = useRef(activeChatId)
   activeChatIdRef.current = activeChatId
 
   const markChatAsRead = useCallback(async (chatId: string) => {
-    // REST guarantees DB update; SignalR additionally broadcasts to the other party
     chatsApi.markAsRead(chatId, userId).catch(() => {})
     markAsRead(chatId).catch(() => {})
     qc.invalidateQueries({ queryKey: ['unread-count', userId] })
   }, [markAsRead, userId, qc])
 
-  // ── Mark as read when opening a chat ────────────────────────────────────────
   useEffect(() => {
     if (activeChatId) markChatAsRead(activeChatId)
   }, [activeChatId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Send text ───────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim()
     if (!text || !activeChatId || sending) return
@@ -182,7 +153,7 @@ export default function Chat() {
         setMessages((prev) => [...prev, msg])
         qc.invalidateQueries({ queryKey: ['chats', userId] })
       } catch (err: unknown) {
-        toast.error((err as Error)?.message ?? 'Failed to send')
+        toast.error((err as Error)?.message ?? 'Göndərmək alınmadı')
         setInput(text)
       }
     } finally {
@@ -190,12 +161,10 @@ export default function Chat() {
     }
   }
 
-  // ── Upload file ─────────────────────────────────────────────────────────────
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !activeChatId) return
     e.target.value = ''
-
     setUploading(true)
     try {
       const { url, mimeType } = await filesApi.upload(file)
@@ -209,7 +178,7 @@ export default function Chat() {
         qc.invalidateQueries({ queryKey: ['chats', userId] })
       }
     } catch (err: unknown) {
-      toast.error((err as Error)?.message ?? 'Upload failed')
+      toast.error((err as Error)?.message ?? 'Yükləmə alınmadı')
     } finally {
       setUploading(false)
     }
@@ -223,28 +192,16 @@ export default function Chat() {
       style={{ display: 'flex', height: 'calc(100vh - 64px)', background: '#F5F5F5' }}
     >
       {/* Chats sidebar */}
-      <div style={{
-        width: 280, borderRight: '1px solid #E8E8E8', background: '#FFFFFF',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-      }}>
+      <div style={{ width: 280, borderRight: '1px solid #E8E8E8', background: '#FFFFFF', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid #E8E8E8' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 10 }}>{t('chat.title')}</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 10 }}>Mesajlar</h2>
           <div style={{ position: 'relative' }}>
-            <Search size={14} style={{
-              position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-              color: '#A3A3A3', pointerEvents: 'none',
-            }} />
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: '#A3A3A3', pointerEvents: 'none' }} />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations..."
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                border: '1px solid #E8E8E8', borderRadius: 10,
-                padding: '8px 12px 8px 30px', fontSize: 13,
-                outline: 'none', fontFamily: 'Inter, sans-serif',
-                background: '#FAFAFA', color: '#0A0A0A',
-              }}
+              placeholder="Söhbətləri axtar"
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid #E8E8E8', borderRadius: 10, padding: '8px 12px 8px 30px', fontSize: 13, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FAFAFA', color: '#0A0A0A' }}
               onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
               onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
             />
@@ -258,7 +215,7 @@ export default function Chat() {
           ) : filteredChats.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: '#A3A3A3' }}>
               <MessageSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-              <p style={{ fontSize: 13 }}>{searchQuery ? 'No conversations found' : t('chat.noChats')}</p>
+              <p style={{ fontSize: 13 }}>{searchQuery ? 'Söhbət tapılmadı' : 'Hələ söhbət yoxdur'}</p>
             </div>
           ) : filteredChats.map((chat) => {
             const isActive = chat.id === activeChatId
@@ -267,32 +224,18 @@ export default function Chat() {
               <button
                 key={chat.id}
                 onClick={() => setActiveChatId(chat.id)}
-                style={{
-                  width: '100%', padding: '12px 14px', borderRadius: 10,
-                  background: isActive ? '#F5F5F5' : 'transparent',
-                  border: isActive ? '1px solid #E8E8E8' : '1px solid transparent',
-                  cursor: 'pointer', textAlign: 'left', marginBottom: 4,
-                  transition: 'all 0.15s', fontFamily: 'Inter, sans-serif',
-                }}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 10, background: isActive ? '#F5F5F5' : 'transparent', border: isActive ? '1px solid #E8E8E8' : '1px solid transparent', cursor: 'pointer', textAlign: 'left', marginBottom: 4, transition: 'all 0.15s', fontFamily: 'Inter, sans-serif' }}
                 onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F5F5F5' }}
                 onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0,
-                  }}>
+                  <div style={{ width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                     {name[0] ?? '?'}
                   </div>
                   <div style={{ overflow: 'hidden' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {name}
-                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
                     {chat.lastMessageAt && (
-                      <div style={{ fontSize: 11, color: '#A3A3A3', marginTop: 2 }}>
-                        {formatTime(chat.lastMessageAt)}
-                      </div>
+                      <div style={{ fontSize: 11, color: '#A3A3A3', marginTop: 2 }}>{formatTime(chat.lastMessageAt)}</div>
                     )}
                   </div>
                 </div>
@@ -307,21 +250,14 @@ export default function Chat() {
         {!activeChatId ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: '#A3A3A3' }}>
             <MessageSquare size={48} style={{ opacity: 0.3 }} />
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#6B6B6B' }}>Select a chat</h3>
-            <p style={{ fontSize: 14 }}>Choose a conversation from the sidebar</p>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#6B6B6B' }}>Söhbət seçin</h3>
+            <p style={{ fontSize: 14 }}>Siyahıdan söhbət seçin</p>
           </div>
         ) : (
           <>
             {/* Header */}
-            <div style={{
-              padding: '16px 24px', borderBottom: '1px solid #E8E8E8',
-              background: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 12,
-            }}>
-              <div style={{
-                width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, fontWeight: 700, color: '#fff',
-              }}>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #E8E8E8', background: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, background: '#0A0A0A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff' }}>
                 {(user.role === 'Client' ? activeChat?.lawyerFullName : activeChat?.clientFullName)?.[0]}
               </div>
               <div>
@@ -330,17 +266,13 @@ export default function Chat() {
                     {user.role === 'Client' ? activeChat?.lawyerFullName : activeChat?.clientFullName}
                   </span>
                   {lawyerStatus?.isOnline && (
-                    <span style={{
-                      width: 8, height: 8, borderRadius: '50%',
-                      background: '#22C55E', border: '2px solid white',
-                      boxShadow: '0 0 0 1px #22C55E', flexShrink: 0,
-                    }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', border: '2px solid white', boxShadow: '0 0 0 1px #22C55E', flexShrink: 0 }} />
                   )}
                 </div>
                 <div style={{ fontSize: 12, color: '#6B6B6B' }}>
                   {user.role === 'Client'
-                    ? lawyerStatus?.isOnline ? 'Online' : 'Lawyer'
-                    : 'Client'}
+                    ? lawyerStatus?.isOnline ? 'Onlayn' : 'Vəkil'
+                    : 'Müştəri'}
                 </div>
               </div>
             </div>
@@ -350,20 +282,14 @@ export default function Chat() {
               {loadingMessages ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} height={40} borderRadius={12}
-                      width={i % 2 === 0 ? '60%' : '40%'}
-                      style={{ alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end' }}
-                    />
+                    <Skeleton key={i} height={40} borderRadius={12} width={i % 2 === 0 ? '60%' : '40%'} style={{ alignSelf: i % 2 === 0 ? 'flex-start' : 'flex-end' }} />
                   ))}
                 </div>
               ) : messages.map((msg) => {
                 const isOwn = msg.senderId === userId
                 const isFile = msg.type === 'File' || msg.type === 'Image'
                 return (
-                  <div key={msg.id} style={{
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: isOwn ? 'flex-end' : 'flex-start',
-                  }}>
+                  <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
                     <div style={{
                       maxWidth: isFile && isImage(msg.content) ? 240 : '65%',
                       padding: isFile && isImage(msg.content) ? 4 : '10px 14px',
@@ -374,14 +300,9 @@ export default function Chat() {
                       fontSize: 14, lineHeight: 1.5,
                       boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                     }}>
-                      {isFile
-                        ? <FileMessage url={msg.content} isOwn={isOwn} />
-                        : msg.content
-                      }
+                      {isFile ? <FileMessage url={msg.content} isOwn={isOwn} /> : msg.content}
                     </div>
-                    <span style={{ fontSize: 11, color: '#A3A3A3', marginTop: 4 }}>
-                      {formatTime(msg.sentAt)}
-                    </span>
+                    <span style={{ fontSize: 11, color: '#A3A3A3', marginTop: 4 }}>{formatTime(msg.sentAt)}</span>
                   </div>
                 )
               })}
@@ -389,61 +310,30 @@ export default function Chat() {
             </div>
 
             {/* Input */}
-            <div style={{
-              padding: '14px 20px', borderTop: '1px solid #E8E8E8',
-              background: '#FFFFFF', display: 'flex', gap: 8, alignItems: 'center',
-            }}>
-              {/* Hidden file input */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-              />
-
-              {/* Paperclip button */}
+            <div style={{ padding: '14px 20px', borderTop: '1px solid #E8E8E8', background: '#FFFFFF', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style={{ display: 'none' }} onChange={handleFileSelect} />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                title="Attach file"
-                style={{
-                  width: 38, height: 38, borderRadius: 10, border: '1px solid #E8E8E8',
-                  background: '#F5F5F5', cursor: uploading ? 'wait' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0, opacity: uploading ? 0.5 : 1, transition: 'all 0.15s',
-                }}
+                title="Fayl əlavə et"
+                style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid #E8E8E8', background: '#F5F5F5', cursor: uploading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: uploading ? 0.5 : 1, transition: 'all 0.15s' }}
               >
                 <Paperclip size={16} color="#6B6B6B" />
               </button>
-
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder={uploading ? 'Uploading file…' : t('chat.typeMessage')}
+                placeholder={uploading ? 'Fayl yüklənir…' : 'Mesaj yazın...'}
                 disabled={uploading}
-                style={{
-                  flex: 1, border: '1px solid #E8E8E8', borderRadius: 12,
-                  padding: '11px 16px', fontSize: 14, outline: 'none',
-                  fontFamily: 'Inter, sans-serif', background: '#F5F5F5', color: '#0A0A0A',
-                  transition: 'border-color 0.15s',
-                }}
+                style={{ flex: 1, border: '1px solid #E8E8E8', borderRadius: 12, padding: '11px 16px', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#F5F5F5', color: '#0A0A0A', transition: 'border-color 0.15s' }}
                 onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
                 onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
               />
-
               <button
                 onClick={handleSend}
                 disabled={!canSend}
-                style={{
-                  width: 42, height: 42, borderRadius: 12, border: 'none',
-                  background: canSend ? '#0A0A0A' : '#E8E8E8',
-                  color: canSend ? '#FFFFFF' : '#A3A3A3',
-                  cursor: canSend ? 'pointer' : 'not-allowed',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s', flexShrink: 0,
-                }}
+                style={{ width: 42, height: 42, borderRadius: 12, border: 'none', background: canSend ? '#0A0A0A' : '#E8E8E8', color: canSend ? '#FFFFFF' : '#A3A3A3', cursor: canSend ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 }}
               >
                 <Send size={16} />
               </button>

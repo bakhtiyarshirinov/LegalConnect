@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, Star, CheckCircle, X, Clock } from 'lucide-react'
+import { Calendar, Star, CheckCircle, X, Clock, Video } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { lawyersApi } from '../../api/lawyers'
 import { appointmentsApi } from '../../api/appointments'
@@ -45,6 +45,22 @@ export default function LawyerDashboard() {
     },
     onError: (err: Error) => toast.error(err.message),
   })
+
+  const joinMeeting = async (appt: typeof appointments[0]) => {
+    if (appt.meetingUrl) { window.open(appt.meetingUrl, '_blank'); return }
+    try {
+      const { meetingUrl } = await appointmentsApi.createMeeting(appt.id)
+      window.open(meetingUrl, '_blank')
+      qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to create meeting')
+    }
+  }
+
+  function isWithin24Hours(scheduledAt: string) {
+    const diff = new Date(scheduledAt).getTime() - Date.now()
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000
+  }
 
   const pending = appointments.filter((a) => a.status === 'Pending')
   const confirmed = appointments.filter((a) => a.status === 'Confirmed')
@@ -184,9 +200,16 @@ export default function LawyerDashboard() {
                         {new Date(appt.scheduledAt).toLocaleDateString()} · {appt.durationMinutes}min
                       </span>
                     </div>
-                    <Button variant="danger" size="sm" onClick={() => cancel(appt.id)}>
-                      Cancel
-                    </Button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {isWithin24Hours(appt.scheduledAt) && (
+                        <Button size="sm" onClick={() => joinMeeting(appt)} style={{ background: '#1C7ED6', color: '#fff', border: 'none' }}>
+                          <Video size={13} /> Join
+                        </Button>
+                      )}
+                      <Button variant="danger" size="sm" onClick={() => cancel(appt.id)}>
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               </motion.div>

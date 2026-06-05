@@ -9,5 +9,6 @@ public record AppointmentDto(
     string Status,
     string Type,
     decimal Price,
-    string? Notes
+    string? Notes,
+    string? MeetingUrl
 );

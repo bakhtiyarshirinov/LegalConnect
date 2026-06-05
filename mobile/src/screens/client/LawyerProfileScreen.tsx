@@ -81,45 +81,25 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
 
   const onDateChange = (_: any, d?: Date) => {
     setShowDatePicker(false);
-    if (d) {
-      setSelectedDate(d);
-      fetchSlots(d);
-    }
+    if (d) { setSelectedDate(d); fetchSlots(d); }
   };
 
   const handleBook = async () => {
-    if (!selectedSlot) {
-      Alert.alert('Error', 'Please select a time slot');
-      return;
-    }
-    if (!user) return;
-    if (!lawyer) return;
+    if (!selectedSlot) { Alert.alert('Xəta', 'Vaxt seçin'); return; }
+    if (!user || !lawyer) return;
 
-    // Ensure scheduledAt is a valid UTC ISO string in the future
-    const scheduledAt = selectedSlot.startTime.endsWith('Z')
-      ? selectedSlot.startTime
-      : new Date(selectedSlot.startTime).toISOString();
-
-    if (new Date(scheduledAt) <= new Date()) {
-      Alert.alert('Error', 'Selected slot is in the past. Please choose a future date.');
-      return;
-    }
+    const scheduledAt = selectedSlot.startTime.endsWith('Z') ? selectedSlot.startTime : new Date(selectedSlot.startTime).toISOString();
+    if (new Date(scheduledAt) <= new Date()) { Alert.alert('Xəta', 'Seçilmiş vaxt keçmişdədir. Gələcək vaxt seçin.'); return; }
 
     const durationMinutes = Math.round(
       (new Date(selectedSlot.endTime).getTime() - new Date(selectedSlot.startTime).getTime()) / 60000
     );
 
     const payload = {
-      clientId: user.userId,
-      lawyerId: lawyer.id,
-      scheduledAt,
-      durationMinutes: Number(durationMinutes),
-      type: type === 'Online' ? 1 : 2,
-      notes: notes || undefined,
-      slotId: selectedSlot.id,
+      clientId: user.userId, lawyerId: lawyer.id, scheduledAt,
+      durationMinutes: Number(durationMinutes), type: type === 'Online' ? 1 : 2,
+      notes: notes || undefined, slotId: selectedSlot.id,
     };
-
-    console.log('Booking payload:', JSON.stringify(payload, null, 2));
 
     setBooking(true);
     try {
@@ -128,20 +108,13 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
       setSelectedSlot(null);
       setNotes('');
       qc.invalidateQueries({ queryKey: ['myAppointments'] });
-      Alert.alert('Booked!', 'Your appointment has been created.', [
-        {
-          text: 'View Appointments',
-          onPress: () => navigation.navigate('Appointments'),
-        },
+      Alert.alert('Görüş planlandı!', 'Görüşünüz yaradıldı.', [
+        { text: 'Görüşlərə bax', onPress: () => navigation.navigate('Appointments') },
         { text: 'OK' },
       ]);
     } catch (e: any) {
-      const msg =
-        e.response?.data?.message ||
-        e.response?.data?.errors?.[Object.keys(e.response?.data?.errors ?? {})[0]]?.[0] ||
-        JSON.stringify(e.response?.data) ||
-        'Failed to book appointment';
-      Alert.alert('Booking Failed', msg);
+      const msg = e.response?.data?.message || JSON.stringify(e.response?.data) || 'Görüş planlamaq alınmadı';
+      Alert.alert('Görüş alınmadı', msg);
     } finally {
       setBooking(false);
     }
@@ -154,7 +127,7 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
       const chatId = res.data.chatId ?? res.data.id;
       navigation.navigate('Conversation', { chatId, name: lawyer?.fullName });
     } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to open chat');
+      Alert.alert('Xəta', e.response?.data?.message || 'Söhbət açılmadı');
     }
   };
 
@@ -164,11 +137,7 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
   };
 
   if (isLoading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator style={{ flex: 1 }} color="#0A0A0A" />
-      </SafeAreaView>
-    );
+    return <SafeAreaView style={styles.safe}><ActivityIndicator style={{ flex: 1 }} color="#0A0A0A" /></SafeAreaView>;
   }
 
   if (!lawyer) return null;
@@ -190,9 +159,7 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
           </View>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{lawyer.fullName}</Text>
-            {lawyer.isVerified && (
-              <Ionicons name="checkmark-circle" size={20} color="#3B82F6" style={{ marginLeft: 6 }} />
-            )}
+            {lawyer.isVerified && <Ionicons name="checkmark-circle" size={20} color="#3B82F6" style={{ marginLeft: 6 }} />}
           </View>
           <View style={styles.cityRow}>
             <Ionicons name="location-outline" size={14} color="#6B6B6B" />
@@ -202,46 +169,42 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
             {[1, 2, 3, 4, 5].map((s) => (
               <Ionicons key={s} name="star" size={16} color={s <= Math.round(lawyer.rating) ? '#F59E0B' : '#E8E8E8'} />
             ))}
-            <Text style={styles.ratingText}>{lawyer.rating.toFixed(1)} ({lawyer.reviewCount} reviews)</Text>
+            <Text style={styles.ratingText}>{lawyer.rating.toFixed(1)} ({lawyer.reviewCount} rəy)</Text>
           </View>
         </View>
 
         <View style={styles.statsRow}>
-          <StatItem label="Experience" value={`${lawyer.experienceYears} yrs`} />
+          <StatItem label="il təcrübə" value={`${lawyer.experienceYears}`} />
           <View style={styles.statDivider} />
-          <StatItem label="Rate" value={`$${lawyer.hourlyRate}/hr`} />
+          <StatItem label="/saat" value={`$${lawyer.hourlyRate}`} />
           <View style={styles.statDivider} />
-          <StatItem label="Reviews" value={String(lawyer.reviewCount)} />
+          <StatItem label="Rəylər" value={String(lawyer.reviewCount)} />
         </View>
 
         {lawyer.bio && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About</Text>
+            <Text style={styles.sectionTitle}>Haqqında</Text>
             <Text style={styles.bio}>{lawyer.bio}</Text>
           </View>
         )}
 
         {lawyer.specializations?.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Specializations</Text>
+            <Text style={styles.sectionTitle}>İxtisaslar</Text>
             <View style={styles.specs}>
               {lawyer.specializations.map((s: string) => (
-                <View key={s} style={styles.chip}>
-                  <Text style={styles.chipText}>{s}</Text>
-                </View>
+                <View key={s} style={styles.chip}><Text style={styles.chipText}>{s}</Text></View>
               ))}
             </View>
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Reviews {lawyer.reviewCount > 0 ? `(${lawyer.reviewCount})` : ''}
-          </Text>
+          <Text style={styles.sectionTitle}>Rəylər {lawyer.reviewCount > 0 ? `(${lawyer.reviewCount})` : ''}</Text>
           {reviewsLoading ? (
             <ActivityIndicator color="#0A0A0A" style={{ marginVertical: 16 }} />
           ) : !reviews || reviews.length === 0 ? (
-            <Text style={styles.noReviewsText}>No reviews yet. Be the first!</Text>
+            <Text style={styles.noReviewsText}>Hələ rəy yoxdur İlk rəy yazan siz olun!</Text>
           ) : (
             reviews.map((r) => (
               <View key={r.id} style={styles.reviewCard}>
@@ -249,20 +212,13 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
                   <Text style={styles.reviewName}>{r.clientFullName}</Text>
                   <View style={styles.reviewStars}>
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Ionicons
-                        key={s}
-                        name={s <= r.rating ? 'star' : 'star-outline'}
-                        size={12}
-                        color={s <= r.rating ? '#F59E0B' : '#D1D5DB'}
-                      />
+                      <Ionicons key={s} name={s <= r.rating ? 'star' : 'star-outline'} size={12} color={s <= r.rating ? '#F59E0B' : '#D1D5DB'} />
                     ))}
                   </View>
                 </View>
                 {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
                 <Text style={styles.reviewDate}>
-                  {new Date(r.createdAt).toLocaleDateString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                  })}
+                  {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </Text>
               </View>
             ))
@@ -273,51 +229,41 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        <Button title="Message" onPress={handleMessage} variant="outline" style={{ flex: 1, marginRight: 8 }} />
-        <Button title="Book Appointment" onPress={openBooking} style={{ flex: 2 }} />
+        <Button title="Mesaj" onPress={handleMessage} variant="outline" style={{ flex: 1, marginRight: 8 }} />
+        <Button title="Görüş planla" onPress={openBooking} style={{ flex: 2 }} />
       </View>
 
       <Modal visible={bookingVisible} animationType="slide" presentationStyle="pageSheet">
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Book Appointment</Text>
+            <Text style={styles.modalTitle}>Görüş planla</Text>
             <TouchableOpacity onPress={() => setBookingVisible(false)}>
               <Ionicons name="close" size={24} color="#0A0A0A" />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
-
-            <Text style={styles.fieldLabel}>Select Date</Text>
+            <Text style={styles.fieldLabel}>Tarix seçin</Text>
             <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
               <Ionicons name="calendar-outline" size={18} color="#6B6B6B" />
               <Text style={styles.dateButtonText}>{formatDateOnly(selectedDate.toISOString())}</Text>
             </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                minimumDate={new Date()}
-                onChange={onDateChange}
-              />
-            )}
+            {showDatePicker && <DateTimePicker value={selectedDate} mode="date" minimumDate={new Date()} onChange={onDateChange} />}
 
-            <Text style={styles.fieldLabel}>Available Slots</Text>
+            <Text style={styles.fieldLabel}>Mövcud vaxtlar</Text>
             {slotsLoading ? (
               <ActivityIndicator style={{ marginVertical: 16 }} color="#0A0A0A" />
             ) : availableSlots.length === 0 ? (
               <View style={styles.noSlots}>
                 <Ionicons name="calendar-outline" size={32} color="#9CA3AF" />
-                <Text style={styles.noSlotsText}>No available slots for this date.</Text>
-                <Text style={styles.noSlotsHint}>Try selecting another date.</Text>
+                <Text style={styles.noSlotsText}>Bu tarixdə mövcud vaxt yoxdur</Text>
+                <Text style={styles.noSlotsHint}>Başqa tarix seçin.</Text>
               </View>
             ) : (
               <View style={styles.slotsGrid}>
                 {availableSlots.map((slot) => {
                   const isSelected = selectedSlot?.id === slot.id;
                   return (
-                    <TouchableOpacity
-                      key={slot.id}
-                      onPress={() => setSelectedSlot(isSelected ? null : slot)}
+                    <TouchableOpacity key={slot.id} onPress={() => setSelectedSlot(isSelected ? null : slot)}
                       style={[styles.slotBtn, isSelected && styles.slotBtnSelected]}
                     >
                       <Text style={[styles.slotBtnText, isSelected && styles.slotBtnTextSelected]}>
@@ -329,23 +275,19 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
               </View>
             )}
 
-            <Text style={styles.fieldLabel}>Type</Text>
+            <Text style={styles.fieldLabel}>Görüş növü</Text>
             <View style={styles.segmented}>
-              {TYPES.map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  onPress={() => setType(t)}
-                  style={[styles.segment, type === t && styles.segmentActive]}
-                >
-                  <Text style={[styles.segmentText, type === t && styles.segmentTextActive]}>{t}</Text>
+              {TYPES.map((tp) => (
+                <TouchableOpacity key={tp} onPress={() => setType(tp)} style={[styles.segment, type === tp && styles.segmentActive]}>
+                  <Text style={[styles.segmentText, type === tp && styles.segmentTextActive]}>{tp}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={styles.fieldLabel}>Notes (optional)</Text>
+            <Text style={styles.fieldLabel}>Qeydlər (isteğe bağlı)</Text>
             <TextInput
               style={styles.notesInput}
-              placeholder="Describe your legal issue..."
+              placeholder="Hüquqi məsələnizi təsvir edin..."
               placeholderTextColor="#9CA3AF"
               value={notes}
               onChangeText={setNotes}
@@ -360,15 +302,13 @@ export const LawyerProfileScreen = ({ route, navigation }: any) => {
                 <Text style={styles.selectedSlotText}>
                   {formatSlotTime(selectedSlot.startTime)} – {formatSlotTime(selectedSlot.endTime)}
                   {'  •  '}
-                  {Math.round(
-                    (new Date(selectedSlot.endTime).getTime() - new Date(selectedSlot.startTime).getTime()) / 60000
-                  )} min
+                  {Math.round((new Date(selectedSlot.endTime).getTime() - new Date(selectedSlot.startTime).getTime()) / 60000)} dəq
                 </Text>
               </View>
             )}
 
             <Button
-              title={selectedSlot ? 'Confirm Booking' : 'Select a slot to book'}
+              title={selectedSlot ? 'Görüşü təsdiqlə' : 'Vaxt seçin'}
               onPress={handleBook}
               loading={booking}
               disabled={!selectedSlot}
@@ -392,26 +332,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FAFAFA' },
   scroll: { flex: 1 },
   headerBg: { height: 140, backgroundColor: '#0A0A0A', paddingTop: 48, paddingHorizontal: 16 },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   profileArea: { alignItems: 'center', marginTop: -44, paddingBottom: 20 },
-  avatar: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#0A0A0A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: '#FAFAFA',
-    marginBottom: 12,
-  },
+  avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#0A0A0A', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: '#FAFAFA', marginBottom: 12 },
   initials: { color: '#FFFFFF', fontSize: 28, fontWeight: '700' },
   nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   name: { fontSize: 22, fontWeight: '800', color: '#0A0A0A' },
@@ -419,16 +342,7 @@ const styles = StyleSheet.create({
   city: { fontSize: 14, color: '#6B6B6B', marginLeft: 4 },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   ratingText: { fontSize: 13, color: '#6B6B6B', marginLeft: 6 },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    marginBottom: 20,
-  },
+  statsRow: { flexDirection: 'row', backgroundColor: '#FFFFFF', marginHorizontal: 16, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E8E8E8', marginBottom: 20 },
   statDivider: { width: 1, backgroundColor: '#E8E8E8' },
   statValue: { fontSize: 18, fontWeight: '800', color: '#0A0A0A', marginBottom: 2 },
   statLabel: { fontSize: 12, color: '#6B6B6B' },
@@ -438,64 +352,26 @@ const styles = StyleSheet.create({
   specs: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { backgroundColor: '#F3F4F6', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
   chipText: { fontSize: 13, color: '#374151', fontWeight: '500' },
-  reviewCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-  },
+  reviewCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#E8E8E8' },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   reviewName: { fontSize: 14, fontWeight: '600', color: '#0A0A0A' },
   reviewStars: { flexDirection: 'row', gap: 2 },
   reviewComment: { fontSize: 13, color: '#374151', lineHeight: 20, marginBottom: 4 },
   reviewDate: { fontSize: 11, color: '#9CA3AF' },
   noReviewsText: { fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' },
-  bottomBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
-  },
+  bottomBar: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E8E8E8' },
   modalSafe: { flex: 1, backgroundColor: '#FAFAFA' },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8E8E8',
-  },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#E8E8E8' },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#0A0A0A' },
   modalContent: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: '#0A0A0A', marginBottom: 8, marginTop: 16 },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    padding: 14,
-  },
+  dateButton: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1.5, borderColor: '#E8E8E8', padding: 14 },
   dateButtonText: { fontSize: 15, color: '#0A0A0A' },
   noSlots: { alignItems: 'center', paddingVertical: 24 },
   noSlotsText: { fontSize: 15, color: '#374151', fontWeight: '500', marginTop: 10 },
   noSlotsHint: { fontSize: 13, color: '#9CA3AF', marginTop: 4 },
   slotsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  slotBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFFFFF',
-  },
+  slotBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' },
   slotBtnSelected: { backgroundColor: '#0A0A0A', borderColor: '#0A0A0A' },
   slotBtnText: { fontSize: 13, color: '#374151', fontWeight: '500' },
   slotBtnTextSelected: { color: '#FFFFFF' },
@@ -504,26 +380,7 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: '#0A0A0A' },
   segmentText: { fontSize: 14, fontWeight: '500', color: '#6B6B6B' },
   segmentTextActive: { color: '#FFFFFF' },
-  notesInput: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    padding: 14,
-    fontSize: 15,
-    color: '#0A0A0A',
-    minHeight: 100,
-  },
-  selectedSlotInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
-  },
+  notesInput: { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1.5, borderColor: '#E8E8E8', padding: 14, fontSize: 15, color: '#0A0A0A', minHeight: 100 },
+  selectedSlotInfo: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDF4', borderRadius: 10, padding: 12, marginTop: 16, borderWidth: 1, borderColor: '#BBF7D0' },
   selectedSlotText: { fontSize: 14, color: '#065F46', fontWeight: '500' },
 });

@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '../../api/appointments';
 import { lawyersApi } from '../../api/lawyers';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -21,7 +20,6 @@ import { Appointment } from '../../types';
 import { formatDate } from '../../utils/date';
 
 export const LawyerDashboardScreen = () => {
-  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const lawyerProfileId = useAuthStore((s) => s.lawyerProfileId);
   const setLawyerProfileId = useAuthStore((s) => s.setLawyerProfileId);
@@ -29,9 +27,7 @@ export const LawyerDashboardScreen = () => {
 
   useEffect(() => {
     if (!lawyerProfileId) {
-      lawyersApi.getMyProfile()
-        .then((r) => setLawyerProfileId(r.data.id))
-        .catch(() => {});
+      lawyersApi.getMyProfile().then((r) => setLawyerProfileId(r.data.id)).catch(() => {});
     }
   }, [lawyerProfileId]);
 
@@ -55,61 +51,50 @@ export const LawyerDashboardScreen = () => {
   }, []);
 
   const handleConfirm = async (id: string) => {
-    if (!lawyerProfileId) { Alert.alert('Error', 'Profile not loaded'); return; }
-    try {
-      await appointmentsApi.confirm(id, lawyerProfileId);
-      qc.invalidateQueries({ queryKey: ['lawyerAppointments'] });
-    } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to confirm');
-    }
+    if (!lawyerProfileId) { Alert.alert('Xəta', 'Profil yüklənmədi'); return; }
+    try { await appointmentsApi.confirm(id, lawyerProfileId); qc.invalidateQueries({ queryKey: ['lawyerAppointments'] }); }
+    catch (e: any) { Alert.alert('Xəta', e.response?.data?.message || 'Təsdiqləmə alınmadı'); }
   };
 
   const handleCancel = async (id: string) => {
     if (!user) return;
-    try {
-      await appointmentsApi.cancel(id, user.userId);
-      qc.invalidateQueries({ queryKey: ['lawyerAppointments'] });
-    } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to cancel');
-    }
+    try { await appointmentsApi.cancel(id, user.userId); qc.invalidateQueries({ queryKey: ['lawyerAppointments'] }); }
+    catch (e: any) { Alert.alert('Xəta', e.response?.data?.message || 'Ləğv etmək alınmadı'); }
   };
 
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return t('dashboard.goodMorning');
-    if (h < 17) return t('dashboard.goodAfternoon');
-    return t('dashboard.goodEvening');
+    if (h < 12) return 'Sabahınız xeyir';
+    if (h < 17) return 'Günortanız xeyir';
+    return 'Axşamınız xeyir';
   };
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
-        style={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-      >
+      <ScrollView style={styles.scroll} refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}>
         <View style={styles.header}>
           <Text style={styles.greeting}>{greeting()}, {user?.fullName?.split(' ')[0]}!</Text>
-          <Text style={styles.greetingSub}>Here's your dashboard</Text>
+          <Text style={styles.greetingSub}>Günün xülasəsi</Text>
         </View>
 
         {statsLoading ? (
           <LoadingSpinner />
         ) : (
           <View style={styles.statsGrid}>
-            <StatCard label={t('dashboard.totalAppointments')} value={stats?.totalAppointments ?? 0} icon="layers-outline" />
-            <StatCard label={t('dashboard.pending')} value={stats?.pendingAppointments ?? 0} icon="time-outline" />
-            <StatCard label={t('dashboard.completed')} value={stats?.completedAppointments ?? 0} icon="checkmark-outline" />
-            <StatCard label={t('dashboard.rating')} value={stats?.averageRating?.toFixed(1) ?? '—'} icon="star-outline" />
+            <StatCard label="Cəmi" value={stats?.totalAppointments ?? 0} icon="layers-outline" />
+            <StatCard label="Gözləyir" value={stats?.pendingAppointments ?? 0} icon="time-outline" />
+            <StatCard label="Tamamlandı" value={stats?.completedAppointments ?? 0} icon="checkmark-outline" />
+            <StatCard label="Reytinq" value={stats?.averageRating?.toFixed(1) ?? '—'} icon="star-outline" />
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('dashboard.pendingRequests')}</Text>
+          <Text style={styles.sectionTitle}>Gözləyən sorğular</Text>
           {apptLoading ? (
             <LoadingSpinner />
           ) : pending.length === 0 ? (
             <Card>
-              <Text style={styles.emptyText}>{t('dashboard.noUpcoming')}</Text>
+              <Text style={styles.emptyText}>Gözləyən sorğu yoxdur</Text>
             </Card>
           ) : (
             pending.map((appt) => (
@@ -124,24 +109,12 @@ export const LawyerDashboardScreen = () => {
                   </View>
                 </View>
                 <View style={styles.apptDetails}>
-                  <Text style={styles.apptDetail}>
-                    {appt.durationMinutes} min • {appt.type}
-                  </Text>
+                  <Text style={styles.apptDetail}>{appt.durationMinutes} dəq • {appt.type}</Text>
                   <Text style={styles.apptPrice}>${appt.price.toFixed(2)}</Text>
                 </View>
                 <View style={styles.actionRow}>
-                  <Button
-                    title={t('appointments.confirm')}
-                    onPress={() => handleConfirm(appt.id)}
-                    style={{ flex: 1, height: 40, backgroundColor: '#10B981' } as any}
-                    textStyle={{ color: '#FFFFFF' }}
-                  />
-                  <Button
-                    title={t('appointments.cancel')}
-                    onPress={() => handleCancel(appt.id)}
-                    variant="danger"
-                    style={styles.actionBtn}
-                  />
+                  <Button title="Təsdiqlə" onPress={() => handleConfirm(appt.id)} style={{ flex: 1, height: 40, backgroundColor: '#10B981' } as any} textStyle={{ color: '#FFFFFF' }} />
+                  <Button title="Ləğv et" onPress={() => handleCancel(appt.id)} variant="danger" style={styles.actionBtn} />
                 </View>
               </Card>
             ))
@@ -166,40 +139,15 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 },
   greeting: { fontSize: 22, fontWeight: '800', color: '#0A0A0A' },
   greetingSub: { fontSize: 14, color: '#6B6B6B', marginTop: 2 },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    width: '46%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 12, marginBottom: 24 },
+  statCard: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E8E8E8', width: '46%', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   statValue: { fontSize: 24, fontWeight: '800', color: '#0A0A0A' },
   statLabel: { fontSize: 12, color: '#6B6B6B', marginTop: 2 },
   section: { paddingHorizontal: 16, marginBottom: 24 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#0A0A0A', marginBottom: 12 },
   apptCard: { marginBottom: 12 },
   apptHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  clientAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0A0A0A',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  clientAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#0A0A0A', alignItems: 'center', justifyContent: 'center' },
   clientAvatarText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
   clientName: { fontSize: 15, fontWeight: '600', color: '#0A0A0A' },
   apptDate: { fontSize: 12, color: '#6B6B6B', marginTop: 2 },

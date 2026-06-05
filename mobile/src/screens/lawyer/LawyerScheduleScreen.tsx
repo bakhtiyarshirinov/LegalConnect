@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { formatDateOnly } from '../../utils/date';
 
 const DURATIONS = [30, 60, 90, 120];
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 6);
 
 interface Slot {
   id: string;
@@ -41,17 +41,15 @@ export const LawyerScheduleScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [duration, setDuration] = useState(60);
-  const [startHour, setStartHour] = useState('9');
-  const [endHour, setEndHour] = useState('17');
+  const [startHour, setStartHour] = useState(9);
+  const [endHour, setEndHour] = useState(17);
   const [generating, setGenerating] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   useEffect(() => {
     if (!lawyerProfileId) {
-      lawyersApi.getMyProfile().then((r) => {
-        setLawyerProfileId(r.data.id);
-      }).catch(() => {});
+      lawyersApi.getMyProfile().then((r) => { setLawyerProfileId(r.data.id); }).catch(() => {});
     }
   }, [lawyerProfileId]);
 
@@ -69,46 +67,30 @@ export const LawyerScheduleScreen = () => {
       to.setHours(23, 59, 59, 999);
       const res = await slotsApi.getBulk(lawyerProfileId, from.toISOString(), to.toISOString());
       setSlots(res.data || []);
-    } catch {
-      setSlots([]);
-    } finally {
-      setSlotsLoading(false);
-    }
+    } catch { setSlots([]); } finally { setSlotsLoading(false); }
   };
 
   const onDateChange = (_: any, d?: Date) => {
     setShowDatePicker(false);
-    if (d) {
-      setSelectedDate(d);
-      fetchSlots(d);
-    }
+    if (d) { setSelectedDate(d); fetchSlots(d); }
   };
 
+  const slotCount = Math.floor((endHour - startHour) * 60 / duration);
+
   const handleGenerate = async () => {
-    if (!lawyerProfileId) {
-      Alert.alert('Error', 'Profile not loaded yet');
-      return;
-    }
-    const sh = parseInt(startHour);
-    const eh = parseInt(endHour);
-    if (isNaN(sh) || isNaN(eh) || sh >= eh || sh < 0 || eh > 24) {
-      Alert.alert('Error', 'Invalid hours. Start must be before end (0–24)');
-      return;
-    }
+    if (!lawyerProfileId) { Alert.alert('Xəta', 'Profil hələ yüklənmədi'); return; }
+    if (endHour <= startHour) { Alert.alert('Xəta', 'Bitmə saatı başlanğıc saatından sonra olmalıdır'); return; }
     setGenerating(true);
     try {
       const res = await slotsApi.createBulk({
-        lawyerId: lawyerProfileId,
-        date: selectedDate.toISOString(),
-        slotDurationMinutes: duration,
-        startHour: sh,
-        endHour: eh,
+        lawyerId: lawyerProfileId, date: selectedDate.toISOString(),
+        slotDurationMinutes: duration, startHour, endHour,
       });
       const count = res.data?.count ?? res.data?.length ?? '?';
-      Alert.alert('Success', `${count} slot(s) created!`);
+      Alert.alert('Uğurlu', `${count} slot yaradıldı!`);
       fetchSlots(selectedDate);
     } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to generate slots');
+      Alert.alert('Xəta', e.response?.data?.message || 'Slotlar yaradılmadı');
     } finally {
       setGenerating(false);
     }
@@ -120,112 +102,86 @@ export const LawyerScheduleScreen = () => {
       await slotsApi.deleteSlot(slotId, lawyerProfileId);
       setSlots((prev) => prev.filter((s) => s.id !== slotId));
     } catch (e: any) {
-      Alert.alert('Error', e.response?.data?.message || 'Failed to delete slot');
+      Alert.alert('Xəta', e.response?.data?.message || 'Slot silinmədi');
     }
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>My Schedule</Text>
+        <Text style={styles.title}>Mənim cədvəlim</Text>
 
         <Card style={styles.card}>
-          <Text style={styles.fieldLabel}>Select Date</Text>
+          <Text style={styles.fieldLabel}>Tarix seçin</Text>
           <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
             <Ionicons name="calendar-outline" size={18} color="#6B6B6B" />
             <Text style={styles.dateButtonText}>{formatDateOnly(selectedDate.toISOString())}</Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              minimumDate={new Date()}
-              onChange={onDateChange}
-            />
-          )}
+          {showDatePicker && <DateTimePicker value={selectedDate} mode="date" minimumDate={new Date()} onChange={onDateChange} />}
 
-          <Text style={styles.fieldLabel}>Slot Duration</Text>
+          <Text style={styles.fieldLabel}>Slot müddəti</Text>
           <View style={styles.segmented}>
             {DURATIONS.map((d) => (
-              <TouchableOpacity
-                key={d}
-                onPress={() => setDuration(d)}
-                style={[styles.segment, duration === d && styles.segmentActive]}
-              >
-                <Text style={[styles.segmentText, duration === d && styles.segmentTextActive]}>
-                  {d}m
-                </Text>
+              <TouchableOpacity key={d} onPress={() => setDuration(d)} style={[styles.segment, duration === d && styles.segmentActive]}>
+                <Text style={[styles.segmentText, duration === d && styles.segmentTextActive]}>{d}dəq</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <View style={styles.hoursRow}>
-            <View style={styles.hourInput}>
-              <Text style={styles.fieldLabel}>Start Hour</Text>
-              <TextInput
-                style={styles.hourBox}
-                value={startHour}
-                onChangeText={setStartHour}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="9"
-                placeholderTextColor="#9CA3AF"
-              />
+          <Text style={styles.fieldLabel}>Başlanğıc saatı</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+            <View style={styles.hourRow}>
+              {HOURS.map((h) => (
+                <TouchableOpacity key={h} onPress={() => { setStartHour(h); if (endHour <= h) setEndHour(h + 1); }}
+                  style={[styles.hourChip, startHour === h && styles.hourChipActive]}
+                >
+                  <Text style={[styles.hourChipText, startHour === h && styles.hourChipTextActive]}>{String(h).padStart(2, '0')}:00</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <View style={styles.hourDivider}>
-              <Text style={styles.hourDividerText}>–</Text>
+          </ScrollView>
+
+          <Text style={styles.fieldLabel}>Bitmə saatı</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+            <View style={styles.hourRow}>
+              {HOURS.filter((h) => h > startHour).map((h) => (
+                <TouchableOpacity key={h} onPress={() => setEndHour(h)} style={[styles.hourChip, endHour === h && styles.hourChipActive]}>
+                  <Text style={[styles.hourChipText, endHour === h && styles.hourChipTextActive]}>{String(h).padStart(2, '0')}:00</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <View style={styles.hourInput}>
-              <Text style={styles.fieldLabel}>End Hour</Text>
-              <TextInput
-                style={styles.hourBox}
-                value={endHour}
-                onChangeText={setEndHour}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="17"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
+          </ScrollView>
+
+          <View style={styles.previewBox}>
+            <Text style={styles.previewText}>
+              {slotCount > 0 ? `${slotCount} slot yaradılacaq` : 'Slot yoxdur'}
+            </Text>
           </View>
 
-          <Button
-            title="Generate Slots"
-            onPress={handleGenerate}
-            loading={generating}
-            style={{ marginTop: 4 }}
-          />
+          <Button title="Slotlar yarat" onPress={handleGenerate} loading={generating} style={{ marginTop: 4 }} />
         </Card>
 
-        <Text style={styles.slotsTitle}>
-          Slots for {formatDateOnly(selectedDate.toISOString())}
-        </Text>
+        <Text style={styles.slotsTitle}>Slotlar: {formatDateOnly(selectedDate.toISOString())}</Text>
 
         {slotsLoading ? (
           <ActivityIndicator style={{ marginTop: 24 }} color="#0A0A0A" />
         ) : slots.length === 0 ? (
           <View style={styles.emptySlots}>
             <Ionicons name="time-outline" size={40} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No slots for this date</Text>
+            <Text style={styles.emptyText}>Bu tarixdə slot yoxdur</Text>
           </View>
         ) : (
           slots.map((slot) => (
             <View key={slot.id} style={styles.slotRow}>
               <View style={styles.slotTime}>
                 <Ionicons name="time-outline" size={16} color="#6B6B6B" style={{ marginRight: 6 }} />
-                <Text style={styles.slotTimeText}>
-                  {formatSlotTime(slot.startTime)} – {formatSlotTime(slot.endTime)}
-                </Text>
+                <Text style={styles.slotTimeText}>{formatSlotTime(slot.startTime)} – {formatSlotTime(slot.endTime)}</Text>
               </View>
               <View style={styles.slotRight}>
                 {slot.isBooked ? (
-                  <Badge label="Booked" variant="confirmed" />
+                  <Badge label="Rezerv edilib" variant="confirmed" />
                 ) : (
-                  <TouchableOpacity
-                    onPress={() => handleDelete(slot.id)}
-                    style={styles.deleteBtn}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
+                  <TouchableOpacity onPress={() => handleDelete(slot.id)} style={styles.deleteBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Ionicons name="trash-outline" size={18} color="#EF4444" />
                   </TouchableOpacity>
                 )}
@@ -244,50 +200,22 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', color: '#0A0A0A', marginBottom: 20 },
   card: { marginBottom: 24 },
   fieldLabel: { fontSize: 14, fontWeight: '600', color: '#0A0A0A', marginBottom: 8, marginTop: 12 },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    padding: 14,
-  },
+  dateButton: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1.5, borderColor: '#E8E8E8', padding: 14 },
   dateButtonText: { fontSize: 15, color: '#0A0A0A' },
   segmented: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4, gap: 4 },
   segment: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
   segmentActive: { backgroundColor: '#0A0A0A' },
   segmentText: { fontSize: 14, fontWeight: '500', color: '#6B6B6B' },
   segmentTextActive: { color: '#FFFFFF' },
-  hoursRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginBottom: 4 },
-  hourInput: { flex: 1 },
-  hourBox: {
-    height: 52,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0A0A0A',
-    textAlign: 'center',
-  },
-  hourDivider: { paddingBottom: 14 },
-  hourDividerText: { fontSize: 20, color: '#9CA3AF', fontWeight: '300' },
+  hourRow: { flexDirection: 'row', gap: 6, paddingVertical: 4, paddingRight: 16 },
+  hourChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF' },
+  hourChipActive: { backgroundColor: '#0A0A0A', borderColor: '#0A0A0A' },
+  hourChipText: { fontSize: 13, color: '#6B6B6B', fontWeight: '500' },
+  hourChipTextActive: { color: '#FFFFFF' },
+  previewBox: { backgroundColor: '#F5F5F5', borderRadius: 10, padding: 12, marginTop: 8, marginBottom: 4 },
+  previewText: { fontSize: 13, color: '#6B6B6B', textAlign: 'center', fontWeight: '500' },
   slotsTitle: { fontSize: 16, fontWeight: '700', color: '#0A0A0A', marginBottom: 12 },
-  slotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-  },
+  slotRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#E8E8E8' },
   slotTime: { flexDirection: 'row', alignItems: 'center' },
   slotTimeText: { fontSize: 15, fontWeight: '500', color: '#0A0A0A' },
   slotRight: { flexDirection: 'row', alignItems: 'center' },

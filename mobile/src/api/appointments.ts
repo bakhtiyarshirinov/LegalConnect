@@ -25,4 +25,7 @@ export const appointmentsApi = {
 
   complete: (id: string, lawyerId: string) =>
     api.put(`/appointments/${id}/complete`, null, { params: { lawyerId } }),
+
+  createMeeting: (appointmentId: string) =>
+    api.post(`/appointments/${appointmentId}/create-meeting`).then(r => r.data),
 };

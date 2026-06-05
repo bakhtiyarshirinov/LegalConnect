@@ -10,13 +10,11 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 
 export const VerifyOtpScreen = ({ route, navigation }: any) => {
-  const { t } = useTranslation();
   const { email } = route.params;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -27,11 +25,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((c) => {
-        if (c <= 1) {
-          setCanResend(true);
-          clearInterval(timer);
-          return 0;
-        }
+        if (c <= 1) { setCanResend(true); clearInterval(timer); return 0; }
         return c - 1;
       });
     }, 1000);
@@ -49,9 +43,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
     const next = [...otp];
     next[index] = digits[digits.length - 1];
     setOtp(next);
-    if (index < 5 && digits) {
-      inputs.current[index + 1]?.focus();
-    }
+    if (index < 5 && digits) { inputs.current[index + 1]?.focus(); }
   };
 
   const handleKeyPress = (e: any, index: number) => {
@@ -62,21 +54,14 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
 
   const handleVerify = async () => {
     const code = otp.join('');
-    if (code.length < 6) {
-      Alert.alert('Error', 'Enter the 6-digit code');
-      return;
-    }
+    if (code.length < 6) { Alert.alert('Xəta', '6 rəqəmli kodu daxil edin'); return; }
     setLoading(true);
     try {
       const res = await authApi.verifyOtp(email, code);
       const setUser = useAuthStore.getState().setUser;
-      if (res.data?.token) {
-        await setUser(res.data);
-      } else {
-        navigation.navigate('Login');
-      }
+      if (res.data?.token) { await setUser(res.data); } else { navigation.navigate('Login'); }
     } catch (e: any) {
-      Alert.alert('Invalid Code', e.response?.data?.message || 'Wrong or expired code');
+      Alert.alert('Yanlış kod', e.response?.data?.message || 'Yanlış və ya vaxtı keçmiş kod');
     } finally {
       setLoading(false);
     }
@@ -96,7 +81,7 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
         });
       }, 1000);
     } catch {
-      Alert.alert('Error', 'Failed to resend code');
+      Alert.alert('Xəta', 'Kod göndərilə bilmədi');
     }
   };
 
@@ -104,9 +89,9 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={styles.container}>
-          <Text style={styles.title}>{t('auth.checkEmail')}</Text>
+          <Text style={styles.title}>E-poçtu təsdiqlə</Text>
           <Text style={styles.subtitle}>
-            We sent a 6-digit code to{'\n'}
+            6 rəqəmli kod göndərildi{'\n'}
             <Text style={styles.email}>{email}</Text>
           </Text>
 
@@ -127,16 +112,11 @@ export const VerifyOtpScreen = ({ route, navigation }: any) => {
             ))}
           </View>
 
-          <Button
-            title={t('auth.verify')}
-            onPress={handleVerify}
-            loading={loading}
-            style={styles.btn}
-          />
+          <Button title="E-poçtu təsdiqlə" onPress={handleVerify} loading={loading} style={styles.btn} />
 
           <TouchableOpacity onPress={handleResend} disabled={!canResend} style={styles.resendBtn}>
             <Text style={[styles.resendText, !canResend && styles.resendDisabled]}>
-              {canResend ? t('auth.resendCode') : `${t('auth.resendCode')} in ${countdown}s`}
+              {canResend ? 'Kodu yenidən göndər' : `Kodu yenidən göndər ${countdown}s`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -152,17 +132,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, color: '#6B6B6B', textAlign: 'center', marginBottom: 40, lineHeight: 22 },
   email: { fontWeight: '600', color: '#0A0A0A' },
   otpRow: { flexDirection: 'row', gap: 10, marginBottom: 32 },
-  otpBox: {
-    width: 48,
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0A0A0A',
-  },
+  otpBox: { width: 48, height: 56, borderRadius: 12, borderWidth: 1.5, borderColor: '#E8E8E8', backgroundColor: '#FFFFFF', fontSize: 22, fontWeight: '700', color: '#0A0A0A' },
   otpBoxFilled: { borderColor: '#0A0A0A' },
   btn: { width: '100%', marginBottom: 16 },
   resendBtn: { paddingVertical: 8 },

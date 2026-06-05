@@ -11,13 +11,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { authApi } from '../../api/auth';
 
 export const RegisterClientScreen = ({ navigation }: any) => {
-  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +24,7 @@ export const RegisterClientScreen = ({ navigation }: any) => {
 
   const handleRegister = async () => {
     if (!fullName.trim() || !email.trim() || !password.trim() || !phone.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Xəta', 'Bütün sahələri doldurun');
       return;
     }
     setLoading(true);
@@ -34,7 +32,7 @@ export const RegisterClientScreen = ({ navigation }: any) => {
       await authApi.registerClient({ fullName, email, password, phone });
       navigation.navigate('VerifyOtp', { email });
     } catch (e: any) {
-      Alert.alert('Registration Failed', e.response?.data?.message || 'Something went wrong');
+      Alert.alert('Qeydiyyat alınmadı', e.response?.data?.message || 'Xəta baş verdi');
     } finally {
       setLoading(false);
     }
@@ -42,57 +40,21 @@ export const RegisterClientScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.back}>
             <Ionicons name="arrow-back" size={24} color="#0A0A0A" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>{t('auth.createAccount')}</Text>
-          <Text style={styles.subtitle}>Join as a client</Text>
+          <Text style={styles.title}>Hesab yarat</Text>
+          <Text style={styles.subtitle}>Müştəri kimi qoşul</Text>
 
-          <Input
-            label={t('profile.fullName')}
-            placeholder="John Doe"
-            value={fullName}
-            onChangeText={setFullName}
-            autoCapitalize="words"
-          />
-          <Input
-            label={t('auth.email')}
-            placeholder="your@email.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Input
-            label={t('auth.password')}
-            placeholder="Min 6 characters"
-            value={password}
-            onChangeText={setPassword}
-            secureToggle
-          />
-          <Input
-            label={t('profile.phone')}
-            placeholder="+994 50 000 00 00"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-          />
+          <Input label="Ad Soyad" placeholder="Əli Həsənov" value={fullName} onChangeText={setFullName} autoCapitalize="words" />
+          <Input label="E-poçt ünvanı" placeholder="siz@email.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <Input label="Şifrə" placeholder="Minimum 6 simvol" value={password} onChangeText={setPassword} secureToggle />
+          <Input label="Telefon" placeholder="+994 50 000 00 00" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
 
-          <Button
-            title={t('auth.createAccount')}
-            onPress={handleRegister}
-            loading={loading}
-            style={styles.btn}
-          />
+          <Button title="Hesab yarat" onPress={handleRegister} loading={loading} style={styles.btn} />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

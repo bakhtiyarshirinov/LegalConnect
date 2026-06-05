@@ -4,36 +4,34 @@ import {
   UserCircle, ShieldCheck, Bell, User,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { chatsApi } from '../../api/chats'
 
 interface NavItem { label: string; to: string; icon: React.ReactNode }
 
 export function Sidebar() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const role = user?.role
 
   const clientNav: NavItem[] = [
-    { label: t('nav.dashboard'),     to: '/dashboard',    icon: <LayoutDashboard size={16} /> },
-    { label: t('nav.profile'),       to: '/profile',      icon: <User size={16} /> },
-    { label: t('nav.findLawyers'),   to: '/lawyers',      icon: <Users size={16} /> },
-    { label: t('nav.appointments'),  to: '/appointments', icon: <Calendar size={16} /> },
-    { label: t('nav.chat'),          to: '/chat',         icon: <MessageSquare size={16} /> },
-    { label: t('nav.notifications'), to: '/notifications',icon: <Bell size={16} /> },
+    { label: 'İdarə paneli',  to: '/dashboard',    icon: <LayoutDashboard size={16} /> },
+    { label: 'Profil',        to: '/profile',      icon: <User size={16} /> },
+    { label: 'Vəkil axtar',   to: '/lawyers',      icon: <Users size={16} /> },
+    { label: 'Görüşlər',      to: '/appointments', icon: <Calendar size={16} /> },
+    { label: 'Söhbət',        to: '/chat',         icon: <MessageSquare size={16} /> },
+    { label: 'Bildirişlər',   to: '/notifications',icon: <Bell size={16} /> },
   ]
 
   const lawyerNav: NavItem[] = [
-    { label: t('nav.dashboard'),    to: '/lawyer/dashboard',    icon: <LayoutDashboard size={16} /> },
-    { label: t('nav.appointments'), to: '/lawyer/appointments', icon: <Calendar size={16} /> },
-    { label: t('nav.chat'),         to: '/chat',                icon: <MessageSquare size={16} /> },
-    { label: t('nav.profile'),      to: '/lawyer/profile',      icon: <UserCircle size={16} /> },
+    { label: 'İdarə paneli', to: '/lawyer/dashboard',    icon: <LayoutDashboard size={16} /> },
+    { label: 'Görüşlər',     to: '/lawyer/appointments', icon: <Calendar size={16} /> },
+    { label: 'Söhbət',       to: '/chat',                icon: <MessageSquare size={16} /> },
+    { label: 'Profil',       to: '/lawyer/profile',      icon: <UserCircle size={16} /> },
   ]
 
   const adminNav: NavItem[] = [
-    { label: t('nav.dashboard'),  to: '/admin/dashboard', icon: <LayoutDashboard size={16} /> },
-    { label: 'Verify Lawyers',    to: '/admin/lawyers',   icon: <ShieldCheck size={16} /> },
+    { label: 'İdarə paneli',  to: '/admin/dashboard', icon: <LayoutDashboard size={16} /> },
+    { label: 'Vəkillər',      to: '/admin/lawyers',   icon: <ShieldCheck size={16} /> },
   ]
 
   const navItems = role === 'Lawyer' ? lawyerNav : role === 'Admin' ? adminNav : clientNav

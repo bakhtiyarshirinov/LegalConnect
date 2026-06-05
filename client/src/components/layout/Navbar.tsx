@@ -3,19 +3,15 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, LogOut, Scale, ChevronDown } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { notificationsApi } from '../../api/notifications'
 import { usersApi } from '../../api/users'
-
-const LANGS = ['EN', 'AZ', 'RU'] as const
 
 export function Navbar() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const [dropOpen, setDropOpen] = useState(false)
-  const { t, i18n } = useTranslation()
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count', user?.userId],
@@ -32,7 +28,6 @@ export function Navbar() {
   })
 
   const handleLogout = () => { logout(); navigate('/login') }
-  const activeLang = i18n.language?.slice(0, 2).toUpperCase()
 
   return (
     <nav style={{
@@ -49,32 +44,10 @@ export function Navbar() {
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        {/* Language switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', background: '#F5F5F5', borderRadius: 8, padding: 3, gap: 2 }}>
-          {LANGS.map((lang) => {
-            const isActive = activeLang === lang
-            return (
-              <button
-                key={lang}
-                onClick={() => i18n.changeLanguage(lang.toLowerCase())}
-                style={{
-                  padding: '4px 8px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                  fontSize: 11, fontWeight: 600, letterSpacing: '0.03em',
-                  background: isActive ? '#0A0A0A' : 'transparent',
-                  color: isActive ? '#FFFFFF' : '#6B6B6B',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {lang}
-              </button>
-            )
-          })}
-        </div>
-
         <Link to="/notifications" style={{ position: 'relative', padding: 8, display: 'flex', alignItems: 'center', color: '#6B6B6B', borderRadius: 10, background: 'transparent', textDecoration: 'none' }}
           onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#F5F5F5')}
           onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-          title={t('notifications.title')}
+          title="Bildirişlər"
         >
           <Bell size={18} />
           {unreadCount > 0 && (
@@ -123,7 +96,7 @@ export function Navbar() {
                     onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#fef2f2')}
                     onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.background = 'none')}
                   >
-                    <LogOut size={14} /> {t('auth.logout')}
+                    <LogOut size={14} /> Çıxış
                   </button>
                 </motion.div>
               </>

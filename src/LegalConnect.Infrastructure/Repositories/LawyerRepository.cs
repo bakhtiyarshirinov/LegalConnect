@@ -39,7 +39,7 @@ public class LawyerRepository : ILawyerRepository
             .Include(l => l.User)
             .Include(l => l.Specializations)
             .ThenInclude(ls => ls.Specialization)
-            .Where(l => l.IsAvailable)
+            .Where(l => l.IsAvailable && l.IsVerified)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(city))

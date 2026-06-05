@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, Bell, XCircle, ArrowRight } from 'lucide-react'
+import { Calendar, Bell, XCircle, ArrowRight, Video } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi } from '../../api/appointments'
 import { notificationsApi } from '../../api/notifications'
@@ -16,7 +15,6 @@ const item = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }
 const pageVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } } }
 
 export default function ClientDashboard() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
 
@@ -25,23 +23,39 @@ export default function ClientDashboard() {
 
   const cancelMutation = useMutation({
     mutationFn: (id: string) => appointmentsApi.cancel(id, user.userId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['appointments', user.userId] }); toast.success('Appointment cancelled') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['appointments', user.userId] }); toast.success('Görüş ləğv edildi') },
     onError: (err: Error) => toast.error(err.message),
   })
 
+  const joinMeeting = async (a: typeof appointments[0]) => {
+    if (a.meetingUrl) { window.open(a.meetingUrl, '_blank'); return }
+    try {
+      const { meetingUrl } = await appointmentsApi.createMeeting(a.id)
+      window.open(meetingUrl, '_blank')
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Görüşə qoşulmaq alınmadı')
+    }
+  }
+
+  function isWithin24Hours(scheduledAt: string) {
+    const diff = new Date(scheduledAt).getTime() - Date.now()
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000
+  }
+
   const upcoming = appointments.filter((a) => a.status === 'Pending' || a.status === 'Confirmed').sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()).slice(0, 3)
   const stats = [
-    { label: t('dashboard.totalAppointments'), value: appointments.length },
-    { label: t('dashboard.upcoming'), value: appointments.filter((a) => a.status === 'Pending' || a.status === 'Confirmed').length },
-    { label: t('dashboard.completed'), value: appointments.filter((a) => a.status === 'Completed').length },
+    { label: 'Cəmi', value: appointments.length },
+    { label: 'Gələcək', value: appointments.filter((a) => a.status === 'Pending' || a.status === 'Confirmed').length },
+    { label: 'Tamamlandı', value: appointments.filter((a) => a.status === 'Completed').length },
   ]
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
     <motion.div initial="hidden" animate="visible" variants={pageVariant} style={{ padding: '32px 36px', background: '#F5F5F5', minHeight: 'calc(100vh - 64px)' }}>
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>{t('dashboard.welcome')}, {user.fullName.split(' ')[0]}! 👋</h1>
-        <p style={{ color: '#6B6B6B', fontSize: 15 }}>Here's an overview of your legal activity.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>Xoş gəldiniz, {user.fullName.split(' ')[0]}! 👋</h1>
+        <p style={{ color: '#6B6B6B', fontSize: 15 }}>Hüquqi fəaliyyətinizə ümumi baxış.</p>
       </div>
 
       <motion.div initial="hidden" animate="visible" variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
@@ -57,16 +71,16 @@ export default function ClientDashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         <div style={{ background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={16} /> {t('dashboard.upcoming')}</h2>
-            <Link to="/lawyers" style={{ fontSize: 13, color: '#6B6B6B', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>{t('common.seeAll')} <ArrowRight size={12} /></Link>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}><Calendar size={16} /> Gələcək</h2>
+            <Link to="/lawyers" style={{ fontSize: 13, color: '#6B6B6B', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>Hamısını gör <ArrowRight size={12} /></Link>
           </div>
           {loadingAppts ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{[1,2,3].map(i => <SkeletonCard key={i} />)}</div>
           ) : upcoming.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: '#A3A3A3' }}>
               <Calendar size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <p style={{ fontSize: 14 }}>{t('dashboard.noUpcoming')}</p>
-              <Link to="/lawyers"><Button size="sm" style={{ marginTop: 12 }}>{t('dashboard.findLawyer')}</Button></Link>
+              <p style={{ fontSize: 14 }}>Gələcək görüş yoxdur</p>
+              <Link to="/lawyers"><Button size="sm" style={{ marginTop: 12 }}>Vəkil tap</Button></Link>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -82,13 +96,20 @@ export default function ClientDashboard() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Badge variant="info">{a.type}</Badge>
-                      <span style={{ fontSize: 12, color: '#6B6B6B' }}>{a.durationMinutes}min</span>
+                      <span style={{ fontSize: 12, color: '#6B6B6B' }}>{a.durationMinutes}dəq</span>
                     </div>
-                    {(a.status === 'Pending' || a.status === 'Confirmed') && (
-                      <button onClick={() => cancelMutation.mutate(a.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#ef4444', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif' }}>
-                        <XCircle size={12} /> Cancel
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {a.status === 'Confirmed' && isWithin24Hours(a.scheduledAt) && (
+                        <button onClick={() => joinMeeting(a)} style={{ background: '#1C7ED6', border: 'none', color: '#fff', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif' }}>
+                          <Video size={12} /> Qoşul
+                        </button>
+                      )}
+                      {(a.status === 'Pending' || a.status === 'Confirmed') && (
+                        <button onClick={() => cancelMutation.mutate(a.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#ef4444', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif' }}>
+                          <XCircle size={12} /> Ləğv et
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -98,15 +119,15 @@ export default function ClientDashboard() {
 
         <div style={{ background: '#FFFFFF', border: '1px solid #F0F0F0', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}><Bell size={16} /> Notifications</h2>
-            <Link to="/notifications" style={{ fontSize: 13, color: '#6B6B6B', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>View all <ArrowRight size={12} /></Link>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}><Bell size={16} /> Bildirişlər</h2>
+            <Link to="/notifications" style={{ fontSize: 13, color: '#6B6B6B', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>Hamısına bax <ArrowRight size={12} /></Link>
           </div>
           {loadingNotifs ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{[1,2,3,4,5].map(i => <Skeleton key={i} height={60} borderRadius={10} />)}</div>
           ) : notifications.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: '#A3A3A3' }}>
               <Bell size={32} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <p style={{ fontSize: 14 }}>No notifications yet</p>
+              <p style={{ fontSize: 14 }}>Hələ bildiriş yoxdur</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

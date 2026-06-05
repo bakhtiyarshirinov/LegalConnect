@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { User, BadgeCheck, Calendar, CheckCircle, Clock, Camera } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { usersApi } from '../../api/users'
 import { appointmentsApi } from '../../api/appointments'
@@ -26,7 +25,6 @@ function formatShort(d: string) {
 }
 
 export default function ClientProfile() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const updateUser = useAuthStore((s) => s.updateUser)
   const qc = useQueryClient()
@@ -56,7 +54,7 @@ export default function ClientProfile() {
   const saveMutation = useMutation({
     mutationFn: () => usersApi.updateMe({ fullName: fullName.trim(), phone: phone.trim() || undefined }),
     onSuccess: () => {
-      toast.success('Profile updated!')
+      toast.success('Profil yeniləndi!')
       updateUser({ fullName: fullName.trim() })
       qc.invalidateQueries({ queryKey: ['myProfile', user.userId] })
     },
@@ -69,10 +67,10 @@ export default function ClientProfile() {
     setUploadingAvatar(true)
     try {
       await usersApi.uploadAvatar(file)
-      toast.success('Photo updated!')
+      toast.success('Şəkil yeniləndi!')
       qc.invalidateQueries({ queryKey: ['myProfile', user.userId] })
     } catch {
-      toast.error('Failed to upload photo')
+      toast.error('Şəkil yüklənə bilmədi')
     } finally {
       setUploadingAvatar(false)
       if (avatarInputRef.current) avatarInputRef.current.value = ''
@@ -87,9 +85,9 @@ export default function ClientProfile() {
     .slice(0, 3)
 
   const stats = [
-    { label: t('appointments.total'), value: totalAppts, icon: <Calendar size={16} /> },
-    { label: t('dashboard.completed'), value: completed, icon: <CheckCircle size={16} /> },
-    { label: t('dashboard.upcoming'), value: pending, icon: <Clock size={16} /> },
+    { label: 'Cəmi', value: totalAppts, icon: <Calendar size={16} /> },
+    { label: 'Tamamlandı', value: completed, icon: <CheckCircle size={16} /> },
+    { label: 'Gələcək', value: pending, icon: <Clock size={16} /> },
   ]
 
   return (
@@ -98,7 +96,7 @@ export default function ClientProfile() {
       style={{ padding: '32px 36px', background: '#F5F5F5', minHeight: 'calc(100vh - 64px)' }}
     >
       <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 28 }}>
-        {t('profile.title')}
+        Profil
       </h1>
 
       {/* Stats row */}
@@ -128,13 +126,7 @@ export default function ClientProfile() {
               </>
             ) : (
               <>
-                <input
-                  ref={avatarInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handleAvatarChange}
-                />
+                <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
                 <div
                   style={{ position: 'relative', width: 80, height: 80, margin: '0 auto 16px', cursor: 'pointer' }}
                   onClick={() => !uploadingAvatar && avatarInputRef.current?.click()}
@@ -142,68 +134,46 @@ export default function ClientProfile() {
                   {profile?.avatarUrl ? (
                     <img src={profile.avatarUrl} alt="Avatar" style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{
-                      width: 80, height: 80, background: '#0A0A0A', borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 32, fontWeight: 800, color: '#fff',
-                    }}>
+                    <div style={{ width: 80, height: 80, background: '#0A0A0A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, color: '#fff' }}>
                       {uploadingAvatar ? '...' : (profile?.fullName?.[0]?.toUpperCase() ?? user.fullName[0])}
                     </div>
                   )}
-                  <div style={{
-                    position: 'absolute', inset: 0, borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: 2,
-                    opacity: 0, transition: 'opacity 0.2s',
-                  }}
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, opacity: 0, transition: 'opacity 0.2s' }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0' }}
                   >
                     <Camera size={18} color="#fff" />
-                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>{t('profile.changePhoto')}</span>
+                    <span style={{ fontSize: 10, color: '#fff', fontWeight: 600 }}>Şəkli dəyiş</span>
                   </div>
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 6 }}>
-                  {profile?.fullName ?? user.fullName}
-                </div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 6 }}>{profile?.fullName ?? user.fullName}</div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                  <span style={{
-                    background: '#F5F5F5', color: '#6B6B6B', border: '1px solid #E8E8E8',
-                    borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: 4,
-                  }}>
-                    <User size={11} /> Client
+                  <span style={{ background: '#F5F5F5', color: '#6B6B6B', border: '1px solid #E8E8E8', borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <User size={11} /> Müştəri
                   </span>
                   {profile?.isVerified && (
-                    <span style={{
-                      background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe',
-                      borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 600,
-                      display: 'flex', alignItems: 'center', gap: 4,
-                    }}>
-                      <BadgeCheck size={11} /> Verified
+                    <span style={{ background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <BadgeCheck size={11} /> Təsdiqlənmiş
                     </span>
                   )}
                 </div>
                 {profile?.createdAt && (
                   <div style={{ fontSize: 12, color: '#A3A3A3' }}>
-                    Member since {formatDate(profile.createdAt)}
+                    Üzv olma tarixi {formatDate(profile.createdAt)}
                   </div>
                 )}
               </>
             )}
           </Card>
 
-          {/* Recent activity */}
           {recent.length > 0 && (
             <Card padding={20}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 14 }}>Recent Activity</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 14 }}>Son fəaliyyət</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {recent.map((a) => (
                   <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                     <div style={{ overflow: 'hidden' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {a.lawyerFullName}
-                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.lawyerFullName}</div>
                       <div style={{ fontSize: 11, color: '#A3A3A3' }}>{formatShort(a.scheduledAt)}</div>
                     </div>
                     <Badge>{a.status}</Badge>
@@ -216,69 +186,42 @@ export default function ClientProfile() {
 
         {/* Right — edit form */}
         <Card padding={28}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 20 }}>{t('profile.editProfile')}</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 20 }}>Profili redaktə et</h2>
           {loadingProfile ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[1, 2, 3].map((i) => <Skeleton key={i} height={46} borderRadius={10} />)}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              {/* Full Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('profile.fullName')}</label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  style={{
-                    border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
-                    fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
-                    background: '#FFFFFF', color: '#0A0A0A', transition: 'border-color 0.15s',
-                  }}
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Ad Soyad</label>
+                <input value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FFFFFF', color: '#0A0A0A', transition: 'border-color 0.15s' }}
                   onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
                   onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
                 />
               </div>
 
-              {/* Email — disabled */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>
-                  {t('profile.email')} <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(cannot change)</span>
+                  E-poçt <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(dəyişdirilə bilməz)</span>
                 </label>
-                <input
-                  value={profile?.email ?? user.email}
-                  disabled
-                  style={{
-                    border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
-                    fontSize: 14, fontFamily: 'Inter, sans-serif',
-                    background: '#F5F5F5', color: '#6B6B6B', cursor: 'not-allowed',
-                  }}
+                <input value={profile?.email ?? user.email} disabled
+                  style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontFamily: 'Inter, sans-serif', background: '#F5F5F5', color: '#6B6B6B', cursor: 'not-allowed' }}
                 />
               </div>
 
-              {/* Phone */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>{t('profile.phone')}</label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  style={{
-                    border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
-                    fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif',
-                    background: '#FFFFFF', color: '#0A0A0A', transition: 'border-color 0.15s',
-                  }}
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Telefon</label>
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+994 XX XXX XX XX"
+                  style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FFFFFF', color: '#0A0A0A', transition: 'border-color 0.15s' }}
                   onFocus={(e) => { e.target.style.borderColor = '#0A0A0A' }}
                   onBlur={(e) => { e.target.style.borderColor = '#E8E8E8' }}
                 />
               </div>
 
-              <Button
-                loading={saveMutation.isPending}
-                disabled={!fullName.trim()}
-                onClick={() => saveMutation.mutate()}
-                style={{ alignSelf: 'flex-start', minWidth: 160 }}
-              >
-                {t('profile.saveChanges')}
+              <Button loading={saveMutation.isPending} disabled={!fullName.trim()} onClick={() => saveMutation.mutate()} style={{ alignSelf: 'flex-start', minWidth: 160 }}>
+                Dəyişiklikləri saxla
               </Button>
             </div>
           )}

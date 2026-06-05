@@ -32,6 +32,7 @@ export interface Appointment {
   type: string;
   price: number;
   notes?: string;
+  meetingUrl?: string;
 }
 
 export interface Chat {

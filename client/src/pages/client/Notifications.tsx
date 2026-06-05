@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Bell, Calendar, MessageSquare, CheckCheck, Info } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { notificationsApi } from '../../api/notifications'
 import { useAuthStore } from '../../store/authStore'
 import { Button } from '../../components/ui/Button'
@@ -23,7 +22,6 @@ function formatDate(d: string) {
 }
 
 export default function Notifications() {
-  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
 
@@ -40,7 +38,7 @@ export default function Notifications() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications', user.userId] })
       qc.invalidateQueries({ queryKey: ['unread-count', user.userId] })
-      toast.success('All notifications marked as read')
+      toast.success('Bütün bildirişlər oxunmuş sayıldı')
     },
     onError: (err: Error) => toast.error(err.message),
   })
@@ -51,12 +49,12 @@ export default function Notifications() {
     <motion.div initial="hidden" animate="visible" variants={pageVariant} style={{ padding: '32px 36px', background: '#F5F5F5', minHeight: 'calc(100vh - 64px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>{t('notifications.title')}</h1>
-          <p style={{ color: '#6B6B6B', fontSize: 15 }}>{unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>Bildirişlər</h1>
+          <p style={{ color: '#6B6B6B', fontSize: 15 }}>{unreadCount > 0 ? `${unreadCount} oxunmamış` : 'Hamısı oxunub!'}</p>
         </div>
         {unreadCount > 0 && (
           <Button variant="secondary" loading={markAllMutation.isPending} onClick={() => markAllMutation.mutate()}>
-            <CheckCheck size={15} /> {t('notifications.markAllRead')}
+            <CheckCheck size={15} /> Hamısını oxunmuş say
           </Button>
         )}
       </div>
@@ -69,8 +67,8 @@ export default function Notifications() {
         ) : notifications.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '64px 24px', color: '#A3A3A3' }}>
             <Bell size={40} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#6B6B6B', marginBottom: 8 }}>{t('notifications.noNotifications')}</h3>
-            <p style={{ fontSize: 14 }}>Notifications about appointments and messages will appear here.</p>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: '#6B6B6B', marginBottom: 8 }}>Bildiriş yoxdur</h3>
+            <p style={{ fontSize: 14 }}>Görüşlər və mesajlar haqqında bildirişlər burada görünəcək.</p>
           </div>
         ) : (
           <motion.div initial="hidden" animate="visible" variants={stagger}>
