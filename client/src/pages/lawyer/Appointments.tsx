@@ -31,7 +31,7 @@ export default function LawyerAppointments() {
   const { mutate: confirm } = useMutation({
     mutationFn: (id: string) => appointmentsApi.confirm(id, profile!.id),
     onSuccess: () => {
-      toast.success('Appointment confirmed!')
+      toast.success('Görüş təsdiqləndi!')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -40,7 +40,7 @@ export default function LawyerAppointments() {
   const { mutate: cancel } = useMutation({
     mutationFn: (id: string) => appointmentsApi.cancel(id, profile!.id),
     onSuccess: () => {
-      toast.success('Appointment cancelled')
+      toast.success('Görüş ləğv edildi')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -53,7 +53,7 @@ export default function LawyerAppointments() {
       window.open(meetingUrl, '_blank')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create meeting')
+      toast.error(err.response?.data?.message || 'Görüş yaradılmadı')
     }
   }
 
@@ -79,10 +79,10 @@ export default function LawyerAppointments() {
     >
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.5px' }}>
-          Appointments
+          Görüşlər
         </h1>
         <p style={{ color: '#6B6B6B', marginTop: 4 }}>
-          {appointments.length} total · {appointments.filter((a) => a.status === 'Pending').length} pending
+          {appointments.length} cəmi · {appointments.filter((a) => a.status === 'Pending').length} gözləyir
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export default function LawyerAppointments() {
         </div>
       ) : sorted.length === 0 ? (
         <Card padding={40} style={{ textAlign: 'center' }}>
-          <p style={{ color: '#6B6B6B' }}>No appointments yet</p>
+          <p style={{ color: '#6B6B6B' }}>Hələ görüş yoxdur</p>
         </Card>
       ) : (
         <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -123,7 +123,7 @@ export default function LawyerAppointments() {
                       <span>📅 {new Date(appt.scheduledAt).toLocaleDateString('en-US', {
                         weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
                       })} at {new Date(appt.scheduledAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span>⏱ {appt.durationMinutes} minutes · ${appt.price}</span>
+                      <span>⏱ {appt.durationMinutes} dəq · ${appt.price}</span>
                       {appt.notes && <span style={{ fontStyle: 'italic', color: '#6B6B6B' }}>"{appt.notes}"</span>}
                     </div>
                   </div>
@@ -131,10 +131,10 @@ export default function LawyerAppointments() {
                   {appt.status === 'Pending' && (
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Button variant="primary" size="sm" onClick={() => confirm(appt.id)}>
-                        <CheckCircle size={13} /> Confirm
+                        <CheckCircle size={13} /> Təsdiqlə
                       </Button>
                       <Button variant="danger" size="sm" onClick={() => cancel(appt.id)}>
-                        <X size={13} /> Decline
+                        <X size={13} /> Rədd et
                       </Button>
                     </div>
                   )}
@@ -142,11 +142,11 @@ export default function LawyerAppointments() {
                     <div style={{ display: 'flex', gap: 8 }}>
                       {isWithin24Hours(appt.scheduledAt) && (
                         <Button size="sm" onClick={() => joinMeeting(appt)} style={{ background: '#1C7ED6', color: '#fff', border: 'none' }}>
-                          <Video size={13} /> Join Meeting
+                          <Video size={13} /> Görüşə qoşul
                         </Button>
                       )}
                       <Button variant="danger" size="sm" onClick={() => cancel(appt.id)}>
-                        Cancel
+                        Ləğv et
                       </Button>
                     </div>
                   )}

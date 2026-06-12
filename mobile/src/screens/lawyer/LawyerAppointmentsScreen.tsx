@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { appointmentsApi } from '../../api/appointments';
@@ -53,6 +54,8 @@ export const LawyerAppointmentsScreen = () => {
     },
   });
 
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+
   const apiFilter = FILTER_MAP[filter] ?? 'All';
   const data = apiFilter === 'All' ? allAppointments : (allAppointments || []).filter((a) => a.status === apiFilter);
 
@@ -62,10 +65,19 @@ export const LawyerAppointmentsScreen = () => {
     catch (e: any) { Alert.alert('Xəta', e.response?.data?.message || 'Təsdiqləmə alınmadı'); }
   };
 
-  const cancel = async (id: string) => {
+  const cancel = (id: string) => {
     if (!user) return;
-    try { await appointmentsApi.cancel(id, user.userId); qc.invalidateQueries({ queryKey: ['lawyerAppointments'] }); }
-    catch (e: any) { Alert.alert('Xəta', e.response?.data?.message || 'Ləğv etmək alınmadı'); }
+    Alert.alert('Görüşü ləğv et', 'Əminsiniz?', [
+      { text: 'Xeyr' },
+      {
+        text: 'Bəli, ləğv et',
+        style: 'destructive',
+        onPress: async () => {
+          try { await appointmentsApi.cancel(id, user.userId); qc.invalidateQueries({ queryKey: ['lawyerAppointments'] }); }
+          catch (e: any) { Alert.alert('Xəta', e.response?.data?.message || 'Ləğv etmək alınmadı'); }
+        },
+      },
+    ]);
   };
 
   const isWithin24Hours = (scheduledAt: string) => {

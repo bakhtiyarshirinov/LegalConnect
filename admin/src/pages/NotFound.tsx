@@ -14,14 +14,14 @@ export const NotFound: React.FC = () => {
         className="text-center"
       >
         <p className="text-8xl font-bold text-[#E8E8E8] mb-6">404</p>
-        <h1 className="text-2xl font-bold text-[#0A0A0A] mb-2">Page not found</h1>
+        <h1 className="text-2xl font-bold text-[#0A0A0A] mb-2">Səhifə tapılmadı</h1>
         <p className="text-[#6B6B6B] mb-8">
-          The page you're looking for doesn't exist or has been moved.
+          Axtardığınız səhifə mövcud deyil və ya köçürülüb.
         </p>
         <Link to="/dashboard">
           <Button>
             <Home className="w-4 h-4" />
-            Back to Dashboard
+            Panelə qayıt
           </Button>
         </Link>
       </motion.div>

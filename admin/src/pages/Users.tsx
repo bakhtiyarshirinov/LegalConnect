@@ -40,8 +40,8 @@ export const Users: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-2xl font-bold text-[#0A0A0A]">All Users</h1>
-        <p className="text-[#6B6B6B] text-sm mt-1">Manage platform users and roles</p>
+        <h1 className="text-2xl font-bold text-[#0A0A0A]">Bütün İstifadəçilər</h1>
+        <p className="text-[#6B6B6B] text-sm mt-1">Platforma istifadəçilərini idarə edin</p>
       </motion.div>
 
       {/* Count */}
@@ -49,7 +49,7 @@ export const Users: React.FC = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
           <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F5F5F5] border border-[#E8E8E8] rounded-xl text-sm font-medium text-[#6B6B6B]">
             <UsersIcon className="w-3.5 h-3.5" />
-            {users.length} total users
+            {users.length} ümumi istifadəçi
           </span>
         </motion.div>
       )}
@@ -67,8 +67,8 @@ export const Users: React.FC = () => {
           <div className="w-14 h-14 bg-[#F5F5F5] rounded-2xl flex items-center justify-center mb-4">
             <UsersIcon className="w-7 h-7 text-[#6B6B6B]" />
           </div>
-          <p className="text-lg font-semibold text-[#0A0A0A] mb-1">Coming soon</p>
-          <p className="text-sm text-[#6B6B6B]">User management feature is under development</p>
+          <p className="text-lg font-semibold text-[#0A0A0A] mb-1">Tezliklə</p>
+          <p className="text-sm text-[#6B6B6B]">İstifadəçi idarəetməsi funksiyası hazırlanır</p>
         </motion.div>
       )}
 
@@ -77,11 +77,11 @@ export const Users: React.FC = () => {
         <Card padding="sm">
           {/* Table header */}
           <div className="grid grid-cols-12 px-4 py-3 border-b border-[#E8E8E8] text-xs font-semibold text-[#6B6B6B] uppercase tracking-wider">
-            <div className="col-span-4">User</div>
-            <div className="col-span-3">Email</div>
-            <div className="col-span-2">Role</div>
-            <div className="col-span-2">Verified</div>
-            <div className="col-span-1">Joined</div>
+            <div className="col-span-4">İstifadəçi</div>
+            <div className="col-span-3">E-poçt</div>
+            <div className="col-span-2">Rol</div>
+            <div className="col-span-2">Təsdiqləndi</div>
+            <div className="col-span-1">Qoşulub</div>
           </div>
 
           {/* Rows */}
@@ -119,11 +119,11 @@ export const Users: React.FC = () => {
                 <div className="col-span-2">
                   {user.isVerified ? (
                     <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
-                      <CheckCircle className="w-3.5 h-3.5" /> Verified
+                      <CheckCircle className="w-3.5 h-3.5" /> Təsdiqləndi
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-[#6B6B6B] text-xs">
-                      <XCircle className="w-3.5 h-3.5" /> Pending
+                      <XCircle className="w-3.5 h-3.5" /> Gözləyir
                     </span>
                   )}
                 </div>
@@ -149,8 +149,8 @@ export const Users: React.FC = () => {
           <div className="w-14 h-14 bg-[#F5F5F5] rounded-2xl flex items-center justify-center mb-4">
             <UsersIcon className="w-7 h-7 text-[#6B6B6B]" />
           </div>
-          <p className="text-lg font-semibold text-[#0A0A0A]">No users found</p>
-          <p className="text-sm text-[#6B6B6B] mt-1">The platform has no registered users yet</p>
+          <p className="text-lg font-semibold text-[#0A0A0A]">İstifadəçi tapılmadı</p>
+          <p className="text-sm text-[#6B6B6B] mt-1">Platformada hələ qeydiyyatdan keçmiş istifadəçi yoxdur</p>
         </div>
       )}
     </div>

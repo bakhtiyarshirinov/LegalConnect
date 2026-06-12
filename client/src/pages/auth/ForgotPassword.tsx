@@ -19,7 +19,7 @@ export default function ForgotPassword() {
   const sendMutation = useMutation({
     mutationFn: () => authApi.forgotPassword(email),
     onSuccess: () => {
-      toast.success('Reset code sent! Check your email.')
+      toast.success('Sıfırlama kodu göndərildi! E-poçtunuzu yoxlayın.')
       setStep('reset')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -28,7 +28,7 @@ export default function ForgotPassword() {
   const resetMutation = useMutation({
     mutationFn: () => authApi.resetPassword({ email, code, newPassword }),
     onSuccess: () => {
-      toast.success('Password reset! You can now log in.')
+      toast.success('Şifrə sıfırlandı! İndi daxil ola bilərsiniz.')
       navigate('/login')
     },
     onError: (err: Error) => toast.error(err.message),
@@ -36,16 +36,16 @@ export default function ForgotPassword() {
 
   const validateEmail = () => {
     const e: Record<string, string> = {}
-    if (!email) e.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Invalid email'
+    if (!email) e.email = 'E-poçt tələb olunur'
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Yanlış e-poçt'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const validateReset = () => {
     const e: Record<string, string> = {}
-    if (!code || code.length !== 6) e.code = '6-digit code required'
-    if (!newPassword || newPassword.length < 6) e.newPassword = 'Minimum 6 characters'
+    if (!code || code.length !== 6) e.code = '6 rəqəmli kod tələb olunur'
+    if (!newPassword || newPassword.length < 6) e.newPassword = 'Minimum 6 simvol'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -72,10 +72,10 @@ export default function ForgotPassword() {
           fontSize: 34, fontWeight: 800, color: '#FFFFFF',
           letterSpacing: '-0.04em', lineHeight: 1.15, marginBottom: 16,
         }}>
-          Reset your<br />password
+          Şifrənizi<br />sıfırlayın
         </h2>
         <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65 }}>
-          We'll send a 6-digit code to your email. Use it to set a new password.
+          E-poçtunuza 6 rəqəmli kod göndərəcəyik. Yeni şifrə yaratmaq üçün istifadə edin.
         </p>
       </div>
 
@@ -97,24 +97,24 @@ export default function ForgotPassword() {
               color: '#6B6B6B', fontSize: 13, textDecoration: 'none', marginBottom: 24,
             }}
           >
-            <ArrowLeft size={14} /> Back to login
+            <ArrowLeft size={14} /> Girişə qayıt
           </Link>
 
           {step === 'email' ? (
             <>
               <div style={{ marginBottom: 28 }}>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 6 }}>
-                  Forgot password?
+                  Şifrəni unutdunuz?
                 </h1>
                 <p style={{ color: '#6B6B6B', fontSize: 14 }}>
-                  Enter your email and we'll send a reset code.
+                  E-poçtunuzu daxil edin, sıfırlama kodu göndərəcəyik.
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <Input
-                  label="Email address"
+                  label="E-poçt ünvanı"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="siz@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   error={errors.email}
@@ -127,7 +127,7 @@ export default function ForgotPassword() {
                   onClick={() => { if (validateEmail()) sendMutation.mutate() }}
                   style={{ marginTop: 4 }}
                 >
-                  Send Reset Code
+                  Sıfırlama kodu göndər
                 </Button>
               </div>
             </>
@@ -135,16 +135,16 @@ export default function ForgotPassword() {
             <>
               <div style={{ marginBottom: 28 }}>
                 <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.5px', marginBottom: 6 }}>
-                  Enter reset code
+                  Sıfırlama kodunu daxil edin
                 </h1>
                 <p style={{ color: '#6B6B6B', fontSize: 14 }}>
-                  Code sent to <strong>{email}</strong>. Enter it below with your new password.
+                  Kod <strong>{email}</strong> ünvanına göndərildi. Aşağıda yeni şifrənizlə daxil edin.
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {/* 6-digit code input */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Reset Code</label>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Sıfırlama kodu</label>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     {Array.from({ length: 6 }).map((_, i) => (
                       <input
@@ -182,7 +182,7 @@ export default function ForgotPassword() {
                 </div>
 
                 <Input
-                  label="New Password"
+                  label="Yeni şifrə"
                   type="password"
                   placeholder="••••••••"
                   value={newPassword}
@@ -198,7 +198,7 @@ export default function ForgotPassword() {
                   onClick={() => { if (validateReset()) resetMutation.mutate() }}
                   style={{ marginTop: 4 }}
                 >
-                  Reset Password
+                  Şifrəni sıfırla
                 </Button>
 
                 <button
@@ -210,7 +210,7 @@ export default function ForgotPassword() {
                     textUnderlineOffset: 3, fontFamily: 'Inter, sans-serif',
                   }}
                 >
-                  Didn't receive it? Resend code
+                  Almadınız? Kodu yenidən göndər
                 </button>
               </div>
             </>

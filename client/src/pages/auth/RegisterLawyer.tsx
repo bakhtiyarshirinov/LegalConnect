@@ -31,7 +31,7 @@ export default function RegisterLawyer() {
     mutationFn: authApi.registerLawyer,
     onSuccess: (data) => {
       setAuth(data)
-      toast.success('Registration successful! Please verify your email.')
+      toast.success('Qeydiyyat uğurlu oldu! E-poçtunuzu təsdiqləyin.')
       navigate('/verify-otp', { state: { email: data.email } })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -42,24 +42,24 @@ export default function RegisterLawyer() {
 
   const validateStep1 = () => {
     const e: Record<string, string> = {}
-    if (!form.fullName.trim()) e.fullName = 'Required'
-    if (!form.email) e.email = 'Required'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email'
-    if (!form.password) e.password = 'Required'
-    else if (form.password.length < 6) e.password = 'At least 6 characters'
-    if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match'
+    if (!form.fullName.trim()) e.fullName = 'Tələb olunur'
+    if (!form.email) e.email = 'Tələb olunur'
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Yanlış e-poçt'
+    if (!form.password) e.password = 'Tələb olunur'
+    else if (form.password.length < 6) e.password = 'Minimum 6 simvol'
+    if (form.password !== form.confirmPassword) e.confirmPassword = 'Şifrələr uyğun deyil'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const validateStep2 = () => {
     const e: Record<string, string> = {}
-    if (!form.bio.trim()) e.bio = 'Required'
-    if (!form.city.trim()) e.city = 'Required'
-    if (!form.licenseNumber.trim()) e.licenseNumber = 'Required'
-    if (!form.experienceYears) e.experienceYears = 'Required'
-    if (!form.hourlyRate) e.hourlyRate = 'Required'
-    if (selectedSpecs.length === 0) e.specs = 'Select at least one specialization'
+    if (!form.bio.trim()) e.bio = 'Tələb olunur'
+    if (!form.city.trim()) e.city = 'Tələb olunur'
+    if (!form.licenseNumber.trim()) e.licenseNumber = 'Tələb olunur'
+    if (!form.experienceYears) e.experienceYears = 'Tələb olunur'
+    if (!form.hourlyRate) e.hourlyRate = 'Tələb olunur'
+    if (selectedSpecs.length === 0) e.specs = 'Ən azı bir ixtisas seçin'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -130,17 +130,17 @@ export default function RegisterLawyer() {
             marginBottom: 16,
           }}
         >
-          Grow Your<br />Legal Practice
+          Hüquqi Praktikanızı<br />İnkişaf Etdirin
         </h2>
         <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65, marginBottom: 48 }}>
-          Join hundreds of verified lawyers who trust LegalConnect to connect with clients.
+          Müştərilərlə əlaqə üçün LegalConnect-ə güvənən yüzlərlə təsdiqlənmiş vəkilə qoşulun.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {[
-            'Reach clients actively seeking legal help',
-            'Manage appointments effortlessly',
-            'Build your reputation with client reviews',
+            'Aktiv hüquqi yardım axtaran müştərilərə çatın',
+            'Görüşləri asanlıqla idarə edin',
+            'Müştəri rəyləri ilə reputasiyanızı qurun',
           ].map((item) => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <CheckCircle size={15} color="#6B6B6B" style={{ flexShrink: 0 }} />
@@ -152,7 +152,7 @@ export default function RegisterLawyer() {
         {/* Step indicator */}
         <div style={{ marginTop: 64 }}>
           <div style={{ fontSize: 11, color: '#6B6B6B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-            Step {step} of 2
+            Addım {step} / 2
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             {[1, 2].map((s) => (
@@ -199,10 +199,10 @@ export default function RegisterLawyer() {
                 marginBottom: 6,
               }}
             >
-              {step === 1 ? 'Create your account' : 'Professional details'}
+              {step === 1 ? 'Hesabınızı yaradın' : 'Peşəkar məlumatlar'}
             </h1>
             <p style={{ color: '#6B6B6B', fontSize: 14 }}>
-              {step === 1 ? 'Start with your personal information' : 'Tell clients about your expertise'}
+              {step === 1 ? 'Şəxsi məlumatlarınızla başlayın' : 'Müştərilərə ixtisasınız haqqında məlumat verin'}
             </p>
           </div>
 
@@ -213,13 +213,13 @@ export default function RegisterLawyer() {
               animate={{ opacity: 1, x: 0 }}
               style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
-              <Input label="Full Name" placeholder="Jane Smith" value={form.fullName} onChange={set('fullName')} error={errors.fullName} icon={<User size={14} />} />
-              <Input label="Email" type="email" placeholder="jane@lawfirm.com" value={form.email} onChange={set('email')} error={errors.email} icon={<Mail size={14} />} />
-              <Input label="Phone" type="tel" placeholder="+994 XX XXX XX XX" value={form.phone} onChange={set('phone')} icon={<Phone size={14} />} />
-              <Input label="Password" type="password" placeholder="••••••••" value={form.password} onChange={set('password')} error={errors.password} icon={<Lock size={14} />} />
-              <Input label="Confirm Password" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={set('confirmPassword')} error={errors.confirmPassword} icon={<Lock size={14} />} />
+              <Input label="Ad Soyad" placeholder="Əli Həsənov" value={form.fullName} onChange={set('fullName')} error={errors.fullName} icon={<User size={14} />} />
+              <Input label="E-poçt" type="email" placeholder="siz@lawfirm.com" value={form.email} onChange={set('email')} error={errors.email} icon={<Mail size={14} />} />
+              <Input label="Telefon" type="tel" placeholder="+994 XX XXX XX XX" value={form.phone} onChange={set('phone')} icon={<Phone size={14} />} />
+              <Input label="Şifrə" type="password" placeholder="••••••••" value={form.password} onChange={set('password')} error={errors.password} icon={<Lock size={14} />} />
+              <Input label="Şifrəni təsdiqlə" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={set('confirmPassword')} error={errors.confirmPassword} icon={<Lock size={14} />} />
               <Button fullWidth size="lg" onClick={handleNext} style={{ marginTop: 4 }} type="button">
-                Continue →
+                Davam et →
               </Button>
             </motion.div>
           )}
@@ -233,9 +233,9 @@ export default function RegisterLawyer() {
               style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Bio / About you</label>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Bio / Haqqınızda</label>
                 <textarea
-                  placeholder="Describe your experience and expertise..."
+                  placeholder="Təcrübənizi və ixtisasınızı təsvir edin..."
                   value={form.bio}
                   onChange={set('bio')}
                   rows={3}
@@ -258,15 +258,15 @@ export default function RegisterLawyer() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Input label="City" placeholder="Baku" value={form.city} onChange={set('city')} error={errors.city} icon={<MapPin size={14} />} />
-                <Input label="License Number" placeholder="AZ-12345" value={form.licenseNumber} onChange={set('licenseNumber')} error={errors.licenseNumber} icon={<FileText size={14} />} />
-                <Input label="Experience (years)" type="number" placeholder="5" value={form.experienceYears} onChange={set('experienceYears')} error={errors.experienceYears} icon={<Briefcase size={14} />} />
-                <Input label="Hourly Rate ($)" type="number" placeholder="100" value={form.hourlyRate} onChange={set('hourlyRate')} error={errors.hourlyRate} icon={<DollarSign size={14} />} />
+                <Input label="Şəhər" placeholder="Bakı" value={form.city} onChange={set('city')} error={errors.city} icon={<MapPin size={14} />} />
+                <Input label="Lisenziya nömrəsi" placeholder="AZ-12345" value={form.licenseNumber} onChange={set('licenseNumber')} error={errors.licenseNumber} icon={<FileText size={14} />} />
+                <Input label="Təcrübə (il)" type="number" placeholder="5" value={form.experienceYears} onChange={set('experienceYears')} error={errors.experienceYears} icon={<Briefcase size={14} />} />
+                <Input label="Saatlıq qiymət ($)" type="number" placeholder="100" value={form.hourlyRate} onChange={set('hourlyRate')} error={errors.hourlyRate} icon={<DollarSign size={14} />} />
               </div>
 
               <div>
                 <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'block', marginBottom: 8 }}>
-                  Specializations
+                  İxtisaslar
                 </label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {specializations.map((s) => (
@@ -296,17 +296,17 @@ export default function RegisterLawyer() {
 
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <Button type="button" variant="secondary" onClick={() => setStep(1)} style={{ flex: 1 }}>
-                  ← Back
+                  ← Geri
                 </Button>
                 <Button type="submit" loading={isPending} style={{ flex: 2 }}>
-                  Register as Lawyer
+                  Vəkil kimi qeydiyyat
                 </Button>
               </div>
             </motion.form>
           )}
 
           <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
-            Already have an account?{' '}
+            Artıq hesabınız var?{' '}
             <Link
               to="/login"
               style={{
@@ -316,7 +316,7 @@ export default function RegisterLawyer() {
                 textUnderlineOffset: 3,
               }}
             >
-              Sign in
+              Daxil olun
             </Link>
           </p>
         </motion.div>

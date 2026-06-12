@@ -71,7 +71,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
           <div style={{ fontSize: 18, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em' }}>
             ${lawyer.hourlyRate}
           </div>
-          <div style={{ fontSize: 11, color: '#6B6B6B' }}>/hr</div>
+          <div style={{ fontSize: 11, color: '#6B6B6B' }}>/saat</div>
         </div>
       </div>
 
@@ -172,7 +172,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
             padding: '4px 10px',
           }}
         >
-          View Profile <ArrowRight size={12} />
+          Profili gör <ArrowRight size={12} />
         </motion.div>
       </div>
     </motion.div>

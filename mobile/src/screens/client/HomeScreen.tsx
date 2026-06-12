@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
@@ -33,7 +34,9 @@ export const HomeScreen = ({ navigation }: any) => {
     queryFn: () => appointmentsApi.getByClient(user!.userId).then((r) => r.data),
   });
 
-  const onRefresh = useCallback(() => { refetch(); }, []);
+  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+
+  const onRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   const total = appointments?.length ?? 0;
   const upcoming = (appointments || []).filter((a) => a.status === 'Confirmed').length;

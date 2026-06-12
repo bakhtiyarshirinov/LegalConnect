@@ -32,7 +32,7 @@ export function ReviewModal({ open, onClose, appointmentId, lawyerId, lawyerName
       comment: comment.trim() || undefined,
     }),
     onSuccess: () => {
-      toast.success('Review submitted!')
+      toast.success('Rəy göndərildi!')
       qc.invalidateQueries({ queryKey: ['reviews', lawyerId] })
       qc.invalidateQueries({ queryKey: ['clientReviews', user.userId] })
       handleClose()
@@ -47,10 +47,10 @@ export function ReviewModal({ open, onClose, appointmentId, lawyerId, lawyerName
     onClose()
   }
 
-  const labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent']
+  const labels = ['', 'Zəif', 'Orta', 'Yaxşı', 'Çox yaxşı', 'Əla']
 
   return (
-    <Modal open={open} onClose={handleClose} title={`Review ${lawyerName}`} width={440}>
+    <Modal open={open} onClose={handleClose} title={`${lawyerName} haqqında rəy`} width={440}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* Stars */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
@@ -82,12 +82,12 @@ export function ReviewModal({ open, onClose, appointmentId, lawyerId, lawyerName
         {/* Comment */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>
-            Comment <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(optional)</span>
+            Şərh <span style={{ color: '#A3A3A3', fontWeight: 400 }}>(isteğe bağlı)</span>
           </label>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value.slice(0, 500))}
-            placeholder="Share your experience with this lawyer..."
+            placeholder="Bu vəkillə təcrübənizi paylaşın..."
             rows={4}
             style={{
               border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
@@ -104,14 +104,14 @@ export function ReviewModal({ open, onClose, appointmentId, lawyerId, lawyerName
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <Button variant="secondary" fullWidth onClick={handleClose}>Cancel</Button>
+          <Button variant="secondary" fullWidth onClick={handleClose}>Ləğv et</Button>
           <Button
             fullWidth
             loading={mutation.isPending}
             disabled={rating === 0}
             onClick={() => mutation.mutate()}
           >
-            Submit Review
+            Rəyi göndər
           </Button>
         </div>
       </div>

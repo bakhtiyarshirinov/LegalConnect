@@ -1,52 +1,49 @@
-# LegalConnect
+# LegalConnect — Hüquqi Xidmətlər Platforması
 
-A full-stack legal services platform for Azerbaijan connecting clients with verified lawyers. Built as a diploma project.
+## Haqqında
 
-## Tech Stack
+Azərbaycanda vəkil axtarışı üçün platforma. Müştərilər təsdiqlənmiş vəkilləri axtarır, görüş rezerv edir, real vaxtlı çat və video görüş aparır. Diplom layihəsi.
 
-| Layer | Technology |
-|---|---|
-| Backend | .NET 9, ASP.NET Core, CQRS + MediatR, EF Core, PostgreSQL |
-| Client Portal | React 18, TypeScript, Vite, TanStack Query, Framer Motion |
-| Lawyer Portal | React 18, TypeScript, Vite, TanStack Query |
-| Admin Portal | React 18, TypeScript, Vite, TanStack Query |
-| Mobile | React Native (Expo), TypeScript, TanStack Query |
-| Real-time | SignalR (chat) |
-| Auth | JWT + BCrypt + OTP email verification |
-| Video | Daily.co API |
-| i18n | English, Azerbaijani, Russian (all 4 apps) |
+## Texnologiyalar
 
-## Project Structure
+**Backend:** .NET 9, Clean Architecture, CQRS, MediatR, EF Core 9, PostgreSQL, SignalR, JWT  
+**Web:** React 19 + TypeScript, Vite, Framer Motion, Zustand, React Query  
+**Mobile:** React Native + Expo SDK 56, TypeScript  
+**Database:** PostgreSQL 16 (Docker)  
+**Email:** Gmail SMTP (MailKit)  
+**Video:** Daily.co API  
+**i18n:** Azərbaycan, İngilis, Rus dilləri (bütün 4 proqramda)
+
+## Layihənin Strukturu
 
 ```
 LegalConnect/
-├── src/                  # .NET 9 backend (Clean Architecture)
-│   ├── LegalConnect.API/          # Controllers, Program.cs
-│   ├── LegalConnect.Application/  # CQRS handlers, DTOs
-│   ├── LegalConnect.Domain/       # Entities, interfaces
+├── src/                          # .NET 9 backend (Clean Architecture)
+│   ├── LegalConnect.API/         # Controllers, Program.cs
+│   ├── LegalConnect.Application/ # CQRS handlers, DTOs
+│   ├── LegalConnect.Domain/      # Entities, interfaces
 │   ├── LegalConnect.Infrastructure/ # EF Core, repositories
-│   └── LegalConnect.SignalR/      # Chat hub
-├── client/               # React client portal (port 5173)
-├── lawyer/               # React lawyer portal (port 5174)
-├── admin/                # React admin portal (port 5175)
-└── mobile/               # React Native Expo app
+│   └── LegalConnect.SignalR/     # Chat hub
+├── client/                       # React müştəri portalı (port 5173)
+├── lawyer/                       # React vəkil portalı (port 5174)
+├── admin/                        # React admin portalı (port 5175)
+└── mobile/                       # React Native Expo tətbiqi
 ```
 
-## How to Run
+## Necə İşə Salmaq
 
-### Prerequisites
-- Docker (PostgreSQL container)
+### Tələblər
+- Docker (PostgreSQL konteyner)
 - .NET 9 SDK
 - Node.js 20+
-- Expo Go app on phone (for mobile)
+- Expo Go (mobil üçün)
 
-### 1. Database
+### 1. Verilənlər bazası
 
 ```bash
-# Start PostgreSQL
 docker start legalconnect-db
 
-# Reset to demo state (optional)
+# Demo məlumatları yükləmək üçün (isteğe bağlı)
 docker exec -i legalconnect-db psql -U postgres -d legalconnect < seed.sql
 ```
 
@@ -55,103 +52,96 @@ docker exec -i legalconnect-db psql -U postgres -d legalconnect < seed.sql
 ```bash
 cd src/LegalConnect.API
 dotnet run
-# Runs on https://localhost:7777
+# https://localhost:7777 ünvanında işləyir
 ```
 
-### 3. Web Portals
+### 3. Veb portallar
 
 ```bash
-# Client portal (port 5173)
-cd client && npm run dev
-
-# Lawyer portal (port 5174)
-cd lawyer && npm run dev
-
-# Admin portal (port 5175)
-cd admin && npm run dev
+cd client && npm run dev   # port 5173
+cd lawyer && npm run dev   # port 5174
+cd admin && npm run dev    # port 5175
 ```
 
-### 4. Mobile App
+### 4. Mobil tətbiq
 
 ```bash
 cd mobile
 npx expo start
-# Scan QR code with Expo Go
+# Expo Go ilə QR kodu skan edin
 ```
 
-## Test Credentials
+## Test Etimadnamələri
 
-> Password for ALL accounts: **Test!123**
+> Bütün hesablar üçün şifrə: **Test!123**
 
-| Role | Email | Notes |
+| Rol | E-poçt | Qeyd |
 |---|---|---|
-| **Admin** | admin@legalconnect.az | Access admin portal |
-| **Client** | anar@test.az | Has confirmed appt + chat with Kamran |
-| **Client** | leyla@test.az | Has pending appointment with Nigar |
-| **Client** | tural@test.az | Has completed appointment (can review) |
-| **Lawyer** | kamran@test.az | Criminal & Civil Law, Baku, $150/hr |
-| **Lawyer** | nigar@test.az | Family & Labor Law, Baku, $120/hr |
-| **Lawyer** | rauf@test.az | Corporate & Tax Law, Ganja, $200/hr |
-| **Lawyer** | sebine@test.az | Real Estate Law, Baku, $100/hr |
-| **Lawyer** | elchin@test.az | Immigration & Civil Law, Sumqayit, $130/hr |
-| **Lawyer (pending)** | farid@test.az | Tax & Corporate Law — NOT yet verified (for admin demo) |
+| **Admin** | admin@legalconnect.az | Admin portalı |
+| **Müştəri** | anar@test.az | Kamranla təsdiqlənmiş görüş + çat |
+| **Müştəri** | leyla@test.az | Nigarla gözlənilən görüş |
+| **Müştəri** | tural@test.az | Tamamlanmış görüş (rəy yaza bilər) |
+| **Vəkil** | kamran@test.az | Cinayət & Mülki hüquq, Bakı, $150/saat |
+| **Vəkil** | nigar@test.az | Ailə & Əmək hüququ, Bakı, $120/saat |
+| **Vəkil** | rauf@test.az | Korporativ & Vergi hüququ, Gəncə, $200/saat |
+| **Vəkil** | sebine@test.az | Daşınmaz əmlak hüququ, Bakı, $100/saat |
+| **Vəkil** | elchin@test.az | Miqrasiya & Mülki hüquq, Sumqayıt, $130/saat |
+| **Vəkil (gözləyir)** | farid@test.az | Hələ təsdiqlənməyib — admin demosu üçün |
 
-## Features
+## Xüsusiyyətlər
 
-### Client
-- Register with OTP email verification
-- Browse and search verified lawyers (filter by city, specialization, price, rating)
-- View lawyer profiles with reviews and ratings
-- Book appointments with slot picker (Online/Offline)
-- View appointments with calendar view
-- Real-time chat with lawyer (after confirmed appointment)
-- Leave reviews for completed appointments
-- Join video meetings (Daily.co)
-- Notifications
-- Multi-language (AZ/EN/RU)
+### Müştəri
+- OTP e-poçt doğrulaması ilə qeydiyyat
+- Təsdiqlənmiş vəkilləri axtarış (şəhər, ixtisas, qiymət, reytinq üzrə filtr)
+- Vəkil profilləri — rəylər, reytinq diaqramı, onlayn status
+- Slot seçərək görüş rezerv etmək (Onlayn/Oflayn)
+- Görüşlər — filtr, görüşə qoşulmaq (video)
+- Vəkillə real vaxtlı çat + fayl/şəkil göndərmək
+- Tamamlanmış görüşlər üçün rəy yazmaq
+- Bildirişlər
+- Çoxdilli interfeys (AZ/EN/RU)
 
-### Lawyer
-- Register and await admin verification
-- Dashboard with stats (total/pending/completed/rating)
-- Manage appointments (confirm, cancel, complete)
-- Manage availability schedule (bulk slot creation by hour)
-- Chat with clients
-- Edit profile, bio, hourly rate, specializations
-- Avatar upload
-- Multi-language (AZ/EN/RU)
+### Vəkil
+- Qeydiyyat + admin tərəfindən təsdiqləmə gözləmək
+- Statistika paneli (cəmi/gözləyir/tamamlandı/reytinq)
+- Görüşlər — təsdiqləmə, ləğv, tamamlama
+- İş cədvəli — saatlıq slot yaratmaq
+- Müştərilərlə çat
+- Profil redaktəsi — bio, qiymət, ixtisaslar, avatar
+- Çoxdilli interfeys (AZ/EN/RU)
 
 ### Admin
-- View and verify pending lawyer registrations
-- View all users
+- Gözlənilən vəkil qeydiyyatlarını görmək və təsdiqləmək
+- Bütün istifadəçiləri görmək
 
-## Demo Flows
+## Demo Ssenariləri
 
-**Flow 1 — Client books appointment:**
-Login as `anar@test.az` → Browse Lawyers → Nigar Hüseynova → Book Appointment → Select date → Select slot → Confirm
+**Ssenari 1 — Müştəri görüş rezerv edir:**  
+`anar@test.az` → Vəkillər → Nigar Hüseynova → Görüş rezerv et → Tarix → Slot → Təsdiq
 
-**Flow 2 — Lawyer confirms appointment:**
-Login as `nigar@test.az` on lawyer portal → Dashboard → Pending Requests → Confirm
+**Ssenari 2 — Vəkil görüşü təsdiqləyir:**  
+`nigar@test.az` (vəkil portalı) → Panel → Gözlənilən görüşlər → Təsdiqlə
 
-**Flow 3 — Chat:**
-Login as `anar@test.az` → already has chat with Kamran Əliyev
+**Ssenari 3 — Çat:**  
+`anar@test.az` → Çat → Kamran Əliyev ilə söhbət mövcuddur
 
-**Flow 4 — Leave review:**
-Login as `tural@test.az` → Appointments → Completed appointment with Kamran → Leave Review
+**Ssenari 4 — Rəy:**  
+`tural@test.az` → Görüşlər → Kamranla tamamlanmış görüş → Rəy yaz
 
-**Flow 5 — Admin verification:**
-Login at admin portal as `admin@legalconnect.az` → Lawyers tab → Verify pending lawyer
+**Ssenari 5 — Admin təsdiqləməsi:**  
+`admin@legalconnect.az` → Vəkillər → Gözlənilən vəkili təsdiqləyin
 
 ## API
 
-Base URL: `https://localhost:7777/api`
+Əsas URL: `https://localhost:7777/api`  
+Swagger: `https://localhost:7777/swagger`
 
-Swagger UI: `https://localhost:7777/swagger`
-
-Key endpoints:
-- `POST /api/auth/register` — Register
-- `POST /api/auth/login` — Login
-- `GET /api/lawyers` — Browse lawyers (public)
-- `GET /api/appointments/client/{clientId}` — Client appointments
-- `GET /api/appointments/lawyer/{lawyerId}` — Lawyer appointments
-- `GET /api/chats?userId={id}` — User chats
-- `GET /api/slots/available?lawyerId={id}&date={date}` — Available slots
+| Endpoint | Təsvir |
+|---|---|
+| `POST /api/auth/register` | Qeydiyyat |
+| `POST /api/auth/login` | Giriş |
+| `GET /api/lawyers` | Vəkilləri axtarış (açıq) |
+| `GET /api/appointments/client/{id}` | Müştəri görüşləri |
+| `GET /api/appointments/lawyer/{id}` | Vəkil görüşləri |
+| `GET /api/chats?userId={id}` | İstifadəçi çatları |
+| `GET /api/slots/available?lawyerId={id}&date={date}` | Mövcud slotlar |

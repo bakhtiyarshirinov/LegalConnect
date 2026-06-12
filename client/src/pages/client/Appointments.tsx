@@ -149,7 +149,7 @@ export default function ClientAppointments() {
             )}
             {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
               <button
-                onClick={() => cancelMutation.mutate(appt.id)}
+                onClick={() => { if (window.confirm('Görüşü ləğv etmək istədiyinizə əminsiniz?')) cancelMutation.mutate(appt.id) }}
                 disabled={cancelMutation.isPending}
                 style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.6 : 1 }}
               >

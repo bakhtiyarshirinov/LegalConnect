@@ -16,7 +16,7 @@ export function useAuth() {
       const data = await login(email, password)
 
       if (data.role !== 'Lawyer') {
-        toast.error('Access denied. Lawyer account required.')
+        toast.error('Giriş qadağandır. Vəkil hesabı tələb olunur.')
         return
       }
 
@@ -42,7 +42,7 @@ export function useAuth() {
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Login failed. Check your credentials.'
+        'Giriş alınmadı. Məlumatları yoxlayın.'
       toast.error(msg)
     } finally {
       setLoading(false)

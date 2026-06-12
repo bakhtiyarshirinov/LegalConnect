@@ -4,9 +4,9 @@ import { LayoutDashboard, Users, Briefcase } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/lawyers', label: 'Lawyers', icon: Briefcase },
-  { to: '/users', label: 'Users', icon: Users },
+  { to: '/dashboard', label: 'Panel', icon: LayoutDashboard },
+  { to: '/lawyers', label: 'Vəkillər', icon: Briefcase },
+  { to: '/users', label: 'İstifadəçilər', icon: Users },
 ]
 
 export const Sidebar: React.FC = () => {

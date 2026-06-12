@@ -31,17 +31,17 @@ export default function AdminDashboard() {
     >
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.5px' }}>
-          Admin Dashboard
+          Admin Paneli
         </h1>
-        <p style={{ color: '#6B6B6B', marginTop: 4 }}>Welcome back, {user.fullName}</p>
+        <p style={{ color: '#6B6B6B', marginTop: 4 }}>Xoş gəldiniz, {user.fullName}</p>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
         {[
-          { label: 'Total Lawyers', value: allLawyers.length, icon: <Users size={20} /> },
-          { label: 'Verified Lawyers', value: allLawyers.filter((l) => l.isVerified).length, icon: <ShieldCheck size={20} /> },
-          { label: 'Pending Verification', value: pendingLawyers.length, icon: <ShieldCheck size={20} /> },
+          { label: 'Ümumi vəkillər', value: allLawyers.length, icon: <Users size={20} /> },
+          { label: 'Təsdiqlənmiş vəkillər', value: allLawyers.filter((l) => l.isVerified).length, icon: <ShieldCheck size={20} /> },
+          { label: 'Təsdiq gözləyir', value: pendingLawyers.length, icon: <ShieldCheck size={20} /> },
         ].map((stat) => (
           <Card key={stat.label} padding={20}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
       <Card padding={24}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: '#0A0A0A' }}>
-            Pending Verifications{' '}
+            Gözləyən Təsdiqlər{' '}
             {pendingLawyers.length > 0 && (
               <span
                 style={{
@@ -77,12 +77,12 @@ export default function AdminDashboard() {
             )}
           </h2>
           <Button variant="secondary" size="sm" onClick={() => navigate('/admin/lawyers')}>
-            View All <ArrowRight size={13} />
+            Hamısını gör <ArrowRight size={13} />
           </Button>
         </div>
         {pendingLawyers.length === 0 ? (
           <p style={{ color: '#6B6B6B', fontSize: 14, textAlign: 'center', padding: '16px 0' }}>
-            ✓ No pending verifications
+            ✓ Gözləyən təsdiq yoxdur
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -111,11 +111,11 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14, color: '#0A0A0A' }}>{lawyer.fullName}</div>
-                    <div style={{ fontSize: 12, color: '#6B6B6B' }}>{lawyer.city} · ${lawyer.hourlyRate}/hr</div>
+                    <div style={{ fontSize: 12, color: '#6B6B6B' }}>{lawyer.city} · ${lawyer.hourlyRate}/saat</div>
                   </div>
                 </div>
                 <Button size="sm" onClick={() => navigate('/admin/lawyers')}>
-                  Review
+                  İcmalə bax
                 </Button>
               </div>
             ))}

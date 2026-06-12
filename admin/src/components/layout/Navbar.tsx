@@ -8,7 +8,7 @@ export const Navbar: React.FC = () => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { if (window.confirm('Çıxmaq istədiyinizə əminsiniz?')) { logout(); navigate('/login') } }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-[#F0F0F0] shadow-[0_1px_3px_rgba(0,0,0,0.04)]">

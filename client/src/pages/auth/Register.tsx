@@ -17,7 +17,7 @@ export default function Register() {
   const { mutate, isPending } = useMutation({
     mutationFn: () => authApi.registerClient({ ...form }),
     onSuccess: () => {
-      toast.success('Account created! Check your email for OTP.')
+      toast.success('Hesab yaradıldı! E-poçtunuzu OTP üçün yoxlayın.')
       navigate('/verify-otp', { state: { email: form.email } })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -25,11 +25,11 @@ export default function Register() {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.fullName.trim()) e.fullName = 'Full name is required'
-    if (!form.email) e.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email'
-    if (!form.password) e.password = 'Password is required'
-    else if (form.password.length < 6) e.password = 'At least 6 characters'
+    if (!form.fullName.trim()) e.fullName = 'Ad Soyad tələb olunur'
+    if (!form.email) e.email = 'E-poçt tələb olunur'
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Yanlış e-poçt'
+    if (!form.password) e.password = 'Şifrə tələb olunur'
+    else if (form.password.length < 6) e.password = 'Minimum 6 simvol'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -85,17 +85,17 @@ export default function Register() {
             marginBottom: 16,
           }}
         >
-          Start Your Legal<br />Journey Today
+          Hüquqi Səyahətinizə<br />Başlayın
         </h2>
         <p style={{ color: '#A3A3A3', fontSize: 15, lineHeight: 1.65, marginBottom: 48 }}>
-          Connect with verified lawyers and get the legal help you need, fast.
+          Təsdiqlənmiş vəkillərlə əlaqə saxlayın və lazım olan hüquqi yardımı alın.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {[
-            '500+ verified lawyers across Azerbaijan',
-            'Secure, end-to-end encrypted platform',
-            'Book appointments in under 2 minutes',
+            'Azərbaycanda 500+ təsdiqlənmiş vəkil',
+            'Təhlükəsiz, uçdan-uca şifrəli platforma',
+            '2 dəqiqədən az müddətdə görüş planla',
           ].map((item) => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <CheckCircle size={15} color="#6B6B6B" style={{ flexShrink: 0 }} />
@@ -132,24 +132,24 @@ export default function Register() {
                 marginBottom: 6,
               }}
             >
-              Create account
+              Hesab yarat
             </h1>
-            <p style={{ color: '#6B6B6B', fontSize: 14 }}>Join LegalConnect as a client</p>
+            <p style={{ color: '#6B6B6B', fontSize: 14 }}>Müştəri olaraq LegalConnect-ə qoşulun</p>
           </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Input
-              label="Full Name"
-              placeholder="John Doe"
+              label="Ad Soyad"
+              placeholder="Əli Həsənov"
               value={form.fullName}
               onChange={set('fullName')}
               error={errors.fullName}
               icon={<User size={14} />}
             />
             <Input
-              label="Email address"
+              label="E-poçt ünvanı"
               type="email"
-              placeholder="you@example.com"
+              placeholder="siz@email.com"
               value={form.email}
               onChange={set('email')}
               error={errors.email}
@@ -157,16 +157,16 @@ export default function Register() {
               autoComplete="email"
             />
             <Input
-              label="Password"
+              label="Şifrə"
               type="password"
-              placeholder="Min. 6 characters"
+              placeholder="Min. 6 simvol"
               value={form.password}
               onChange={set('password')}
               error={errors.password}
               icon={<Lock size={14} />}
             />
             <Input
-              label="Phone (optional)"
+              label="Telefon (isteğe bağlı)"
               type="tel"
               placeholder="+994 50 000 0000"
               value={form.phone}
@@ -174,12 +174,12 @@ export default function Register() {
               icon={<Phone size={14} />}
             />
             <Button type="submit" fullWidth loading={isPending} size="lg" style={{ marginTop: 4 }}>
-              Create Account
+              Hesab yarat
             </Button>
           </form>
 
           <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 24, fontSize: 14 }}>
-            Already have an account?{' '}
+            Artıq hesabınız var?{' '}
             <Link
               to="/login"
               style={{
@@ -189,11 +189,11 @@ export default function Register() {
                 textUnderlineOffset: 3,
               }}
             >
-              Sign in
+              Daxil olun
             </Link>
           </p>
           <p style={{ textAlign: 'center', color: '#6B6B6B', marginTop: 8, fontSize: 13 }}>
-            Are you a lawyer?{' '}
+            Vəkilsiniz?{' '}
             <a
               href="http://localhost:5174"
               style={{
@@ -203,7 +203,7 @@ export default function Register() {
                 textUnderlineOffset: 3,
               }}
             >
-              Register as lawyer
+              Vəkil kimi qeydiyyat
             </a>
           </p>
         </motion.div>

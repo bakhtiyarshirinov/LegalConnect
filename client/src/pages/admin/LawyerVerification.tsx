@@ -25,7 +25,7 @@ export default function LawyerVerification() {
     mutationFn: (id: string) =>
       api.put(`/api/admin/lawyers/${id}/verify`),
     onSuccess: () => {
-      toast.success('Lawyer verified successfully!')
+      toast.success('Vəkil uğurla təsdiqləndi!')
       qc.invalidateQueries({ queryKey: ['pending-lawyers'] })
       qc.invalidateQueries({ queryKey: ['all-lawyers'] })
     },
@@ -41,10 +41,10 @@ export default function LawyerVerification() {
     >
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.5px' }}>
-          Lawyer Verification
+          Vəkil Təsdiqi
         </h1>
         <p style={{ color: '#6B6B6B', marginTop: 4 }}>
-          {lawyers.length} pending {lawyers.length === 1 ? 'application' : 'applications'}
+          {lawyers.length} gözləyən müraciət
         </p>
       </div>
 
@@ -56,9 +56,9 @@ export default function LawyerVerification() {
         <Card padding={48} style={{ textAlign: 'center' }}>
           <ShieldCheck size={40} color="#4ade80" style={{ margin: '0 auto 12px' }} />
           <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0A0A0A', marginBottom: 8 }}>
-            All caught up!
+            Hamısı tamamlandı!
           </h3>
-          <p style={{ color: '#6B6B6B', fontSize: 14 }}>No pending lawyer verifications</p>
+          <p style={{ color: '#6B6B6B', fontSize: 14 }}>Gözləyən vəkil təsdiqi yoxdur</p>
         </Card>
       ) : (
         <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -81,7 +81,7 @@ export default function LawyerVerification() {
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
                       <h3 style={{ fontSize: 17, fontWeight: 700, color: '#0A0A0A' }}>{lawyer.fullName}</h3>
-                      <Badge variant="warning">Pending</Badge>
+                      <Badge variant="warning">Gözləyir</Badge>
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, color: '#6B6B6B', fontSize: 13, marginBottom: 12 }}>
@@ -89,10 +89,10 @@ export default function LawyerVerification() {
                         <MapPin size={13} /> {lawyer.city}
                       </span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <Briefcase size={13} /> {lawyer.experienceYears} years exp.
+                        <Briefcase size={13} /> {lawyer.experienceYears} il təc.
                       </span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <DollarSign size={13} /> ${lawyer.hourlyRate}/hr
+                        <DollarSign size={13} /> ${lawyer.hourlyRate}/saat
                       </span>
                     </div>
 
@@ -113,7 +113,7 @@ export default function LawyerVerification() {
                         display: 'inline-block',
                       }}
                     >
-                      License: <span style={{ color: '#0A0A0A', fontWeight: 500 }}>{lawyer.licenseNumber}</span>
+                      Lisenziya: <span style={{ color: '#0A0A0A', fontWeight: 500 }}>{lawyer.licenseNumber}</span>
                     </div>
                   </div>
 
@@ -123,7 +123,7 @@ export default function LawyerVerification() {
                     loading={verifyingId === lawyer.id}
                     style={{ minWidth: 120 }}
                   >
-                    <ShieldCheck size={14} /> Verify
+                    <ShieldCheck size={14} /> Təsdiqlə
                   </Button>
                 </div>
               </Card>

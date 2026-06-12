@@ -30,14 +30,14 @@ export default function NotFound() {
         </div>
 
         <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0A0A0A', marginBottom: 12, letterSpacing: '-0.5px' }}>
-          Page not found
+          Səhifə tapılmadı
         </h1>
         <p style={{ color: '#6B6B6B', fontSize: 15, marginBottom: 32 }}>
-          The page you're looking for doesn't exist or has been moved.
+          Axtardığınız səhifə mövcud deyil və ya köçürülüb.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <Button onClick={() => navigate(-1)} variant="secondary">Go Back</Button>
-          <Button onClick={() => navigate('/')}>Home</Button>
+          <Button onClick={() => navigate(-1)} variant="secondary">Geri dön</Button>
+          <Button onClick={() => navigate('/')}>Ana səhifə</Button>
         </div>
       </motion.div>
     </div>

@@ -74,7 +74,7 @@ export const LawyerCard: React.FC<LawyerCardProps> = ({ lawyer, onPress }) => {
         </View>
         <View style={styles.priceContainer}>
           <Text style={styles.price}>${lawyer.hourlyRate}</Text>
-          <Text style={styles.perHour}>/hr</Text>
+          <Text style={styles.perHour}>/saat</Text>
         </View>
       </View>
     </TouchableOpacity>

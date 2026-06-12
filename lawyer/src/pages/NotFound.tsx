@@ -56,7 +56,7 @@ export default function NotFound() {
             marginBottom: 8,
           }}
         >
-          Page not found
+          Səhifə tapılmadı
         </p>
         <p
           style={{
@@ -65,10 +65,10 @@ export default function NotFound() {
             marginBottom: 28,
           }}
         >
-          The page you're looking for doesn't exist or has been moved.
+          Axtardığınız səhifə mövcud deyil və ya köçürülüb.
         </p>
         <Button variant="primary" size="lg" onClick={() => navigate('/dashboard')}>
-          Back to Dashboard
+          Panelə qayıt
         </Button>
       </motion.div>
     </div>

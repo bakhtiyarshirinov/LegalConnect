@@ -31,7 +31,7 @@ export default function LawyerDashboard() {
   const { mutate: confirm } = useMutation({
     mutationFn: (id: string) => appointmentsApi.confirm(id, profile!.id),
     onSuccess: () => {
-      toast.success('Appointment confirmed!')
+      toast.success('Görüş təsdiqləndi!')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -40,7 +40,7 @@ export default function LawyerDashboard() {
   const { mutate: cancel } = useMutation({
     mutationFn: (id: string) => appointmentsApi.cancel(id, profile!.id),
     onSuccess: () => {
-      toast.success('Appointment cancelled')
+      toast.success('Görüş ləğv edildi')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     },
     onError: (err: Error) => toast.error(err.message),
@@ -53,7 +53,7 @@ export default function LawyerDashboard() {
       window.open(meetingUrl, '_blank')
       qc.invalidateQueries({ queryKey: ['lawyer-appointments'] })
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to create meeting')
+      toast.error(err.response?.data?.message || 'Görüş yaradılmadı')
     }
   }
 
@@ -76,18 +76,18 @@ export default function LawyerDashboard() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0A0A0A', letterSpacing: '-0.5px' }}>
-          Welcome back, {user.fullName.split(' ')[0]}! ⚖️
+          Xoş gəldiniz, {user.fullName.split(' ')[0]}! ⚖️
         </h1>
-        <p style={{ color: '#6B6B6B', marginTop: 4 }}>Manage your appointments and profile</p>
+        <p style={{ color: '#6B6B6B', marginTop: 4 }}>Görüşlərinizi və profilinizi idarə edin</p>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 32 }}>
         {[
-          { label: 'Pending', value: pending.length, icon: <Clock size={18} /> },
-          { label: 'Confirmed', value: confirmed.length, icon: <CheckCircle size={18} /> },
-          { label: 'Total', value: appointments.length, icon: <Calendar size={18} /> },
-          { label: 'Rating', value: profile?.rating.toFixed(1) ?? '—', icon: <Star size={18} color="#fbbf24" /> },
+          { label: 'Gözləyir', value: pending.length, icon: <Clock size={18} /> },
+          { label: 'Təsdiqləndi', value: confirmed.length, icon: <CheckCircle size={18} /> },
+          { label: 'Cəmi', value: appointments.length, icon: <Calendar size={18} /> },
+          { label: 'Reytinq', value: profile?.rating.toFixed(1) ?? '—', icon: <Star size={18} color="#fbbf24" /> },
         ].map((s) => (
           <Card key={s.label} padding={18}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -103,7 +103,7 @@ export default function LawyerDashboard() {
 
       {/* Pending Appointments */}
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 8 }}>
-        Pending Requests
+        Gözləyən sorğular
         {pending.length > 0 && (
           <span style={{ background: '#fff', color: '#000', borderRadius: 20, fontSize: 11, fontWeight: 700, padding: '1px 8px' }}>
             {pending.length}
@@ -117,7 +117,7 @@ export default function LawyerDashboard() {
         </div>
       ) : pending.length === 0 ? (
         <Card padding={24} style={{ textAlign: 'center', marginBottom: 28 }}>
-          <p style={{ color: '#6B6B6B', fontSize: 14 }}>No pending appointment requests</p>
+          <p style={{ color: '#6B6B6B', fontSize: 14 }}>Gözləyən görüş sorğusu yoxdur</p>
         </Card>
       ) : (
         <motion.div
@@ -165,14 +165,14 @@ export default function LawyerDashboard() {
                       size="sm"
                       onClick={() => confirm(appt.id)}
                     >
-                      <CheckCircle size={13} /> Confirm
+                      <CheckCircle size={13} /> Təsdiqlə
                     </Button>
                     <Button
                       variant="danger"
                       size="sm"
                       onClick={() => cancel(appt.id)}
                     >
-                      <X size={13} /> Decline
+                      <X size={13} /> Rədd et
                     </Button>
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function LawyerDashboard() {
       {confirmed.length > 0 && (
         <>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#0A0A0A' }}>
-            Confirmed Appointments
+            Təsdiqlənmiş görüşlər
           </h2>
           <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
             {confirmed.map((appt) => (
@@ -203,11 +203,11 @@ export default function LawyerDashboard() {
                     <div style={{ display: 'flex', gap: 8 }}>
                       {isWithin24Hours(appt.scheduledAt) && (
                         <Button size="sm" onClick={() => joinMeeting(appt)} style={{ background: '#1C7ED6', color: '#fff', border: 'none' }}>
-                          <Video size={13} /> Join
+                          <Video size={13} /> Qoşul
                         </Button>
                       )}
                       <Button variant="danger" size="sm" onClick={() => cancel(appt.id)}>
-                        Cancel
+                        Ləğv et
                       </Button>
                     </div>
                   </div>
@@ -221,7 +221,7 @@ export default function LawyerDashboard() {
       {/* Past */}
       {past.length > 0 && (
         <>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#0A0A0A' }}>History</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#0A0A0A' }}>Tarixçə</h2>
           <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {past.slice(0, 5).map((appt) => (
               <motion.div key={appt.id} variants={item}>

@@ -18,7 +18,7 @@ export function Navbar() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { if (window.confirm('Çıxmaq istədiyinizə əminsiniz?')) { logout(); navigate('/login') } }
 
   return (
     <motion.header

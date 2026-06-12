@@ -76,7 +76,7 @@ export default function LawyerProfile() {
       })
     },
     onSuccess: () => {
-      toast.success('Appointment booked!')
+      toast.success('Görüş planlandı!')
       qc.invalidateQueries({ queryKey: ['appointments', user?.userId] })
       qc.invalidateQueries({ queryKey: ['slots'] })
       setBookOpen(false)
@@ -131,7 +131,7 @@ export default function LawyerProfile() {
           fontFamily: 'Inter, sans-serif', padding: 0,
         }}
       >
-        <ArrowLeft size={16} /> Back to lawyers
+        <ArrowLeft size={16} /> Vəkillərə qayıt
       </button>
 
       {/* Header */}
@@ -163,7 +163,7 @@ export default function LawyerProfile() {
                     background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe',
                     borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600,
                   }}>
-                    <BadgeCheck size={12} /> Verified
+                    <BadgeCheck size={12} /> Təsdiqləndi
                   </span>
                 )}
                 {lawyer.isOnline ? (
@@ -173,7 +173,7 @@ export default function LawyerProfile() {
                     borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600,
                   }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }} />
-                    Online now
+                    İndi onlayndır
                   </span>
                 ) : null}
               </div>
@@ -184,20 +184,20 @@ export default function LawyerProfile() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13 }}>
                   <Star size={13} color="#f59e0b" fill="#f59e0b" />
                   <strong style={{ color: '#0A0A0A' }}>{lawyer.rating.toFixed(1)}</strong>
-                  <span style={{ color: '#6B6B6B' }}>({reviews.length} reviews)</span>
+                  <span style={{ color: '#6B6B6B' }}>({reviews.length} rəy)</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#6B6B6B', fontSize: 13 }}>
-                  <Briefcase size={13} /> {lawyer.experienceYears} years experience
+                  <Briefcase size={13} /> {lawyer.experienceYears} il təcrübə
                 </div>
               </div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
             <Button variant="secondary" onClick={() => chatMutation.mutate()} loading={chatMutation.isPending}>
-              <MessageSquare size={15} /> Message
+              <MessageSquare size={15} /> Mesaj
             </Button>
             <Button onClick={() => setBookOpen(true)}>
-              <Calendar size={15} /> Book Appointment
+              <Calendar size={15} /> Görüş planla
             </Button>
           </div>
         </div>
@@ -208,17 +208,17 @@ export default function LawyerProfile() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Bio */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>About</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Haqqında</h2>
             <p style={{ color: '#6B6B6B', fontSize: 14, lineHeight: 1.7 }}>{lawyer.bio}</p>
           </div>
 
           {/* Reviews */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, color: '#0A0A0A', marginBottom: 16 }}>
-              Reviews ({reviews.length})
+              Rəylər ({reviews.length})
             </h2>
             {reviews.length === 0 ? (
-              <p style={{ color: '#A3A3A3', fontSize: 14 }}>No reviews yet.</p>
+              <p style={{ color: '#A3A3A3', fontSize: 14 }}>Hələ rəy yoxdur.</p>
             ) : (
               <>
                 {/* Rating distribution */}
@@ -270,15 +270,15 @@ export default function LawyerProfile() {
             <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>
               ${lawyer.hourlyRate}
             </div>
-            <div style={{ color: '#A3A3A3', fontSize: 14, marginBottom: 20 }}>per hour</div>
+            <div style={{ color: '#A3A3A3', fontSize: 14, marginBottom: 20 }}>saata</div>
             <Button fullWidth style={{ background: '#FFFFFF', color: '#0A0A0A' }} onClick={() => setBookOpen(true)}>
-              Book Now
+              İndi planla
             </Button>
           </div>
 
           {/* Specializations */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Specializations</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>İxtisaslar</h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {lawyer.specializations.map((s) => (
                 <Badge key={s} variant="info">{s}</Badge>
@@ -288,20 +288,20 @@ export default function LawyerProfile() {
 
           {/* Details */}
           <div style={{ background: '#FFFFFF', border: '1px solid #E8E8E8', borderRadius: 16, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Details</h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', marginBottom: 12 }}>Detallar</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                <span style={{ color: '#6B6B6B' }}>Experience</span>
-                <span style={{ fontWeight: 600, color: '#0A0A0A' }}>{lawyer.experienceYears} years</span>
+                <span style={{ color: '#6B6B6B' }}>Təcrübə</span>
+                <span style={{ fontWeight: 600, color: '#0A0A0A' }}>{lawyer.experienceYears} il</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                <span style={{ color: '#6B6B6B' }}>Rating</span>
+                <span style={{ color: '#6B6B6B' }}>Reytinq</span>
                 <span style={{ fontWeight: 600, color: '#0A0A0A' }}>{lawyer.rating.toFixed(1)} ⭐</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                <span style={{ color: '#6B6B6B' }}>Availability</span>
+                <span style={{ color: '#6B6B6B' }}>Mövcudluq</span>
                 <Badge variant={lawyer.isAvailable ? 'success' : 'error'}>
-                  {lawyer.isAvailable ? 'Available' : 'Unavailable'}
+                  {lawyer.isAvailable ? 'Mövcuddur' : 'Mövcud deyil'}
                 </Badge>
               </div>
             </div>
@@ -310,12 +310,12 @@ export default function LawyerProfile() {
       </div>
 
       {/* Booking Modal — slot-based */}
-      <Modal open={bookOpen} onClose={() => { setBookOpen(false); setSelectedSlot(null); setSelectedDate('') }} title="Book Appointment" width={520}>
+      <Modal open={bookOpen} onClose={() => { setBookOpen(false); setSelectedSlot(null); setSelectedDate('') }} title="Görüş planla" width={520}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           {/* Date picker */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Calendar size={13} /> Select Date
+              <Calendar size={13} /> Tarix seçin
             </label>
             <input
               type="date"
@@ -337,7 +337,7 @@ export default function LawyerProfile() {
           {selectedDate && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>
-                Available Slots
+                Mövcud vaxtlar
               </label>
               {loadingSlots ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -350,14 +350,14 @@ export default function LawyerProfile() {
                   padding: '16px', background: '#FEF2F2', borderRadius: 10,
                   textAlign: 'center', color: '#DC2626', fontSize: 13,
                 }}>
-                  Failed to load slots. {(slotsError as Error).message}
+                  Vaxtlar yüklənmədi. {(slotsError as Error).message}
                 </div>
               ) : availableSlots.length === 0 ? (
                 <div style={{
                   padding: '16px', background: '#F5F5F5', borderRadius: 10,
                   textAlign: 'center', color: '#6B6B6B', fontSize: 13,
                 }}>
-                  No available slots for this date. Try another date.
+                  Bu tarixdə mövcud vaxt yoxdur. Başqa tarix seçin.
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
@@ -389,7 +389,7 @@ export default function LawyerProfile() {
           {/* Type and notes */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Type</label>
+              <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Növ</label>
               <select
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: parseInt(e.target.value) }))}
@@ -405,12 +405,12 @@ export default function LawyerProfile() {
             </div>
             {selectedSlot && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Duration</label>
+                <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Müddət</label>
                 <div style={{
                   border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px',
                   fontSize: 14, color: '#6B6B6B', background: '#F5F5F5',
                 }}>
-                  {selectedSlot.durationMinutes} min
+                  {selectedSlot.durationMinutes} dəq
                 </div>
               </div>
             )}
@@ -418,10 +418,10 @@ export default function LawyerProfile() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <FileText size={13} /> Notes (optional)
+              <FileText size={13} /> Qeydlər (isteğe bağlı)
             </label>
             <textarea
-              placeholder="Describe your legal issue..."
+              placeholder="Hüquqi məsələnizi təsvir edin..."
               value={form.notes}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               rows={3}
@@ -440,7 +440,7 @@ export default function LawyerProfile() {
               padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6B6B6B', fontSize: 14 }}>
-                <DollarSign size={15} /> Total price
+                <DollarSign size={15} /> Ümumi qiymət
               </div>
               <div style={{ fontSize: 20, fontWeight: 800, color: '#0A0A0A' }}>
                 ${price.toFixed(2)}
@@ -454,7 +454,7 @@ export default function LawyerProfile() {
             disabled={!selectedSlot}
             onClick={() => bookMutation.mutate()}
           >
-            Confirm Booking
+            Görüşü təsdiqlə
           </Button>
         </div>
       </Modal>

@@ -97,6 +97,7 @@ export default function Appointments() {
 
   const handleCancel = async (a: Appointment) => {
     if (!effectiveLawyerId) return
+    if (!window.confirm('Görüşü ləğv etmək istədiyinizə əminsiniz?')) return
     setActionLoading(a.id + 'cancel')
     try { await cancelAppointment(a.id, effectiveLawyerId); toast.success('Görüş ləğv edildi'); qc.invalidateQueries({ queryKey: ['appointments'] }) }
     catch { toast.error('Görüşü ləğv etmək alınmadı') } finally { setActionLoading(null) }
