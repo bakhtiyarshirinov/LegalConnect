@@ -11,6 +11,6 @@ test.describe('Chat', () => {
 
   test('chat page loads', async ({ page }) => {
     await page.goto('/chat')
-    await expect(page.locator('text=Mesajlar').or(page.locator('h1, h2').first())).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h2:has-text("Mesajlar")')).toBeVisible({ timeout: 5000 })
   })
 })

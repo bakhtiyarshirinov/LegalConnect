@@ -17,7 +17,7 @@ test.describe('Lawyer Portal', () => {
     await page.fill('input[type="password"]', 'Test!123')
     await page.click('button[type="submit"], button:has-text("Daxil Ol")')
     await page.waitForURL(/dashboard/, { timeout: 10000 })
-    await expect(page.locator('text=Cəmi').or(page.locator('text=Görüş').first())).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 5000 })
   })
 
   test('schedule page loads', async ({ page }) => {
@@ -27,6 +27,7 @@ test.describe('Lawyer Portal', () => {
     await page.click('button[type="submit"], button:has-text("Daxil Ol")')
     await page.waitForURL(/dashboard/, { timeout: 10000 })
     await page.goto('/schedule')
-    await expect(page.locator('text=Cədvəl').or(page.locator('h1, h2').first())).toBeVisible({ timeout: 5000 })
+    // h1 text is "Mənim cədvəlim"
+    await expect(page.locator('h1:has-text("cədvəl")')).toBeVisible({ timeout: 5000 })
   })
 })

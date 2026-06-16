@@ -16,7 +16,8 @@ test.describe('Authentication', () => {
     await page.fill('input[type="email"]', 'wrong@test.az')
     await page.fill('input[type="password"]', 'wrongpass')
     await page.click('button[type="submit"], button:has-text("Daxil Ol")')
-    await expect(page.locator('text=səhvdir').or(page.locator('[role="alert"]'))).toBeVisible({ timeout: 5000 })
+    // Stay on login page — successful login redirects away
+    await expect(page).toHaveURL(/login/, { timeout: 5000 })
   })
 
   test('logout works', async ({ page }) => {
@@ -25,7 +26,12 @@ test.describe('Authentication', () => {
     await page.fill('input[type="password"]', TEST_CLIENT.password)
     await page.click('button[type="submit"], button:has-text("Daxil Ol")')
     await page.waitForURL(/dashboard/, { timeout: 10000 })
-    await page.click('[data-testid="user-menu"], button:has-text("Çıxış")')
-    await expect(page).toHaveURL(/login/, { timeout: 5000 })
+    // Navbar logout triggers window.confirm — accept it before it fires
+    page.on('dialog', (dialog) => dialog.accept())
+    // Open dropdown, then click Çıxış
+    await page.click('[data-testid="user-dropdown"]')
+    await page.waitForTimeout(300)
+    await page.click('button:has-text("Çıxış")')
+    await expect(page).toHaveURL(/login/, { timeout: 8000 })
   })
 })

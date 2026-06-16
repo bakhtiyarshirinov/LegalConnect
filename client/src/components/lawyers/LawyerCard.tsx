@@ -19,6 +19,7 @@ export function LawyerCard({ lawyer }: LawyerCardProps) {
 
   return (
     <motion.div
+      data-testid="lawyer-card"
       variants={cardVariants}
       onClick={() => navigate(`/lawyers/${lawyer.id}`)}
       onHoverStart={() => setHovered(true)}

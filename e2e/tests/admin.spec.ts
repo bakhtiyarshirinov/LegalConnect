@@ -16,8 +16,6 @@ test.describe('Admin Portal', () => {
     await page.click('button[type="submit"], button:has-text("Daxil Ol")')
     await page.waitForURL(/dashboard/, { timeout: 10000 })
     await page.goto('http://localhost:5175/lawyers')
-    await expect(
-      page.locator('text=Təsdiq Gözləyir').or(page.locator('text=Vəkillər'))
-    ).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('h1:has-text("Vəkillər")')).toBeVisible({ timeout: 5000 })
   })
 })

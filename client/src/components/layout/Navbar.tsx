@@ -59,6 +59,7 @@ export function Navbar() {
 
         <div style={{ position: 'relative' }}>
           <button
+            data-testid="user-dropdown"
             onClick={() => setDropOpen((p) => !p)}
             style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 10, padding: '6px 12px 6px 8px', cursor: 'pointer', color: '#0A0A0A', fontSize: 13, fontWeight: 500 }}
             onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.background = '#EFEFEF')}

@@ -11,23 +11,35 @@ test.describe('Lawyers Search', () => {
 
   test('lawyers list loads', async ({ page }) => {
     await page.goto('/lawyers')
-    await expect(page.locator('[data-testid="lawyer-card"]').first()).toBeVisible({ timeout: 10000 })
+    await page.waitForResponse(
+      (resp) => resp.url().includes('/api/lawyers') && resp.status() === 200
+    )
+    await expect(page.locator('[data-testid="lawyer-card"]').first()).toBeVisible({ timeout: 15000 })
   })
 
   test('filter by city works', async ({ page }) => {
     await page.goto('/lawyers')
-    await page.fill('input[placeholder*="Şəhər"], input[placeholder*="city"], input[placeholder*="şəhər"]', 'Baku')
+    await page.waitForResponse(
+      (resp) => resp.url().includes('/api/lawyers') && resp.status() === 200
+    )
+    // City input has label "Şəhər" and placeholder "məs. Bakı"
+    await page.fill('input[placeholder="məs. Bakı"]', 'Bakı')
     await page.waitForTimeout(1000)
-    const cards = page.locator('[data-testid="lawyer-card"]')
-    const count = await cards.count()
-    expect(count).toBeGreaterThanOrEqual(0)
+    // Just verify the filter input worked (list may be empty or non-empty)
+    await expect(page.locator('input[placeholder="məs. Bakı"]')).toHaveValue('Bakı')
   })
 
   test('lawyer profile opens', async ({ page }) => {
     await page.goto('/lawyers')
-    await expect(page.locator('[data-testid="lawyer-card"]').first()).toBeVisible({ timeout: 10000 })
-    await page.locator('button:has-text("Profili Gör")').first().click()
+    await page.waitForResponse(
+      (resp) => resp.url().includes('/api/lawyers') && resp.status() === 200
+    )
+    const card = page.locator('[data-testid="lawyer-card"]').first()
+    await expect(card).toBeVisible({ timeout: 15000 })
+    // Click the card — the whole card navigates to lawyer detail
+    await card.click()
     await expect(page).toHaveURL(/lawyers\//, { timeout: 5000 })
-    await expect(page.locator('button:has-text("Görüş Planla")')).toBeVisible()
+    // Profile page has "Görüş planla" booking button
+    await expect(page.locator('button:has-text("Görüş planla")')).toBeVisible({ timeout: 5000 })
   })
 })
