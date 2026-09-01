@@ -35,30 +35,27 @@ public class AppointmentsController : ControllerBase
     [HttpPut("{id:guid}/confirm")]
     public async Task<IActionResult> Confirm(
         Guid id,
-        [FromQuery] Guid lawyerId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new ConfirmAppointmentCommand(id, lawyerId), cancellationToken);
+        await _mediator.Send(new ConfirmAppointmentCommand(id), cancellationToken);
         return NoContent();
     }
 
     [HttpPut("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(
         Guid id,
-        [FromQuery] Guid userId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new CancelAppointmentCommand(id, userId), cancellationToken);
+        await _mediator.Send(new CancelAppointmentCommand(id), cancellationToken);
         return NoContent();
     }
 
     [HttpPut("{id:guid}/complete")]
     public async Task<IActionResult> Complete(
         Guid id,
-        [FromQuery] Guid lawyerId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new CompleteAppointmentCommand(id, lawyerId), cancellationToken);
+        await _mediator.Send(new CompleteAppointmentCommand(id), cancellationToken);
         return NoContent();
     }
 
@@ -71,23 +68,25 @@ public class AppointmentsController : ControllerBase
         return Ok(new { meetingUrl });
     }
 
-    [HttpGet("client/{clientId:guid}")]
-    public async Task<IActionResult> GetClientAppointments(
-        Guid clientId,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// GET /api/appointments/client — appointments of the authenticated client.
+    /// The route no longer trusts a client id from the caller; identity comes from the JWT.
+    /// </summary>
+    [HttpGet("client/{clientId:guid?}")]
+    public async Task<IActionResult> GetClientAppointments(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(
-            new GetClientAppointmentsQuery(clientId), cancellationToken);
+        var result = await _mediator.Send(new GetClientAppointmentsQuery(), cancellationToken);
         return Ok(result);
     }
 
-    [HttpGet("lawyer/{lawyerId:guid}")]
-    public async Task<IActionResult> GetLawyerAppointments(
-        Guid lawyerId,
-        CancellationToken cancellationToken)
+    /// <summary>
+    /// GET /api/appointments/lawyer — appointments of the authenticated lawyer.
+    /// Identity comes from the JWT; any id in the route is ignored.
+    /// </summary>
+    [HttpGet("lawyer/{lawyerId:guid?}")]
+    public async Task<IActionResult> GetLawyerAppointments(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(
-            new GetLawyerAppointmentsQuery(lawyerId), cancellationToken);
+        var result = await _mediator.Send(new GetLawyerAppointmentsQuery(), cancellationToken);
         return Ok(result);
     }
 }

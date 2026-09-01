@@ -20,56 +20,37 @@ public class NotificationsController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>
-    /// Получить список уведомлений пользователя.
-    /// </summary>
+    /// <summary>Уведомления текущего пользователя (идентичность из JWT).</summary>
     [HttpGet]
-    public async Task<IActionResult> GetNotifications(
-        [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetNotifications(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(
-            new GetUserNotificationsQuery(userId), cancellationToken);
+        var result = await _mediator.Send(new GetUserNotificationsQuery(), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>
-    /// Получить количество непрочитанных уведомлений.
-    /// </summary>
+    /// <summary>Количество непрочитанных уведомлений текущего пользователя.</summary>
     [HttpGet("unread-count")]
-    public async Task<IActionResult> GetUnreadCount(
-        [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
     {
-        var count = await _mediator.Send(
-            new GetUnreadNotificationCountQuery(userId), cancellationToken);
+        var count = await _mediator.Send(new GetUnreadNotificationCountQuery(), cancellationToken);
         return Ok(new { count });
     }
 
-    /// <summary>
-    /// Пометить уведомление как прочитанное.
-    /// </summary>
+    /// <summary>Пометить уведомление как прочитанное (только своё).</summary>
     [HttpPut("{id:guid}/read")]
     public async Task<IActionResult> MarkAsRead(
         Guid id,
-        [FromQuery] Guid userId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(
-            new MarkNotificationAsReadCommand(id, userId), cancellationToken);
+        await _mediator.Send(new MarkNotificationAsReadCommand(id), cancellationToken);
         return NoContent();
     }
 
-    /// <summary>
-    /// Пометить все уведомления пользователя как прочитанные.
-    /// </summary>
+    /// <summary>Пометить все свои уведомления как прочитанные.</summary>
     [HttpPut("read-all")]
-    public async Task<IActionResult> MarkAllAsRead(
-        [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> MarkAllAsRead(CancellationToken cancellationToken)
     {
-        await _mediator.Send(
-            new MarkAllNotificationsAsReadCommand(userId), cancellationToken);
+        await _mediator.Send(new MarkAllNotificationsAsReadCommand(), cancellationToken);
         return NoContent();
     }
 }

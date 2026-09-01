@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
@@ -8,17 +10,21 @@ public class CreateReviewCommandHandler
     : IRequestHandler<CreateReviewCommand, Guid>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateReviewCommandHandler(IUnitOfWork unitOfWork)
+    public CreateReviewCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<Guid> Handle(
         CreateReviewCommand request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Проверяем что appointment существует и завершён
+        var clientId = _currentUser.UserId;
+
+        // 1️⃣ Appointment существует и завершён
         var appointment = await _unitOfWork.Appointments
             .GetByIdAsync(request.AppointmentId);
 
@@ -27,15 +33,20 @@ public class CreateReviewCommandHandler
                 $"Appointment with id {request.AppointmentId} not found");
 
         if (appointment.Status != Domain.Enums.AppointmentStatus.Completed)
-            throw new InvalidOperationException(
+            throw new BadRequestException(
                 "You can only review completed appointments");
 
-        // 2️⃣ Проверяем что клиент — именно тот кто был на приёме
-        if (appointment.ClientId != request.ClientId)
-            throw new InvalidOperationException(
-                "You are not authorized to review this appointment");
+        // 2️⃣ Отзыв оставляет только клиент этой записи (id — из JWT)
+        if (appointment.ClientId != clientId)
+            throw new ForbiddenAccessException(
+                "You can only review your own appointments.");
 
-        // 3️⃣ Проверяем что отзыв ещё не оставлен
+        // 3️⃣ LawyerId в запросе обязан совпадать с юристом записи (иначе накрутка чужого рейтинга)
+        if (request.LawyerId != appointment.LawyerId)
+            throw new BadRequestException(
+                "LawyerId does not match the lawyer of this appointment.");
+
+        // 4️⃣ Повторный отзыв запрещён
         var alreadyReviewed = await _unitOfWork.Reviews
             .ExistsByAppointmentIdAsync(request.AppointmentId);
 
@@ -43,34 +54,39 @@ public class CreateReviewCommandHandler
             throw new InvalidOperationException(
                 "You have already reviewed this appointment");
 
-        // 4️⃣ Создаём отзыв — валидация рейтинга уже внутри Create()!
+        // 5️⃣ Создаём отзыв
         var review = Review.Create(
-            clientId: request.ClientId,
-            lawyerId: request.LawyerId,
+            clientId: clientId,
+            lawyerId: appointment.LawyerId,
             appointmentId: request.AppointmentId,
             rating: request.Rating,
             comment: request.Comment
         );
 
         await _unitOfWork.Reviews.AddAsync(review);
-
-        // 5️⃣ Пересчитываем рейтинг юриста
-        var lawyer = await _unitOfWork.Lawyers.GetByIdAsync(request.LawyerId);
-        if (lawyer is not null)
-        {
-            var allReviews = await _unitOfWork.Reviews
-                .GetByLawyerIdAsync(request.LawyerId);
-
-            var newReviewCount = allReviews.Count() + 1;
-            var totalRating = allReviews.Sum(r => r.Rating) + request.Rating;
-            var newRating = (float)totalRating / newReviewCount;
-
-            lawyer.UpdateRating(newRating, newReviewCount);
-            _unitOfWork.Lawyers.Update(lawyer);
-        }
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // 6️⃣ Рейтинг юриста — чистая функция от строк таблицы reviews:
+        //     полный пересчёт из фактических отзывов, без "накопительных" формул
+        //     и без опоры на сид-значения ReviewCount/Rating.
+        await RecalculateLawyerRatingAsync(appointment.LawyerId, cancellationToken);
+
         return review.Id;
+    }
+
+    private async Task RecalculateLawyerRatingAsync(Guid lawyerId, CancellationToken cancellationToken)
+    {
+        var lawyer = await _unitOfWork.Lawyers.GetByIdAsync(lawyerId);
+        if (lawyer is null) return;
+
+        var reviews = (await _unitOfWork.Reviews.GetByLawyerIdAsync(lawyerId)).ToList();
+        var count = reviews.Count;
+        var average = count == 0
+            ? 0f
+            : (float)Math.Round(reviews.Average(r => r.Rating), 2);
+
+        lawyer.UpdateRating(average, count);
+        _unitOfWork.Lawyers.Update(lawyer);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

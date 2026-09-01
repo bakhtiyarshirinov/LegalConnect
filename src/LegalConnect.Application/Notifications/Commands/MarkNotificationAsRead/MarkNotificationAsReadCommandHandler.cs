@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,10 +9,14 @@ public class MarkNotificationAsReadCommandHandler
     : IRequestHandler<MarkNotificationAsReadCommand>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public MarkNotificationAsReadCommandHandler(IUnitOfWork unitOfWork)
+    public MarkNotificationAsReadCommandHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task Handle(
@@ -23,9 +29,8 @@ public class MarkNotificationAsReadCommandHandler
             throw new KeyNotFoundException(
                 $"Notification with id {request.NotificationId} not found");
 
-        if (notification.UserId != request.UserId)
-            throw new InvalidOperationException(
-                "You are not authorized to mark this notification as read");
+        if (notification.UserId != _currentUser.UserId)
+            throw new ForbiddenAccessException("You cannot modify another user's notification.");
 
         notification.MarkAsRead();
         _unitOfWork.Notifications.Update(notification);

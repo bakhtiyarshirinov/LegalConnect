@@ -1,3 +1,4 @@
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,10 +8,14 @@ public class GetClientAppointmentsQueryHandler
     : IRequestHandler<GetClientAppointmentsQuery, IEnumerable<AppointmentDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetClientAppointmentsQueryHandler(IUnitOfWork unitOfWork)
+    public GetClientAppointmentsQueryHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<IEnumerable<AppointmentDto>> Handle(
@@ -18,7 +23,7 @@ public class GetClientAppointmentsQueryHandler
         CancellationToken cancellationToken)
     {
         var appointments = await _unitOfWork.Appointments
-            .GetByClientIdAsync(request.ClientId);
+            .GetByClientIdAsync(_currentUser.UserId);
 
         return appointments.Select(a => new AppointmentDto(
             Id: a.Id,

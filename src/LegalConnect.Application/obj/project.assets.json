@@ -686,7 +686,8 @@
       "FluentValidation >= 12.1.1",
       "FluentValidation.DependencyInjectionExtensions >= 12.1.1",
       "LegalConnect.Domain >= 1.0.0",
-      "MediatR >= 14.1.0"
+      "MediatR >= 14.1.0",
+      "Microsoft.Extensions.Logging.Abstractions >= 10.0.0"
     ]
   },
   "packageFolders": {
@@ -695,11 +696,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/mac/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj",
+      "projectUniqueName": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj",
       "projectName": "LegalConnect.Application",
-      "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj",
+      "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj",
       "packagesPath": "/Users/mac/.nuget/packages/",
-      "outputPath": "/Users/mac/LegalConnect/src/LegalConnect.Application/obj/",
+      "outputPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Application/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/mac/.nuget/NuGet/NuGet.Config"
@@ -715,8 +716,8 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj": {
-              "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj"
+            "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj": {
+              "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj"
             }
           }
         }
@@ -756,6 +757,10 @@
           "MediatR": {
             "target": "Package",
             "version": "[14.1.0, )"
+          },
+          "Microsoft.Extensions.Logging.Abstractions": {
+            "target": "Package",
+            "version": "[10.0.0, )"
           }
         },
         "imports": [

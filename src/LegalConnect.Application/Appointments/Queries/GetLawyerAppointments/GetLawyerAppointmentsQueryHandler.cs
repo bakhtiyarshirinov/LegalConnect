@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,18 +9,25 @@ public class GetLawyerAppointmentsQueryHandler
     : IRequestHandler<GetLawyerAppointmentsQuery, IEnumerable<LawyerAppointmentDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetLawyerAppointmentsQueryHandler(IUnitOfWork unitOfWork)
+    public GetLawyerAppointmentsQueryHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<IEnumerable<LawyerAppointmentDto>> Handle(
         GetLawyerAppointmentsQuery request,
         CancellationToken cancellationToken)
     {
+        var profile = await _unitOfWork.Lawyers.GetByUserIdAsync(_currentUser.UserId)
+            ?? throw new ForbiddenAccessException("Only a lawyer can view lawyer appointments.");
+
         var appointments = await _unitOfWork.Appointments
-            .GetByLawyerIdAsync(request.LawyerId);
+            .GetByLawyerIdAsync(profile.Id);
 
         return appointments.Select(a => new LawyerAppointmentDto(
             Id: a.Id,

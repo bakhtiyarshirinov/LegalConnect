@@ -35,4 +35,15 @@ public class OtpCodeRepository : IOtpCodeRepository
                 o.ExpiresAt > DateTime.UtcNow)
             .OrderByDescending(o => o.ExpiresAt)
             .FirstOrDefaultAsync();
+
+    public async Task InvalidateActiveCodesAsync(string email)
+    {
+        var normalized = email.ToLower().Trim();
+        var active = await _context.OtpCodes
+            .Where(o => o.Email == normalized && !o.IsUsed)
+            .ToListAsync();
+
+        foreach (var code in active)
+            code.MarkAsUsed();
+    }
 }

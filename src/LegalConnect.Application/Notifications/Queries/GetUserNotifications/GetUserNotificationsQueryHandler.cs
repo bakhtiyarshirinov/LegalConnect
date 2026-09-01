@@ -1,3 +1,4 @@
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -7,17 +8,19 @@ public class GetUserNotificationsQueryHandler
     : IRequestHandler<GetUserNotificationsQuery, IEnumerable<NotificationDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetUserNotificationsQueryHandler(IUnitOfWork unitOfWork)
+    public GetUserNotificationsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<IEnumerable<NotificationDto>> Handle(
         GetUserNotificationsQuery request,
         CancellationToken cancellationToken)
     {
-        var notifications = await _unitOfWork.Notifications.GetByUserIdAsync(request.UserId);
+        var notifications = await _unitOfWork.Notifications.GetByUserIdAsync(_currentUser.UserId);
 
         return notifications.Select(n => new NotificationDto(
             Id: n.Id,

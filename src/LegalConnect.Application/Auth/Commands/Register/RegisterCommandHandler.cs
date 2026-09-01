@@ -28,7 +28,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthResul
         var emailExists = await _unitOfWork.Users.ExistsByEmailAsync(request.Email);
 
         if (emailExists)
-            throw new InvalidOperationException("User with this email already exists");
+            throw new InvalidOperationException("Unable to complete registration with the provided details.");
 
         // 2️⃣ Хешируем пароль
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);

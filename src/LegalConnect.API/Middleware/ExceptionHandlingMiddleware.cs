@@ -38,17 +38,29 @@ public class ExceptionHandlingMiddleware
                 "Validation failed",
                 ve.Errors),
 
+            BadRequestException bre => (
+                HttpStatusCode.BadRequest,
+                bre.Message,
+                (IDictionary<string, string[]>?)null),
+
+            ForbiddenAccessException fae => (
+                HttpStatusCode.Forbidden,
+                fae.Message,
+                (IDictionary<string, string[]>?)null),
+
             InvalidOperationException ioe => (
                 HttpStatusCode.Conflict,
                 ioe.Message,
                 (IDictionary<string, string[]>?)null),
-            
-            KeyNotFoundException knfe => (
+
+            // Do NOT surface knfe.Message — it interpolates ids/emails (data leak).
+            // The real message is written to the server log below.
+            KeyNotFoundException => (
                 HttpStatusCode.NotFound,
-                knfe.Message,
+                "Resource not found",
                 (IDictionary<string, string[]>?)null),
-            
-            
+
+
             UnauthorizedAccessException => (
                 HttpStatusCode.Unauthorized,
                 "Invalid credentials",

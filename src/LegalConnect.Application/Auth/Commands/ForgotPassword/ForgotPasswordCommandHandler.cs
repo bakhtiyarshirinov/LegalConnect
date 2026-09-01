@@ -2,6 +2,7 @@ using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace LegalConnect.Application.Auth.Commands.ForgotPassword;
 
@@ -9,11 +10,16 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly ILogger<ForgotPasswordCommandHandler> _logger;
 
-    public ForgotPasswordCommandHandler(IUnitOfWork unitOfWork, IEmailService emailService)
+    public ForgotPasswordCommandHandler(
+        IUnitOfWork unitOfWork,
+        IEmailService emailService,
+        ILogger<ForgotPasswordCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
@@ -26,10 +32,14 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         await _unitOfWork.OtpCodes.AddAsync(otpCode);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        var userIdForLog = user.Id;
         _ = Task.Run(async () =>
         {
             try { await _emailService.SendPasswordResetAsync(user.Email, user.FullName, code); }
-            catch { /* non-critical */ }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password-reset e-mail for user {UserId}", userIdForLog);
+            }
         });
     }
 }

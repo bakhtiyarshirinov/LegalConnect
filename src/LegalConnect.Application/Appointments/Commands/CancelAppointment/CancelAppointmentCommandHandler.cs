@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Application.Notifications.Commands.CreateNotification;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
@@ -9,11 +11,16 @@ public class CancelAppointmentCommandHandler
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUser;
 
-    public CancelAppointmentCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
+    public CancelAppointmentCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMediator mediator,
+        ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
         _mediator = mediator;
+        _currentUser = currentUser;
     }
 
     public async Task Handle(
@@ -25,8 +32,13 @@ public class CancelAppointmentCommandHandler
         if (appointment is null)
             throw new KeyNotFoundException($"Appointment with id {request.AppointmentId} not found");
 
-        if (appointment.ClientId != request.UserId && appointment.LawyerId != request.UserId)
-            throw new InvalidOperationException("You are not authorized to cancel this appointment");
+        // Кто звонит — берём из JWT. Отменить может клиент записи или её юрист.
+        var callerId = _currentUser.UserId;
+        var isClient = appointment.ClientId == callerId;
+        var isLawyer = appointment.Lawyer is not null && appointment.Lawyer.UserId == callerId;
+
+        if (!isClient && !isLawyer)
+            throw new ForbiddenAccessException("You are not a participant of this appointment.");
 
         if (appointment.Status == Domain.Enums.AppointmentStatus.Completed)
             throw new InvalidOperationException("Completed appointments cannot be cancelled");
@@ -46,12 +58,10 @@ public class CancelAppointmentCommandHandler
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var isClientCancelling = appointment.ClientId == request.UserId;
-
-        if (isClientCancelling)
+        if (isClient)
         {
             await _mediator.Send(new CreateNotificationCommand(
-                UserId: appointment.Lawyer.UserId,
+                UserId: appointment.Lawyer!.UserId,
                 Title: "Appointment Cancelled",
                 Body: "The client has cancelled the appointment",
                 Type: "appointment"), cancellationToken);

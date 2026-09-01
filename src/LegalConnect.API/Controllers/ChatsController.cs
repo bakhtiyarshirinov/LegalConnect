@@ -4,6 +4,7 @@ using LegalConnect.Application.Chat.Commands.SendMessage;
 using LegalConnect.Application.Chat.Queries.GetChatMessages;
 using LegalConnect.Application.Chat.Queries.GetUnreadCount;
 using LegalConnect.Application.Chat.Queries.GetUserChats;
+using LegalConnect.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,7 @@ public class ChatsController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>
-    /// Создать чат между клиентом и юристом.
-    /// </summary>
+    /// <summary>Создать чат между текущим клиентом и юристом.</summary>
     [HttpPost]
     public async Task<IActionResult> CreateChat(
         [FromBody] CreateChatCommand command,
@@ -34,56 +33,43 @@ public class ChatsController : ControllerBase
         return Ok(new { chatId });
     }
 
-    /// <summary>
-    /// Получить список чатов текущего пользователя.
-    /// </summary>
+    /// <summary>Список чатов текущего пользователя (идентичность из JWT).</summary>
     [HttpGet]
-    public async Task<IActionResult> GetUserChats(
-        [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUserChats(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(
-            new GetUserChatsQuery(userId), cancellationToken);
+        var result = await _mediator.Send(new GetUserChatsQuery(), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>
-    /// Получить историю сообщений чата.
-    /// </summary>
+    /// <summary>История сообщений чата — только для участников.</summary>
     [HttpGet("{chatId:guid}/messages")]
     public async Task<IActionResult> GetChatMessages(
         Guid chatId,
         CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(
-            new GetChatMessagesQuery(chatId), cancellationToken);
+        var result = await _mediator.Send(new GetChatMessagesQuery(chatId), cancellationToken);
         return Ok(result);
     }
 
-    /// <summary>GET /api/chats/unread-count — total unread message count for a user.</summary>
+    /// <summary>GET /api/chats/unread-count — непрочитанные сообщения текущего пользователя.</summary>
     [HttpGet("unread-count")]
-    public async Task<IActionResult> GetUnreadCount(
-        [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetUnreadCount(CancellationToken cancellationToken)
     {
-        var count = await _mediator.Send(new GetUnreadCountQuery(userId), cancellationToken);
+        var count = await _mediator.Send(new GetUnreadCountQuery(), cancellationToken);
         return Ok(new { count });
     }
 
-    /// <summary>PUT /api/chats/{chatId}/read — mark all incoming messages as read.</summary>
+    /// <summary>PUT /api/chats/{chatId}/read — пометить входящие сообщения прочитанными.</summary>
     [HttpPut("{chatId:guid}/read")]
     public async Task<IActionResult> MarkAsRead(
         Guid chatId,
-        [FromQuery] Guid userId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new MarkMessagesAsReadCommand(chatId, userId), cancellationToken);
+        await _mediator.Send(new MarkMessagesAsReadCommand(chatId), cancellationToken);
         return NoContent();
     }
 
-    /// <summary>
-    /// Отправить сообщение через REST (альтернатива SignalR).
-    /// </summary>
+    /// <summary>Отправить сообщение (отправитель — текущий пользователь из JWT).</summary>
     [HttpPost("{chatId:guid}/messages")]
     public async Task<IActionResult> SendMessage(
         Guid chatId,
@@ -91,13 +77,11 @@ public class ChatsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(
-            new SendMessageCommand(chatId, body.SenderId, body.Content),
+            new SendMessageCommand(chatId, body.Content, body.Type),
             cancellationToken);
         return Ok(result);
     }
 }
 
-/// <summary>
-/// Тело запроса для отправки сообщения через REST.
-/// </summary>
-public record SendMessageBody(Guid SenderId, string Content);
+/// <summary>Тело запроса для отправки сообщения через REST.</summary>
+public record SendMessageBody(string Content, MessageType Type = MessageType.Text);

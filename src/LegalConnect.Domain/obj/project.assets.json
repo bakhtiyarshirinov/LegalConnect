@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj",
+      "projectUniqueName": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj",
       "projectName": "LegalConnect.Domain",
-      "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj",
+      "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj",
       "packagesPath": "/Users/mac/.nuget/packages/",
-      "outputPath": "/Users/mac/LegalConnect/src/LegalConnect.Domain/obj/",
+      "outputPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/mac/.nuget/NuGet/NuGet.Config"

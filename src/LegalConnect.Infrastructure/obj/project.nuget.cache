@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Tzw5MG6M0nY=",
+  "dgSpecHash": "aJkHuRUCYYA=",
   "success": true,
-  "projectFilePath": "/Users/mac/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
+  "projectFilePath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
   "expectedPackageFiles": [
     "/Users/mac/.nuget/packages/automapper/16.1.1/automapper.16.1.1.nupkg.sha512",
     "/Users/mac/.nuget/packages/bcrypt.net-next/4.2.0/bcrypt.net-next.4.2.0.nupkg.sha512",

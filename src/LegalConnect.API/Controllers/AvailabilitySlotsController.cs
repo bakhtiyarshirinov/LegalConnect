@@ -79,10 +79,9 @@ public class AvailabilitySlotsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteSlot(
         Guid id,
-        [FromQuery] Guid lawyerId,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new DeleteSlotCommand(id, lawyerId), cancellationToken);
+        await _mediator.Send(new DeleteSlotCommand(id), cancellationToken);
         return NoContent();
     }
 

@@ -6,8 +6,6 @@ public class CreateSlotCommandValidator : AbstractValidator<CreateSlotCommand>
 {
     public CreateSlotCommandValidator()
     {
-        RuleFor(x => x.LawyerId).NotEmpty();
-
         RuleFor(x => x.StartTime)
             .GreaterThan(DateTime.UtcNow)
             .WithMessage("Start time must be in the future");

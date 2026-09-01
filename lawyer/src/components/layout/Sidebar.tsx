@@ -58,7 +58,7 @@ export function Sidebar() {
               if (!el.getAttribute('aria-current')) { el.style.background = 'transparent'; el.style.color = '#6B6B6B' }
             }}
           >
-            {({ isActive }) => (
+            {() => (
               <>
                 <Icon size={16} />
                 <span style={{ flex: 1 }}>{label}</span>

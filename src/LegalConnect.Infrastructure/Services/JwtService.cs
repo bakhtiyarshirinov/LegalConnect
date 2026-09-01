@@ -29,6 +29,7 @@ public class JwtService : IJwtService
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim(ClaimTypes.Name, user.FullName),
+            new Claim("email_verified", user.IsVerified ? "true" : "false"),
         };
 
         var token = new JwtSecurityToken(

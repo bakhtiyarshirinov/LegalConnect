@@ -1,6 +1,8 @@
 using System.Text;
 using LegalConnect.API.Middleware;
+using LegalConnect.API.Services;
 using LegalConnect.Application;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Infrastructure;
 using LegalConnect.SignalR.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ─── Caller identity (JWT-backed) ───────────────────────────────────────────
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // ─── JWT аутентификация ──────────────────────────────────────────────────────
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -91,6 +97,8 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Reject authenticated-but-unverified users on all but the OTP/profile allow-list
+app.UseMiddleware<EmailVerificationMiddleware>();
 
 app.MapControllers();
 

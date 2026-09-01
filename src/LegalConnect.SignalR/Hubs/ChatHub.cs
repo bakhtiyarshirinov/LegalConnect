@@ -1,5 +1,6 @@
 using LegalConnect.Application.Chat.Commands.MarkMessagesAsRead;
 using LegalConnect.Application.Chat.Commands.SendMessage;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Enums;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
@@ -62,8 +63,11 @@ public class ChatHub : Hub
         using var scope = _scopeFactory.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
+        // Identity comes from the connection's authenticated JWT, not from the payload.
+        using var _ = AmbientUserContext.BeginScope(userId);
+
         var messageDto = await mediator.Send(
-            new SendMessageCommand(chatId, userId, content, type));
+            new SendMessageCommand(chatId, content, type));
 
         await Clients.Group(chatId.ToString())
             .SendAsync("ReceiveMessage", messageDto);
@@ -76,7 +80,9 @@ public class ChatHub : Hub
         using var scope = _scopeFactory.CreateScope();
         var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
-        await mediator.Send(new MarkMessagesAsReadCommand(chatId, userId));
+        using var _ = AmbientUserContext.BeginScope(userId);
+
+        await mediator.Send(new MarkMessagesAsReadCommand(chatId));
 
         await Clients.OthersInGroup(chatId.ToString())
             .SendAsync("MessagesRead", new { ChatId = chatId, ReadBy = userId });

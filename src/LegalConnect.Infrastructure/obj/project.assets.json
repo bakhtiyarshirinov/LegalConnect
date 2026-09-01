@@ -1320,7 +1320,8 @@
           "FluentValidation": "12.1.1",
           "FluentValidation.DependencyInjectionExtensions": "12.1.1",
           "LegalConnect.Domain": "1.0.0",
-          "MediatR": "14.1.0"
+          "MediatR": "14.1.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         },
         "compile": {
           "bin/placeholder/LegalConnect.Application.dll": {}
@@ -3864,11 +3865,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/mac/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
+      "projectUniqueName": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
       "projectName": "LegalConnect.Infrastructure",
-      "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
+      "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Infrastructure/LegalConnect.Infrastructure.csproj",
       "packagesPath": "/Users/mac/.nuget/packages/",
-      "outputPath": "/Users/mac/LegalConnect/src/LegalConnect.Infrastructure/obj/",
+      "outputPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Infrastructure/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/mac/.nuget/NuGet/NuGet.Config"
@@ -3884,11 +3885,11 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "/Users/mac/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj": {
-              "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj"
+            "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj": {
+              "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Application/LegalConnect.Application.csproj"
             },
-            "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj": {
-              "projectPath": "/Users/mac/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj"
+            "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj": {
+              "projectPath": "/Users/mac/Desktop/LegalConnect/src/LegalConnect.Domain/LegalConnect.Domain.csproj"
             }
           }
         }

@@ -1,3 +1,4 @@
+using LegalConnect.Application.Common.Exceptions;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -14,13 +15,22 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand>
 
     public async Task Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var otp = await _unitOfWork.OtpCodes.GetActiveByEmailAndCodeAsync(request.Email, request.Code);
-        if (otp is null)
-            throw new InvalidOperationException("Invalid or expired code");
-
         var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user is null)
-            throw new KeyNotFoundException("User not found");
+        var otp = await _unitOfWork.OtpCodes.GetLatestActiveByEmailAsync(request.Email);
+
+        // Same response whether the e-mail is unknown or the code is wrong — no enumeration.
+        if (user is null || otp is null)
+            throw new BadRequestException("Invalid or expired code");
+
+        if (otp.Code != request.Code)
+        {
+            otp.RegisterFailedAttempt();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            throw new BadRequestException(otp.IsExhausted
+                ? "Too many incorrect attempts. Request a new code."
+                : "Invalid or expired code");
+        }
 
         var newHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.UpdatePassword(newHash);

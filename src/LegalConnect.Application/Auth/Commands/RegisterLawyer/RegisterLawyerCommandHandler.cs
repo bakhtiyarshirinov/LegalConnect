@@ -4,6 +4,7 @@ using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Enums;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace LegalConnect.Application.Auth.Commands.RegisterLawyer;
 
@@ -12,15 +13,18 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<RegisterLawyerCommandHandler> _logger;
 
     public RegisterLawyerCommandHandler(
         IUnitOfWork unitOfWork,
         IJwtService jwtService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<RegisterLawyerCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<AuthResult> Handle(
@@ -30,7 +34,7 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
         // 1️⃣ Проверяем уникальность email
         var emailExists = await _unitOfWork.Users.ExistsByEmailAsync(request.Email);
         if (emailExists)
-            throw new InvalidOperationException("User with this email already exists");
+            throw new InvalidOperationException("Unable to complete registration with the provided details.");
 
         // 2️⃣ Проверяем существование специализаций
         foreach (var specializationId in request.SpecializationIds)
@@ -77,10 +81,14 @@ public class RegisterLawyerCommandHandler : IRequestHandler<RegisterLawyerComman
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 6️⃣ Отправляем email с кодом (fire-and-forget)
+        var userIdForLog = user.Id;
         _ = Task.Run(async () =>
         {
             try { await _emailService.SendOtpAsync(user.Email, user.FullName, code); }
-            catch { /* ignore email errors in dev */ }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration OTP e-mail for lawyer user {UserId}", userIdForLog);
+            }
         });
 
         

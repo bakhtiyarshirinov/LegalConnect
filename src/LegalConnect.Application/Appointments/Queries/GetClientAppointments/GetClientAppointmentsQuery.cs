@@ -2,5 +2,5 @@ using MediatR;
 
 namespace LegalConnect.Application.Appointments.Queries.GetClientAppointments;
 
-public record GetClientAppointmentsQuery(Guid ClientId)
-    : IRequest<IEnumerable<AppointmentDto>>;
+/// <summary>Returns appointments for the authenticated client (identity taken from JWT).</summary>
+public record GetClientAppointmentsQuery : IRequest<IEnumerable<AppointmentDto>>;

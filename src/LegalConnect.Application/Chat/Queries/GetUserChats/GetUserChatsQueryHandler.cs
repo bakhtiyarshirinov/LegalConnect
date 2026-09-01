@@ -1,4 +1,5 @@
 using LegalConnect.Application.Chat.DTOs;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -8,34 +9,25 @@ public class GetUserChatsQueryHandler
     : IRequestHandler<GetUserChatsQuery, IEnumerable<ChatDto>>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetUserChatsQueryHandler(IUnitOfWork unitOfWork)
+    public GetUserChatsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<IEnumerable<ChatDto>> Handle(
         GetUserChatsQuery request,
         CancellationToken cancellationToken)
     {
-        // Репозиторий сам обрабатывает оба случая:
-        // c.ClientId == userId (клиент)
-        // c.LawyerId == userId (юрист — через Lawyer.Id)
-        // Но для юриста нужен Lawyer.Id, не User.Id
-        var lawyerProfile = await _unitOfWork.Lawyers.GetByUserIdAsync(request.UserId);
+        var userId = _currentUser.UserId;
 
-        IEnumerable<Domain.Entities.Chat> chats;
+        // Для юриста чаты хранятся под Lawyer.Id, для клиента — под User.Id
+        var lawyerProfile = await _unitOfWork.Lawyers.GetByUserIdAsync(userId);
+        var lookupId = lawyerProfile?.Id ?? userId;
 
-        if (lawyerProfile is not null)
-        {
-            // Юрист — ищем по Lawyer.Id
-            chats = await _unitOfWork.Chats.GetByUserIdAsync(lawyerProfile.Id);
-        }
-        else
-        {
-            // Клиент — ищем по User.Id
-            chats = await _unitOfWork.Chats.GetByUserIdAsync(request.UserId);
-        }
+        var chats = await _unitOfWork.Chats.GetByUserIdAsync(lookupId);
 
         return chats.Select(c => new ChatDto(
             Id: c.Id,

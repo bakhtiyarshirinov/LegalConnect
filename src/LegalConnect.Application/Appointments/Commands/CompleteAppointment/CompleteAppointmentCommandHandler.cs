@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Application.Notifications.Commands.CreateNotification;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
@@ -9,11 +11,16 @@ public class CompleteAppointmentCommandHandler
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUser;
 
-    public CompleteAppointmentCommandHandler(IUnitOfWork unitOfWork, IMediator mediator)
+    public CompleteAppointmentCommandHandler(
+        IUnitOfWork unitOfWork,
+        IMediator mediator,
+        ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
         _mediator = mediator;
+        _currentUser = currentUser;
     }
 
     public async Task Handle(
@@ -25,8 +32,9 @@ public class CompleteAppointmentCommandHandler
         if (appointment is null)
             throw new KeyNotFoundException($"Appointment with id {request.AppointmentId} not found");
 
-        if (appointment.LawyerId != request.LawyerId)
-            throw new InvalidOperationException("You are not authorized to complete this appointment");
+        var profile = await _unitOfWork.Lawyers.GetByUserIdAsync(_currentUser.UserId);
+        if (profile is null || appointment.LawyerId != profile.Id)
+            throw new ForbiddenAccessException("You are not the lawyer for this appointment.");
 
         if (appointment.Status != Domain.Enums.AppointmentStatus.Confirmed)
             throw new InvalidOperationException("Only confirmed appointments can be completed");

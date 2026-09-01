@@ -4,6 +4,7 @@ using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Enums;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace LegalConnect.Application.Auth.Commands.RegisterClient;
 
@@ -12,15 +13,18 @@ public class RegisterClientCommandHandler : IRequestHandler<RegisterClientComman
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJwtService _jwtService;
     private readonly IEmailService _emailService;
+    private readonly ILogger<RegisterClientCommandHandler> _logger;
 
     public RegisterClientCommandHandler(
         IUnitOfWork unitOfWork,
         IJwtService jwtService,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<RegisterClientCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _jwtService = jwtService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<AuthResult> Handle(
@@ -30,7 +34,7 @@ public class RegisterClientCommandHandler : IRequestHandler<RegisterClientComman
         // 1️⃣ Проверяем уникальность email
         var emailExists = await _unitOfWork.Users.ExistsByEmailAsync(request.Email);
         if (emailExists)
-            throw new InvalidOperationException("User with this email already exists");
+            throw new InvalidOperationException("Unable to complete registration with the provided details.");
 
         // 2️⃣ Хешируем пароль и создаём пользователя (IsVerified = false)
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
@@ -54,10 +58,14 @@ public class RegisterClientCommandHandler : IRequestHandler<RegisterClientComman
 
         // 4️⃣ Отправляем email с кодом
         // 4️⃣ Отправляем email с кодом (fire-and-forget)
+        var userIdForLog = user.Id;
         _ = Task.Run(async () =>
         {
             try { await _emailService.SendOtpAsync(user.Email, user.FullName, code); }
-            catch { /* ignore email errors in dev */ }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration OTP e-mail for user {UserId}", userIdForLog);
+            }
         });
 
         // 5️⃣ Возвращаем результат (токен без IsVerified — пользователь должен подтвердить email)

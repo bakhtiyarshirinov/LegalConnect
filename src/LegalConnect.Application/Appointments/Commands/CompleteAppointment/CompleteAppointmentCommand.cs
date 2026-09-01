@@ -2,7 +2,4 @@ using MediatR;
 
 namespace LegalConnect.Application.Appointments.Commands.CompleteAppointment;
 
-public record CompleteAppointmentCommand(
-    Guid AppointmentId,
-    Guid LawyerId
-) : IRequest;
+public record CompleteAppointmentCommand(Guid AppointmentId) : IRequest;

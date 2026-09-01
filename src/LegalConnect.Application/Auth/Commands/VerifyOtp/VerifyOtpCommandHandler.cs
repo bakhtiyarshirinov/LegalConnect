@@ -1,3 +1,4 @@
+using LegalConnect.Application.Common.Exceptions;
 using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Application.Common.Models;
 using LegalConnect.Domain.Interfaces;
@@ -20,28 +21,32 @@ public class VerifyOtpCommandHandler : IRequestHandler<VerifyOtpCommand, AuthRes
         VerifyOtpCommand request,
         CancellationToken cancellationToken)
     {
-        // 1️⃣ Ищем пользователя по email
         var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
         if (user is null)
             throw new KeyNotFoundException($"User with email {request.Email} not found");
 
-        // 2️⃣ Ищем активный OTP-код
-        var otpCode = await _unitOfWork.OtpCodes
-            .GetActiveByEmailAndCodeAsync(request.Email, request.Code);
+        // Берём последний ещё активный код и сверяем вручную,
+        // чтобы считать неудачные попытки и сжигать код после лимита.
+        var otp = await _unitOfWork.OtpCodes.GetLatestActiveByEmailAsync(request.Email);
+        if (otp is null)
+            throw new BadRequestException("Invalid or expired OTP code");
 
-        if (otpCode is null)
-            throw new InvalidOperationException("Invalid or expired OTP code");
+        if (otp.Code != request.Code)
+        {
+            otp.RegisterFailedAttempt();
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 3️⃣ Помечаем код как использованный
-        otpCode.MarkAsUsed();
+            throw new BadRequestException(otp.IsExhausted
+                ? "Too many incorrect attempts. Request a new code."
+                : "Invalid or expired OTP code");
+        }
 
-        // 4️⃣ Верифицируем пользователя
+        otp.MarkAsUsed();
         user.Verify();
         _unitOfWork.Users.Update(user);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 5️⃣ Возвращаем токен
         var token = _jwtService.GenerateToken(user);
 
         return new AuthResult(

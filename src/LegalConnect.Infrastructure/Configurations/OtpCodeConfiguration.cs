@@ -25,6 +25,10 @@ public class OtpCodeConfiguration : IEntityTypeConfiguration<OtpCode>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(o => o.FailedAttempts)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         // Индекс для быстрого поиска активных OTP по email
         builder.HasIndex(o => new { o.Email, o.IsUsed });
 

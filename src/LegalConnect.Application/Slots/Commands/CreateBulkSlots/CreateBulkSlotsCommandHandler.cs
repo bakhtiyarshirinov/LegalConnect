@@ -1,3 +1,5 @@
+using LegalConnect.Application.Common.Exceptions;
+using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
@@ -7,22 +9,27 @@ namespace LegalConnect.Application.Slots.Commands.CreateBulkSlots;
 public class CreateBulkSlotsCommandHandler : IRequestHandler<CreateBulkSlotsCommand, int>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
-    public CreateBulkSlotsCommandHandler(IUnitOfWork unitOfWork)
+    public CreateBulkSlotsCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
     {
         _unitOfWork = unitOfWork;
+        _currentUser = currentUser;
     }
 
     public async Task<int> Handle(
         CreateBulkSlotsCommand request,
         CancellationToken cancellationToken)
     {
+        var profile = await _unitOfWork.Lawyers.GetByUserIdAsync(_currentUser.UserId)
+            ?? throw new ForbiddenAccessException("Only a lawyer can manage availability slots.");
+
         var date = request.Date.Date;
         var slotStart = new DateTime(date.Year, date.Month, date.Day, request.StartHour, 0, 0, DateTimeKind.Utc);
         var dayEnd = new DateTime(date.Year, date.Month, date.Day, request.EndHour, 0, 0, DateTimeKind.Utc);
 
         var existing = await _unitOfWork.Slots
-            .GetByLawyerIdAsync(request.LawyerId, slotStart, dayEnd);
+            .GetByLawyerIdAsync(profile.Id, slotStart, dayEnd);
         var existingSet = existing.Select(s => s.StartTime).ToHashSet();
 
         var slots = new List<AvailabilitySlot>();
@@ -32,7 +39,7 @@ public class CreateBulkSlotsCommandHandler : IRequestHandler<CreateBulkSlotsComm
             var slotEnd = slotStart.AddMinutes(request.SlotDurationMinutes);
             if (!existingSet.Contains(slotStart))
             {
-                slots.Add(AvailabilitySlot.Create(request.LawyerId, slotStart, slotEnd));
+                slots.Add(AvailabilitySlot.Create(profile.Id, slotStart, slotEnd));
             }
             slotStart = slotEnd;
         }

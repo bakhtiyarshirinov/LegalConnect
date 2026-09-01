@@ -3,4 +3,5 @@ using MediatR;
 
 namespace LegalConnect.Application.Chat.Queries.GetUserChats;
 
-public record GetUserChatsQuery(Guid UserId) : IRequest<IEnumerable<ChatDto>>;
+/// <summary>Chats of the authenticated user (identity from JWT).</summary>
+public record GetUserChatsQuery : IRequest<IEnumerable<ChatDto>>;

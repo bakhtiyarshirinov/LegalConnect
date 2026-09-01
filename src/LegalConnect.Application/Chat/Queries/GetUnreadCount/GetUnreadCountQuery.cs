@@ -2,4 +2,5 @@ using MediatR;
 
 namespace LegalConnect.Application.Chat.Queries.GetUnreadCount;
 
-public record GetUnreadCountQuery(Guid UserId) : IRequest<int>;
+/// <summary>Unread message count for the authenticated user (identity from JWT).</summary>
+public record GetUnreadCountQuery : IRequest<int>;

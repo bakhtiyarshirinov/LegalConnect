@@ -42,8 +42,11 @@ public class LawyerRepository : ILawyerRepository
             .Where(l => l.IsAvailable && l.IsVerified)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(city))
-            query = query.Where(l => l.City == city);
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            var normalizedCity = city.Trim().ToLower();
+            query = query.Where(l => l.City.ToLower() == normalizedCity);
+        }
         if (specializationId.HasValue)
             query = query.Where(l => l.Specializations.Any(s => s.SpecializationId == specializationId));
         if (maxRate.HasValue)
