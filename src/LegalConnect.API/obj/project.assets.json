@@ -1957,6 +1957,7 @@
           "LegalConnect.Domain": "1.0.0",
           "MailKit": "4.17.0",
           "Microsoft.EntityFrameworkCore": "9.0.5",
+          "Microsoft.Extensions.Caching.Memory": "9.0.5",
           "Microsoft.Extensions.Http": "10.0.8",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.4",
           "System.IdentityModel.Tokens.Jwt": "8.18.0"

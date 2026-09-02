@@ -100,6 +100,10 @@ app.UseAuthorization();
 // Reject authenticated-but-unverified users on all but the OTP/profile allow-list
 app.UseMiddleware<EmailVerificationMiddleware>();
 
+// Generic idempotency for POST/PUT requests that carry an Idempotency-Key header.
+// After auth (needs the caller claim for key partitioning), just before MVC.
+app.UseMiddleware<IdempotencyMiddleware>();
+
 app.MapControllers();
 
 // ─── SignalR Hub ─────────────────────────────────────────────────────────────

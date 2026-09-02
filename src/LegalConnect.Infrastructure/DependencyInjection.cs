@@ -23,6 +23,10 @@ public static class DependencyInjection
         services.AddHttpClient("Daily");
         services.AddScoped<IDailyService, DailyService>();
 
+        // Idempotency: in-memory store for one instance; swap for Redis/DB when scaling out.
+        services.AddMemoryCache();
+        services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
+
         return services;
     }
 }
