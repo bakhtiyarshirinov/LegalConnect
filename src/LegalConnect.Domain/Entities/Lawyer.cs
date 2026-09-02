@@ -14,6 +14,10 @@ public class Lawyer
     public bool IsVerified { get; private set; }
     public bool IsAvailable { get; private set; }
 
+    // Set when an admin revokes a previously granted verification (see CancelVerification).
+    public string? CancellationReason { get; private set; }
+    public DateTime? CancelledAt { get; private set; }
+
     // Navigation properties
     public User User { get; private set; }
     public ICollection<LawyerSpecialization> Specializations { get; private set; } = new List<LawyerSpecialization>();
@@ -68,4 +72,16 @@ public class Lawyer
 
     public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
     public void Verify() => IsVerified = true;
+
+    /// <summary>
+    /// Revokes a verification that was previously granted. The lawyer drops back to the
+    /// unverified state (same as never having been verified) and stops appearing in the
+    /// public verified-lawyer listings; <paramref name="reason"/> is kept for the audit trail.
+    /// </summary>
+    public void CancelVerification(string reason)
+    {
+        IsVerified = false;
+        CancellationReason = reason;
+        CancelledAt = DateTime.UtcNow;
+    }
 }

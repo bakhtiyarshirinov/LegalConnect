@@ -33,6 +33,12 @@ public class CreateAppointmentCommandHandler
         if (lawyer is null)
             throw new KeyNotFoundException($"Lawyer with id {request.LawyerId} not found");
 
+        // Verified check runs first — a de-verified lawyer must not be bookable via any
+        // path (direct LawyerId, known slotId, stale UI). Neutral message: do not disclose
+        // the verification-cancellation fact/reason to clients.
+        if (!lawyer.IsVerified)
+            throw new BadRequestException("This lawyer is not currently available for booking");
+
         if (!lawyer.IsAvailable)
             throw new BadRequestException("Lawyer is not available");
 

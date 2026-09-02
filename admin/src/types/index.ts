@@ -18,6 +18,18 @@ export interface PendingLawyer {
   specializations: string[]
 }
 
+export interface VerifiedLawyer {
+  id: string
+  userId: string
+  fullName: string
+  email: string
+  city: string
+  licenseNumber: string
+  experienceYears: number
+  hourlyRate: number
+  specializations: string[]
+}
+
 export interface UserAdmin {
   id: string
   fullName: string

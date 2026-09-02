@@ -25,6 +25,9 @@ public class LawyerConfiguration : IEntityTypeConfiguration<Lawyer>
         builder.Property(l => l.HourlyRate)
             .HasPrecision(10, 2); // Деньги: 10 цифр, 2 после запятой
 
+        builder.Property(l => l.CancellationReason)
+            .HasMaxLength(1000);
+
         builder.Property(l => l.Rating)
             .HasPrecision(3, 2);
 

@@ -1,6 +1,8 @@
 using LegalConnect.Application.Admin.Commands.VerifyLawyer;
 using LegalConnect.Application.Admin.Queries.GetAllUsers;
 using LegalConnect.Application.Admin.Queries.GetPendingLawyers;
+using LegalConnect.Application.Admin.Queries.GetVerifiedLawyers;
+using LegalConnect.Application.Lawyers.Commands.CancelLawyerVerification;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +37,28 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>GET /api/admin/lawyers/verified — returns all currently verified lawyer profiles.</summary>
+    [HttpGet("lawyers/verified")]
+    public async Task<IActionResult> GetVerifiedLawyers(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetVerifiedLawyersQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// PUT /api/admin/lawyers/{id}/cancel-verification — revokes a lawyer's verification.
+    /// Body: { "reason": "string" } (required). Responds 204, mirroring /verify.
+    /// </summary>
+    [HttpPut("lawyers/{id:guid}/cancel-verification")]
+    public async Task<IActionResult> CancelLawyerVerification(
+        Guid id,
+        [FromBody] CancelLawyerVerificationRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new CancelLawyerVerificationCommand(id, body.Reason), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>GET /api/admin/users — returns all users.</summary>
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
@@ -43,3 +67,6 @@ public class AdminController : ControllerBase
         return Ok(result);
     }
 }
+
+/// <summary>Request body for PUT /api/admin/lawyers/{id}/cancel-verification.</summary>
+public record CancelLawyerVerificationRequest(string Reason);
