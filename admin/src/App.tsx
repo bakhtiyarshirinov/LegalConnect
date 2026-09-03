@@ -5,6 +5,7 @@ import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import { Lawyers } from './pages/Lawyers'
 import { Users } from './pages/Users'
+import { UserProfile } from './pages/UserProfile'
 import { NotFound } from './pages/NotFound'
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lawyers" element={<Lawyers />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/users/:id" element={<UserProfile />} />
           </Route>
 
           {/* 404 */}

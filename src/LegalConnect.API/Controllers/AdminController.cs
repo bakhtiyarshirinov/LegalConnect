@@ -1,5 +1,6 @@
 using LegalConnect.Application.Admin.Commands.VerifyLawyer;
 using LegalConnect.Application.Admin.Queries.GetAllUsers;
+using LegalConnect.Application.Admin.Queries.GetUserProfile;
 using LegalConnect.Application.Admin.Queries.GetPendingLawyers;
 using LegalConnect.Application.Admin.Queries.GetVerifiedLawyers;
 using LegalConnect.Application.Lawyers.Commands.CancelLawyerVerification;
@@ -64,6 +65,17 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetAllUsersQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// GET /api/admin/users/{id} — full profile of one user (base fields + role-specific
+    /// data + appointment activity). Admin-only; 404 for an unknown id.
+    /// </summary>
+    [HttpGet("users/{id:guid}")]
+    public async Task<IActionResult> GetUserProfile(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetUserProfileQuery(id), cancellationToken);
         return Ok(result);
     }
 }

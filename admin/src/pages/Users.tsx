@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Users as UsersIcon, CheckCircle, XCircle } from 'lucide-react'
@@ -87,13 +88,10 @@ export const Users: React.FC = () => {
           {/* Rows */}
           <div>
             {users.map((user, i) => (
-              <motion.div
-                key={user.id}
-                custom={i}
-                initial="hidden"
-                animate="visible"
-                variants={fadeUp}
-                className="grid grid-cols-12 px-4 py-3.5 border-b border-[#E8E8E8] last:border-0 hover:bg-[#FAFAFA] transition-colors items-center"
+              <motion.div key={user.id} custom={i} initial="hidden" animate="visible" variants={fadeUp}>
+              <Link
+                to={`/users/${user.id}`}
+                className="grid grid-cols-12 px-4 py-3.5 border-b border-[#E8E8E8] last:border-0 hover:bg-[#FAFAFA] transition-colors items-center cursor-pointer"
               >
                 {/* Avatar + name */}
                 <div className="col-span-4 flex items-center gap-3">
@@ -137,6 +135,7 @@ export const Users: React.FC = () => {
                     })}
                   </span>
                 </div>
+              </Link>
               </motion.div>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import api from './axios'
-import type { PendingLawyer, VerifiedLawyer, UserAdmin } from '../types'
+import type { PendingLawyer, VerifiedLawyer, UserAdmin, UserProfile } from '../types'
 
 export const getPendingLawyers = async (): Promise<PendingLawyer[]> => {
   const { data } = await api.get<PendingLawyer[]>('/admin/lawyers/pending')
@@ -23,5 +23,10 @@ export const cancelLawyerVerification = async (
 
 export const getAllUsers = async (): Promise<UserAdmin[]> => {
   const { data } = await api.get<UserAdmin[]>('/admin/users')
+  return data
+}
+
+export const getUserProfile = async (id: string): Promise<UserProfile> => {
+  const { data } = await api.get<UserProfile>(`/admin/users/${id}`)
   return data
 }

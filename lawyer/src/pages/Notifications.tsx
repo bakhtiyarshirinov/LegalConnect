@@ -3,10 +3,10 @@ import { motion } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Bell, Calendar, MessageSquare, CheckCheck, CheckCircle2, AlertTriangle, Info } from 'lucide-react'
-import { notificationsApi } from '../../api/notifications'
-import { useAuthStore } from '../../store/authStore'
-import { Button } from '../../components/ui/Button'
-import { Skeleton } from '../../components/ui/Skeleton'
+import { notificationsApi } from '../api/notifications'
+import { useAuthStore } from '../store/authStore'
+import { Button } from '../components/ui/Button'
+import { Skeleton } from '../components/ui/Skeleton'
 
 const pageVariant = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } } }
 const stagger = { visible: { transition: { staggerChildren: 0.05 } } }
@@ -33,7 +33,10 @@ export default function Notifications() {
   const qc = useQueryClient()
   const [filter, setFilter] = useState<Filter>('all')
 
-  const { data: notifications = [], isLoading } = useQuery({ queryKey: ['notifications', user.userId], queryFn: () => notificationsApi.getAll(user.userId) })
+  const { data: notifications = [], isLoading } = useQuery({
+    queryKey: ['notifications', user.userId],
+    queryFn: () => notificationsApi.getAll(user.userId),
+  })
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['notifications', user.userId] })
@@ -59,7 +62,7 @@ export default function Notifications() {
   const shown = filter === 'unread' ? notifications.filter((n) => !n.isRead) : notifications
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={pageVariant} style={{ padding: '32px 36px', background: '#F5F5F5', minHeight: 'calc(100vh - 64px)' }}>
+    <motion.div initial="hidden" animate="visible" variants={pageVariant} style={{ padding: '32px 36px', background: '#FAFAFA', minHeight: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.03em', marginBottom: 6 }}>Bildirişlər</h1>
@@ -101,7 +104,7 @@ export default function Notifications() {
             <h3 style={{ fontSize: 18, fontWeight: 600, color: '#6B6B6B', marginBottom: 8 }}>
               {filter === 'unread' ? 'Oxunmamış bildiriş yoxdur' : 'Bildiriş yoxdur'}
             </h3>
-            <p style={{ fontSize: 14 }}>Görüşlər və mesajlar haqqında bildirişlər burada görünəcək.</p>
+            <p style={{ fontSize: 14 }}>Görüşlər və status dəyişiklikləri haqqında bildirişlər burada görünəcək.</p>
           </div>
         ) : (
           <motion.div initial="hidden" animate="visible" variants={stagger}>

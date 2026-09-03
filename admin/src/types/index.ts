@@ -39,6 +39,43 @@ export interface UserAdmin {
   createdAt: string
 }
 
+export interface LawyerProfileInfo {
+  lawyerId: string
+  city: string
+  licenseNumber: string
+  experienceYears: number
+  hourlyRate: number
+  rating: number
+  reviewCount: number
+  isVerified: boolean
+  isAvailable: boolean
+  specializations: string[]
+  cancellationReason: string | null
+  cancelledAt: string | null
+}
+
+export interface ActivitySummary {
+  totalAppointments: number
+  pendingAppointments: number
+  confirmedAppointments: number
+  completedAppointments: number
+  cancelledAppointments: number
+}
+
+export interface UserProfile {
+  id: string
+  fullName: string
+  email: string
+  phone: string | null
+  role: string
+  isVerified: boolean
+  createdAt: string
+  lastSeen: string | null
+  avatarUrl: string | null
+  lawyer: LawyerProfileInfo | null
+  activity: ActivitySummary
+}
+
 export interface LoginResponse {
   token: string
   userId: string

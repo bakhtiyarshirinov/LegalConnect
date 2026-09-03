@@ -6,6 +6,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
 import { chatsApi } from '../../api/chats'
+import { notificationsApi } from '../../api/notifications'
 
 interface NavItem { label: string; to: string; icon: React.ReactNode }
 
@@ -43,6 +44,13 @@ export function Sidebar() {
     refetchInterval: 30000,
   })
 
+  const { data: notifUnread = 0 } = useQuery({
+    queryKey: ['notif-unread-count', user?.userId],
+    queryFn: () => notificationsApi.getUnreadCount(user!.userId),
+    enabled: !!user && role === 'Client',
+    refetchInterval: 30000,
+  })
+
   return (
     <aside style={{
       width: 240, minHeight: 'calc(100vh - 64px)',
@@ -52,8 +60,8 @@ export function Sidebar() {
     }}>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {navItems.map((item) => {
-          const isChat = item.to === '/chat'
-          const badge = isChat && unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
+          const count = item.to === '/chat' ? unreadCount : item.to === '/notifications' ? notifUnread : 0
+          const badge = count > 0 ? (count > 99 ? '99+' : String(count)) : null
           return (
             <NavLink
               key={item.to}

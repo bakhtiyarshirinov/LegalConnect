@@ -1,23 +1,32 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Calendar, User, MessageSquare, Clock } from 'lucide-react'
+import { LayoutDashboard, Calendar, User, MessageSquare, Clock, Bell } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
 import { getUnreadCount } from '../../api/chats'
+import { notificationsApi } from '../../api/notifications'
 
 export function Sidebar() {
   const links = [
-    { to: '/dashboard',    icon: LayoutDashboard, label: 'İdarə paneli' },
-    { to: '/appointments', icon: Calendar,         label: 'Görüşlər' },
-    { to: '/schedule',     icon: Clock,            label: 'Cədvəl' },
-    { to: '/profile',      icon: User,             label: 'Profil' },
-    { to: '/chat',         icon: MessageSquare,    label: 'Söhbət' },
+    { to: '/dashboard',     icon: LayoutDashboard, label: 'İdarə paneli' },
+    { to: '/appointments',  icon: Calendar,         label: 'Görüşlər' },
+    { to: '/schedule',      icon: Clock,            label: 'Cədvəl' },
+    { to: '/profile',       icon: User,             label: 'Profil' },
+    { to: '/chat',          icon: MessageSquare,    label: 'Söhbət' },
+    { to: '/notifications', icon: Bell,             label: 'Bildirişlər' },
   ]
   const user = useAuthStore((s) => s.user)
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-count', user?.userId],
     queryFn: () => getUnreadCount(user!.userId),
+    enabled: !!user,
+    refetchInterval: 30000,
+  })
+
+  const { data: notifUnread = 0 } = useQuery({
+    queryKey: ['notif-unread-count', user?.userId],
+    queryFn: () => notificationsApi.getUnreadCount(user!.userId),
     enabled: !!user,
     refetchInterval: 30000,
   })
@@ -35,8 +44,8 @@ export function Sidebar() {
       }}
     >
       {links.map(({ to, icon: Icon, label }) => {
-        const isChat = to === '/chat'
-        const badge = isChat && unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : null
+        const count = to === '/chat' ? unreadCount : to === '/notifications' ? notifUnread : 0
+        const badge = count > 0 ? (count > 99 ? '99+' : String(count)) : null
         return (
           <NavLink
             key={to}

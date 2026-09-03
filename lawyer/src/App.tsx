@@ -3,6 +3,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Appointments from './pages/Appointments'
+import Notifications from './pages/Notifications'
 import Profile from './pages/Profile'
 import Chat from './pages/Chat'
 import Schedule from './pages/Schedule'
@@ -17,6 +18,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/appointments" element={<Appointments />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/chat" element={<Chat />} />

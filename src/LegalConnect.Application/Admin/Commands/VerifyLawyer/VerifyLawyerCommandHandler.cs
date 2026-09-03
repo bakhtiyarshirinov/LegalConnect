@@ -1,3 +1,4 @@
+using LegalConnect.Domain.Entities;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -26,6 +27,15 @@ public class VerifyLawyerCommandHandler : IRequestHandler<VerifyLawyerCommand>
 
         lawyer.Verify();
         _unitOfWork.Lawyers.Update(lawyer);
+
+        // Notify the lawyer that their account is now verified (status change) —
+        // mirrors the "verification_cancelled" notification, same transaction.
+        await _unitOfWork.Notifications.AddAsync(Notification.Create(
+            userId: lawyer.UserId,
+            title: "Hesabınız təsdiqləndi",
+            body: "Vəkil hesabınız administrator tərəfindən təsdiqləndi. Artıq müştərilər sizinlə görüş təyin edə bilər.",
+            type: "lawyer_verified"));
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 }

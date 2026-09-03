@@ -87,6 +87,13 @@ public class CreateAppointmentCommandHandler
             _unitOfWork.Slots.Update(slot);
         }
 
+        // Notify the lawyer of the new booking — same transaction, not fire-and-forget.
+        await _unitOfWork.Notifications.AddAsync(Notification.Create(
+            userId: lawyer.UserId,
+            title: "New Appointment",
+            body: $"{client.FullName} booked an appointment for {scheduledAt:MMM d, yyyy HH:mm}.",
+            type: "appointment"));
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return appointment.Id;
