@@ -31,6 +31,13 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
             .HasMaxLength(500)
             .IsRequired(false);
 
+        builder.Property(a => a.CancellationReason)
+            .HasMaxLength(1000)
+            .IsRequired(false);
+
+        builder.Property(a => a.CancelledAt)
+            .IsRequired(false);
+
         // Клиент -> Записи (один ко многим)
         builder.HasOne(a => a.Client)
             .WithMany(u => u.Appointments)

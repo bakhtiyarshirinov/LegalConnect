@@ -35,7 +35,8 @@ public class GetClientAppointmentsQueryHandler
             Type: a.Type.ToString(),
             Price: a.Price,
             Notes: a.Notes,
-            MeetingUrl: a.MeetingUrl
+            MeetingUrl: a.MeetingUrl,
+            CancellationReason: a.CancellationReason
         ));
     }
 }

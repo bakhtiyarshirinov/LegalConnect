@@ -10,5 +10,6 @@ public record AppointmentDto(
     string Type,
     decimal Price,
     string? Notes,
-    string? MeetingUrl
+    string? MeetingUrl,
+    string? CancellationReason
 );

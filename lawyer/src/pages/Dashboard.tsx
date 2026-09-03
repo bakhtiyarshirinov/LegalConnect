@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Calendar } from 'lucide-react'
+import { Calendar, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { getByLawyer, confirmAppointment, cancelAppointment, completeAppointment, type Appointment } from '../api/appointments'
+import { getByLawyer, confirmAppointment, cancelAppointment, deleteAppointment, completeAppointment, type Appointment } from '../api/appointments'
+import { AppointmentActionModal, type AppointmentAction } from '../components/appointments/AppointmentActionModal'
 import { getMyLawyerProfile } from '../api/profile'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
@@ -30,6 +31,9 @@ export default function Dashboard() {
   const { user, lawyerId, setLawyerId } = useAuthStore()
   const qc = useQueryClient()
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [actionTarget, setActionTarget] = useState<{
+    id: string; action: AppointmentAction; clientName: string
+  } | null>(null)
 
   const { data: profile } = useQuery({
     queryKey: ['lawyer-profile'],
@@ -63,14 +67,21 @@ export default function Dashboard() {
     } catch { toast.error('Görüşü təsdiqləmək alınmadı') } finally { setActionLoading(null) }
   }
 
-  const handleCancel = async (a: Appointment) => {
-    if (!effectiveLawyerId) return
-    setActionLoading(a.id + 'cancel')
+  const runAction = async (reason: string | undefined) => {
+    if (!actionTarget) return
     try {
-      await cancelAppointment(a.id, effectiveLawyerId)
-      toast.success('Görüş ləğv edildi')
+      if (actionTarget.action === 'cancel') {
+        await cancelAppointment(actionTarget.id, reason as string)
+        toast.success('Görüş ləğv edildi')
+      } else {
+        await deleteAppointment(actionTarget.id, reason)
+        toast.success('Görüş silindi')
+      }
       qc.invalidateQueries({ queryKey: ['appointments'] })
-    } catch { toast.error('Görüşü ləğv etmək alınmadı') } finally { setActionLoading(null) }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
   }
 
   const handleComplete = async (a: Appointment) => {
@@ -157,7 +168,7 @@ export default function Dashboard() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Təsdiqlə</Button>
-                      <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
+                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
                     </div>
                   </div>
                 </Card>
@@ -205,7 +216,8 @@ export default function Dashboard() {
                       >
                         Tamamla
                       </button>
-                      <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
+                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientName })}><Trash2 size={13} /> Sil</Button>
                     </div>
                   </div>
                 </Card>
@@ -214,6 +226,14 @@ export default function Dashboard() {
           </div>
         </motion.div>
       )}
+
+      <AppointmentActionModal
+        open={!!actionTarget}
+        action={actionTarget?.action ?? 'cancel'}
+        counterpartyName={actionTarget?.clientName}
+        onClose={() => setActionTarget(null)}
+        onConfirm={runAction}
+      />
     </div>
   )
 }

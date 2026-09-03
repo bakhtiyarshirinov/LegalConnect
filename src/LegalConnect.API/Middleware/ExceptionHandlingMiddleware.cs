@@ -1,6 +1,9 @@
+using System.Data.Common;
 using System.Net;
+using System.Security.Claims;
 using System.Text.Json;
 using LegalConnect.Application.Common.Exceptions;
+using Microsoft.EntityFrameworkCore;
 
 namespace LegalConnect.API.Middleware;
 
@@ -48,6 +51,18 @@ public class ExceptionHandlingMiddleware
                 fae.Message,
                 (IDictionary<string, string[]>?)null),
 
+            // Infrastructure failure — MUST be classified before InvalidOperationException.
+            // EF wraps a transient DB outage (connection drop / timeout) in an
+            // InvalidOperationException whose inner exception is a DbException, and a failed
+            // SaveChanges surfaces as DbUpdateException. Neither is a business conflict — it is
+            // a real outage that must reach Error-level logs / alerting, not a routine 409.
+            // Handlers that deliberately catch DbUpdateException and translate it into a domain
+            // exception run earlier and never reach this arm.
+            _ when IsDatabaseFailure(ex) => (
+                HttpStatusCode.ServiceUnavailable,
+                "Service temporarily unavailable, please try again later.",
+                (IDictionary<string, string[]>?)null),
+
             InvalidOperationException ioe => (
                 HttpStatusCode.Conflict,
                 ioe.Message,
@@ -72,10 +87,35 @@ public class ExceptionHandlingMiddleware
                 (IDictionary<string, string[]>?)null)
         };
 
-        _logger.LogError(ex, "Exception caught: {Message}", ex.Message);
+        // Log level is driven purely by the mapped status code, never by the client response:
+        //   * 4xx — expected/domain outcome (denied IDOR attempt, business conflict, validation,
+        //     not-found). Logged as Warning WITHOUT the exception object, so no stack trace floods
+        //     the log. A field-only line keeps a spike of 403s visible as a possible attack signal.
+        //   * 5xx — the generic catch: an unhandled, unexpected failure. Keep LogError WITH the
+        //     exception so the full stack trace is available. This is the only branch that needs
+        //     operator attention in production.
+        if (statusCode == HttpStatusCode.ServiceUnavailable)
+        {
+            _logger.LogError(ex, "Database failure on {Path}", context.Request.Path);
+        }
+        else if ((int)statusCode >= 500)
+        {
+            _logger.LogError(ex, "Unhandled exception on {Path}", context.Request.Path);
+        }
+        else
+        {
+            var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous";
+            _logger.LogWarning(
+                "{ExceptionType}: {Message} | Path: {Path} | User: {UserId}",
+                ex.GetType().Name, ex.Message, context.Request.Path, userId);
+        }
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
+
+        // Transient by definition — tell the caller it is worth retrying shortly.
+        if (statusCode == HttpStatusCode.ServiceUnavailable)
+            context.Response.Headers.RetryAfter = "5";
 
         var response = new
         {
@@ -91,4 +131,17 @@ public class ExceptionHandlingMiddleware
 
         await context.Response.WriteAsync(json);
     }
+
+    /// <summary>
+    /// True when the exception represents a database/infrastructure failure rather than a
+    /// business outcome: a failed SaveChanges (<see cref="DbUpdateException"/>, which also
+    /// covers <c>DbUpdateConcurrencyException</c>), a raw provider error
+    /// (<see cref="DbException"/> — e.g. NpgsqlException: connection reset / timeout), or
+    /// EF's transient-failure wrapper (an <see cref="InvalidOperationException"/> whose inner
+    /// exception is a <see cref="DbException"/>).
+    /// </summary>
+    private static bool IsDatabaseFailure(Exception ex) =>
+        ex is DbUpdateException
+        || ex is DbException
+        || (ex is InvalidOperationException && ex.InnerException is DbException);
 }

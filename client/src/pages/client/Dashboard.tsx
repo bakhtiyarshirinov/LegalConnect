@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Calendar, Bell, XCircle, ArrowRight, Video } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -9,6 +10,7 @@ import { notificationsApi } from '../../api/notifications'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { SkeletonCard, Skeleton } from '../../components/ui/Skeleton'
+import { AppointmentActionModal, type AppointmentAction } from '../../components/appointments/AppointmentActionModal'
 
 const stagger = { visible: { transition: { staggerChildren: 0.07 } } }
 const item = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }
@@ -21,11 +23,26 @@ export default function ClientDashboard() {
   const { data: appointments = [], isLoading: loadingAppts } = useQuery({ queryKey: ['appointments', user.userId], queryFn: () => appointmentsApi.getByClient(user.userId) })
   const { data: notifications = [], isLoading: loadingNotifs } = useQuery({ queryKey: ['notifications', user.userId], queryFn: () => notificationsApi.getAll(user.userId) })
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => appointmentsApi.cancel(id, user.userId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['appointments', user.userId] }); toast.success('Görüş ləğv edildi') },
-    onError: (err: Error) => toast.error(err.message),
-  })
+  const [actionTarget, setActionTarget] = useState<{
+    id: string; action: AppointmentAction; lawyerName: string
+  } | null>(null)
+
+  const runAction = async (reason: string | undefined) => {
+    if (!actionTarget) return
+    try {
+      if (actionTarget.action === 'cancel') {
+        await appointmentsApi.cancel(actionTarget.id, reason as string)
+        toast.success('Görüş ləğv edildi')
+      } else {
+        await appointmentsApi.remove(actionTarget.id, reason)
+        toast.success('Görüş silindi')
+      }
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
 
   const joinMeeting = async (a: typeof appointments[0]) => {
     if (a.meetingUrl) { window.open(a.meetingUrl, '_blank'); return }
@@ -105,7 +122,7 @@ export default function ClientDashboard() {
                         </button>
                       )}
                       {(a.status === 'Pending' || a.status === 'Confirmed') && (
-                        <button onClick={() => cancelMutation.mutate(a.id)} style={{ background: 'none', border: '1px solid #fecaca', color: '#ef4444', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif' }}>
+                        <button onClick={() => setActionTarget({ id: a.id, action: 'cancel', lawyerName: a.lawyerFullName })} style={{ background: 'none', border: '1px solid #fecaca', color: '#ef4444', fontSize: 12, fontWeight: 500, padding: '4px 10px', borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif' }}>
                           <XCircle size={12} /> Ləğv et
                         </button>
                       )}
@@ -141,6 +158,14 @@ export default function ClientDashboard() {
           )}
         </div>
       </div>
+
+      <AppointmentActionModal
+        open={!!actionTarget}
+        action={actionTarget?.action ?? 'cancel'}
+        counterpartyName={actionTarget?.lawyerName}
+        onClose={() => setActionTarget(null)}
+        onConfirm={runAction}
+      />
     </motion.div>
   )
 }

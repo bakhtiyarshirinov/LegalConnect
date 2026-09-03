@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Calendar, List, CalendarDays } from 'lucide-react'
+import { Calendar, List, CalendarDays, Trash2 } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
@@ -9,6 +9,7 @@ import {
   getByLawyer,
   confirmAppointment,
   cancelAppointment,
+  deleteAppointment,
   completeAppointment,
   type Appointment,
   type AppointmentStatus,
@@ -18,6 +19,7 @@ import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { AppointmentSkeleton } from '../components/ui/Skeleton'
+import { AppointmentActionModal, type AppointmentAction } from '../components/appointments/AppointmentActionModal'
 
 const STATUS_DOT: Record<string, string> = {
   Pending: '#F97316',
@@ -57,6 +59,9 @@ export default function Appointments() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [view, setView] = useState<View>('list')
   const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null)
+  const [actionTarget, setActionTarget] = useState<{
+    id: string; action: AppointmentAction; clientName: string
+  } | null>(null)
 
   const { data: profile } = useQuery({
     queryKey: ['lawyer-profile'],
@@ -95,12 +100,21 @@ export default function Appointments() {
     catch { toast.error('Görüşü təsdiqləmək alınmadı') } finally { setActionLoading(null) }
   }
 
-  const handleCancel = async (a: Appointment) => {
-    if (!effectiveLawyerId) return
-    if (!window.confirm('Görüşü ləğv etmək istədiyinizə əminsiniz?')) return
-    setActionLoading(a.id + 'cancel')
-    try { await cancelAppointment(a.id, effectiveLawyerId); toast.success('Görüş ləğv edildi'); qc.invalidateQueries({ queryKey: ['appointments'] }) }
-    catch { toast.error('Görüşü ləğv etmək alınmadı') } finally { setActionLoading(null) }
+  const runAction = async (reason: string | undefined) => {
+    if (!actionTarget) return
+    try {
+      if (actionTarget.action === 'cancel') {
+        await cancelAppointment(actionTarget.id, reason as string)
+        toast.success('Görüş ləğv edildi')
+      } else {
+        await deleteAppointment(actionTarget.id, reason)
+        toast.success('Görüş silindi')
+      }
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
   }
 
   const handleComplete = async (a: Appointment) => {
@@ -176,6 +190,9 @@ export default function Appointments() {
                       <div style={{ flex: 1, minWidth: 180 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{a.clientName}</div>
                         <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{formatDate(a.scheduledAt)}</div>
+                        {a.status === 'Cancelled' && a.cancellationReason && (
+                          <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>✕ Ləğv səbəbi: {a.cancellationReason}</div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                         <span>
@@ -190,7 +207,7 @@ export default function Appointments() {
                       {a.status === 'Pending' && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                           <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Təsdiqlə</Button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
+                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
                         </div>
                       )}
                       {a.status === 'Confirmed' && (
@@ -200,7 +217,8 @@ export default function Appointments() {
                           >
                             Tamamla
                           </button>
-                          <Button variant="danger" size="sm" loading={actionLoading === a.id + 'cancel'} onClick={() => handleCancel(a)}>Ləğv et</Button>
+                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
+                          <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientName })}><Trash2 size={13} /> Sil</Button>
                         </div>
                       )}
                     </div>
@@ -275,6 +293,14 @@ export default function Appointments() {
           )}
         </div>
       )}
+
+      <AppointmentActionModal
+        open={!!actionTarget}
+        action={actionTarget?.action ?? 'cancel'}
+        counterpartyName={actionTarget?.clientName}
+        onClose={() => setActionTarget(null)}
+        onConfirm={runAction}
+      />
     </div>
   )
 }

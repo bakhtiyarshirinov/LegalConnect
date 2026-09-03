@@ -11,6 +11,7 @@ export interface AppointmentDto {
   price: number
   notes?: string
   meetingUrl?: string
+  cancellationReason?: string
 }
 
 export interface LawyerAppointmentDto {
@@ -24,6 +25,7 @@ export interface LawyerAppointmentDto {
   price: number
   notes?: string
   meetingUrl?: string
+  cancellationReason?: string
 }
 
 export interface CreateAppointmentPayload {
@@ -55,9 +57,14 @@ export const appointmentsApi = {
       params: { lawyerId },
     }),
 
-  cancel: (id: string, userId: string) =>
-    api.put(`/appointments/${id}/cancel`, null, {
-      params: { userId },
+  /** 4.2 — cancel: reason is mandatory (min 10 chars, enforced server-side). */
+  cancel: (id: string, reason: string) =>
+    api.put(`/appointments/${id}/cancel`, { reason }),
+
+  /** 4.1 — delete: soft-cancel, reason optional. Row stays in history. */
+  remove: (id: string, reason?: string) =>
+    api.delete(`/appointments/${id}`, {
+      params: reason ? { reason } : undefined,
     }),
 
   createMeeting: (id: string) =>

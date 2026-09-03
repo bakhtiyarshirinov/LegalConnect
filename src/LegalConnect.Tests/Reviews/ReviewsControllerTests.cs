@@ -53,6 +53,10 @@ public class ReviewsControllerTests : IClassFixture<TestWebApplicationFactory>
         var lawyerResult = await lawyerCreate.Content.ReadFromJsonAsync<LawyerCreatedResponse>();
         var lawyerEntityId = lawyerResult!.LawyerId;
 
+        // Bookings are blocked for unverified lawyers — verify as admin first.
+        _client.SetBearerToken(Guid.NewGuid(), $"admin_{Guid.NewGuid():N}@test.az", "Admin");
+        await _client.PutAsync($"/api/admin/lawyers/{lawyerEntityId}/verify", null);
+
         _client.SetBearerToken(clientUserId, clientEmail, "Client");
         var apptResp = await _client.PostAsJsonAsync("/api/appointments", new
         {
@@ -66,9 +70,10 @@ public class ReviewsControllerTests : IClassFixture<TestWebApplicationFactory>
         var apptResult = await apptResp.Content.ReadFromJsonAsync<AppointmentCreatedResponse>();
         var appointmentId = apptResult!.AppointmentId;
 
-        // Confirm then Complete
-        await _client.PutAsync($"/api/appointments/{appointmentId}/confirm?lawyerId={lawyerEntityId}", null);
-        await _client.PutAsync($"/api/appointments/{appointmentId}/complete?lawyerId={lawyerEntityId}", null);
+        // Confirm then Complete — both require the lawyer's own JWT (identity no longer from query).
+        _client.SetBearerToken(lawyerUserId, lawyerEmail, "Lawyer");
+        await _client.PutAsync($"/api/appointments/{appointmentId}/confirm", null);
+        await _client.PutAsync($"/api/appointments/{appointmentId}/complete", null);
 
         _client.SetBearerToken(clientUserId, clientEmail, "Client");
 

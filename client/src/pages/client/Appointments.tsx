@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, XCircle, Star, List, CalendarDays, Video } from 'lucide-react'
+import { Calendar, XCircle, Trash2, Star, List, CalendarDays, Video } from 'lucide-react'
 import ReactCalendar from 'react-calendar'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi, type AppointmentDto } from '../../api/appointments'
@@ -11,6 +11,7 @@ import { Badge } from '../../components/ui/Badge'
 import { Card } from '../../components/ui/Card'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { ReviewModal } from '../../components/reviews/ReviewModal'
+import { AppointmentActionModal, type AppointmentAction } from '../../components/appointments/AppointmentActionModal'
 
 const stagger = { visible: { transition: { staggerChildren: 0.07 } } }
 const item = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }
@@ -46,6 +47,9 @@ export default function ClientAppointments() {
   const [reviewTarget, setReviewTarget] = useState<{
     appointmentId: string; lawyerId: string; lawyerName: string
   } | null>(null)
+  const [actionTarget, setActionTarget] = useState<{
+    id: string; action: AppointmentAction; lawyerName: string
+  } | null>(null)
 
   const { data: appointments = [], isLoading } = useQuery({
     queryKey: ['clientAppointments', user.userId],
@@ -65,15 +69,23 @@ export default function ClientAppointments() {
 
   const reviewedApptIds = new Set(allReviews.map((r) => r.appointmentId))
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => appointmentsApi.cancel(id, user.userId),
-    onSuccess: () => {
-      toast.success('Görüş ləğv edildi')
+  const runAction = async (reason: string | undefined) => {
+    if (!actionTarget) return
+    try {
+      if (actionTarget.action === 'cancel') {
+        await appointmentsApi.cancel(actionTarget.id, reason as string)
+        toast.success('Görüş ləğv edildi')
+      } else {
+        await appointmentsApi.remove(actionTarget.id, reason)
+        toast.success('Görüş silindi')
+      }
       qc.invalidateQueries({ queryKey: ['clientAppointments', user.userId] })
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
 
   const joinMeeting = async (appt: AppointmentDto) => {
     if (appt.meetingUrl) {
@@ -136,6 +148,9 @@ export default function ClientAppointments() {
               <span>📅 {formatDate(appt.scheduledAt)}</span>
               <span>⏱ {appt.durationMinutes} dəqiqə · ${appt.price}</span>
               {appt.notes && <span style={{ fontStyle: 'italic' }}>"{appt.notes}"</span>}
+              {appt.status === 'Cancelled' && appt.cancellationReason && (
+                <span style={{ color: '#E03131' }}>✕ Ləğv səbəbi: {appt.cancellationReason}</span>
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
@@ -148,13 +163,20 @@ export default function ClientAppointments() {
               </button>
             )}
             {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
-              <button
-                onClick={() => { if (window.confirm('Görüşü ləğv etmək istədiyinizə əminsiniz?')) cancelMutation.mutate(appt.id) }}
-                disabled={cancelMutation.isPending}
-                style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500, opacity: cancelMutation.isPending ? 0.6 : 1 }}
-              >
-                <XCircle size={14} /> Ləğv et
-              </button>
+              <>
+                <button
+                  onClick={() => setActionTarget({ id: appt.id, action: 'cancel', lawyerName: appt.lawyerFullName })}
+                  style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}
+                >
+                  <XCircle size={14} /> Ləğv et
+                </button>
+                <button
+                  onClick={() => setActionTarget({ id: appt.id, action: 'delete', lawyerName: appt.lawyerFullName })}
+                  style={{ background: 'var(--surface)', color: 'var(--text-2)', border: '1px solid var(--border, #E8E8E8)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}
+                >
+                  <Trash2 size={14} /> Sil
+                </button>
+              </>
             )}
             {appt.status === 'Completed' && (
               reviewedApptIds.has(appt.id) ? (
@@ -300,6 +322,14 @@ export default function ClientAppointments() {
           )}
         </div>
       )}
+
+      <AppointmentActionModal
+        open={!!actionTarget}
+        action={actionTarget?.action ?? 'cancel'}
+        counterpartyName={actionTarget?.lawyerName}
+        onClose={() => setActionTarget(null)}
+        onConfirm={runAction}
+      />
 
       {reviewTarget && (
         <ReviewModal

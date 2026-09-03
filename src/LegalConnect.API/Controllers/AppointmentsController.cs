@@ -41,12 +41,35 @@ public class AppointmentsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// PUT /api/appointments/{id}/cancel — cancel an appointment (4.2).
+    /// Reason is mandatory (min 10 chars). Client, the appointment's lawyer or an admin may call.
+    /// </summary>
     [HttpPut("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(
         Guid id,
+        [FromBody] CancelAppointmentRequest body,
         CancellationToken cancellationToken)
     {
-        await _mediator.Send(new CancelAppointmentCommand(id), cancellationToken);
+        await _mediator.Send(
+            new CancelAppointmentCommand(id, body?.Reason, RequireReason: true),
+            cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// DELETE /api/appointments/{id} — remove an appointment from the user's list (4.1).
+    /// Same soft-cancel as PUT /cancel but the reason is optional. The row is kept for history.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromQuery] string? reason,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(
+            new CancelAppointmentCommand(id, reason, RequireReason: false),
+            cancellationToken);
         return NoContent();
     }
 
@@ -90,3 +113,6 @@ public class AppointmentsController : ControllerBase
         return Ok(result);
     }
 }
+
+/// <summary>Request body for PUT /api/appointments/{id}/cancel.</summary>
+public record CancelAppointmentRequest(string? Reason);

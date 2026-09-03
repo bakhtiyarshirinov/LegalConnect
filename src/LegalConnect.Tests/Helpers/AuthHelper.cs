@@ -21,6 +21,8 @@ public static class AuthHelper
             new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, role),
             new Claim(ClaimTypes.Name, fullName),
+            // Real login tokens carry this; without it EmailVerificationMiddleware 403s every /api call.
+            new Claim("email_verified", "true"),
         };
 
         var token = new JwtSecurityToken(

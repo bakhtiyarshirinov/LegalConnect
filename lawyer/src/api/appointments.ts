@@ -14,6 +14,7 @@ export interface Appointment {
   status: AppointmentStatus
   price: number
   notes?: string
+  cancellationReason?: string
 }
 
 export async function getByLawyer(lawyerId: string): Promise<Appointment[]> {
@@ -25,8 +26,16 @@ export async function confirmAppointment(appointmentId: string, lawyerId: string
   await api.put(`/appointments/${appointmentId}/confirm?lawyerId=${lawyerId}`)
 }
 
-export async function cancelAppointment(appointmentId: string, userId: string): Promise<void> {
-  await api.put(`/appointments/${appointmentId}/cancel?userId=${userId}`)
+/** 4.2 — cancel: reason mandatory (min 10 chars, enforced server-side). */
+export async function cancelAppointment(appointmentId: string, reason: string): Promise<void> {
+  await api.put(`/appointments/${appointmentId}/cancel`, { reason })
+}
+
+/** 4.1 — delete: soft-cancel, reason optional. Row stays in history. */
+export async function deleteAppointment(appointmentId: string, reason?: string): Promise<void> {
+  await api.delete(`/appointments/${appointmentId}`, {
+    params: reason ? { reason } : undefined,
+  })
 }
 
 
