@@ -20,6 +20,7 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { AppointmentSkeleton } from '../components/ui/Skeleton'
 import { AppointmentActionModal, type AppointmentAction } from '../components/appointments/AppointmentActionModal'
+import { useVerificationStatus } from '../hooks/useVerificationStatus'
 
 const STATUS_DOT: Record<string, string> = {
   Pending: '#F97316',
@@ -54,6 +55,7 @@ const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
 
 export default function Appointments() {
   const { user, lawyerId, setLawyerId } = useAuthStore()
+  const { isRevoked } = useVerificationStatus()
   const qc = useQueryClient()
   const [activeTab, setActiveTab] = useState<AppointmentStatus | 'All'>('All')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
@@ -185,10 +187,10 @@ export default function Appointments() {
                   <Card>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                       <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
-                        {a.clientName?.[0] ?? '?'}
+                        {a.clientFullName?.[0] ?? '?'}
                       </div>
                       <div style={{ flex: 1, minWidth: 180 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{a.clientName}</div>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{a.clientFullName}</div>
                         <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{formatDate(a.scheduledAt)}</div>
                         {a.status === 'Cancelled' && a.cancellationReason && (
                           <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>✕ Ləğv səbəbi: {a.cancellationReason}</div>
@@ -204,21 +206,21 @@ export default function Appointments() {
                         <span>💰 ${a.price}</span>
                       </div>
                       <Badge status={a.status} />
-                      {a.status === 'Pending' && (
+                      {a.status === 'Pending' && !isRevoked && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                           <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Təsdiqlə</Button>
-                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
+                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientFullName })}>Ləğv et</Button>
                         </div>
                       )}
-                      {a.status === 'Confirmed' && (
+                      {a.status === 'Confirmed' && !isRevoked && (
                         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                           <button disabled={actionLoading === a.id + 'complete'} onClick={() => handleComplete(a)}
                             style={{ background: '#EBFBEE', color: '#2F9E44', border: '1px solid #B2F2BB', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 500, opacity: actionLoading === a.id + 'complete' ? 0.6 : 1 }}
                           >
                             Tamamla
                           </button>
-                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
-                          <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientName })}><Trash2 size={13} /> Sil</Button>
+                          <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientFullName })}>Ləğv et</Button>
+                          <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientFullName })}><Trash2 size={13} /> Sil</Button>
                         </div>
                       )}
                     </div>
@@ -273,7 +275,7 @@ export default function Appointments() {
                     <Card key={a.id} padding={18}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
                         <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{a.clientName}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{a.clientFullName}</div>
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                             {formatTime(a.scheduledAt)} · {a.durationMinutes} dəq · {a.type}
                           </div>

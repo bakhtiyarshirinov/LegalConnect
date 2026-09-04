@@ -40,8 +40,15 @@ public class SlotsControllerTests : IClassFixture<TestWebApplicationFactory>
             specializationIds = new[] { TestWebApplicationFactory.TestSpecializationId }
         });
         var lawyerResult = await lawyerCreate.Content.ReadFromJsonAsync<LawyerCreatedResponse>();
+        var lawyerEntityId = lawyerResult!.LawyerId;
 
-        return (lawyerUserId, lawyerResult!.LawyerId);
+        // A lawyer must be admin-verified to manage availability (verification gates
+        // all state-changing lawyer actions).
+        _client.SetBearerToken(Guid.NewGuid(), $"admin_{Guid.NewGuid():N}@test.az", "Admin");
+        await _client.PutAsync($"/api/admin/lawyers/{lawyerEntityId}/verify", null);
+
+        _client.SetBearerToken(lawyerUserId, lawyerEmail, "Lawyer");
+        return (lawyerUserId, lawyerEntityId);
     }
 
     [Fact]

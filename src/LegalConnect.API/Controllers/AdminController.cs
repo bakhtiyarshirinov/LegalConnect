@@ -1,9 +1,11 @@
 using LegalConnect.Application.Admin.Commands.VerifyLawyer;
+using LegalConnect.Application.Admin.Queries.GetAdminStats;
 using LegalConnect.Application.Admin.Queries.GetAllUsers;
 using LegalConnect.Application.Admin.Queries.GetUserProfile;
 using LegalConnect.Application.Admin.Queries.GetPendingLawyers;
 using LegalConnect.Application.Admin.Queries.GetVerifiedLawyers;
 using LegalConnect.Application.Lawyers.Commands.CancelLawyerVerification;
+using LegalConnect.Application.Lawyers.Commands.RejectLawyer;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +22,14 @@ public class AdminController : ControllerBase
     public AdminController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>GET /api/admin/stats — aggregate counts for the dashboard cards.</summary>
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetAdminStatsQuery(), cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>GET /api/admin/lawyers/pending — returns all unverified lawyer profiles.</summary>
@@ -60,6 +70,21 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// PUT /api/admin/lawyers/{id}/reject — rejects a pending verification application.
+    /// Body: { "reason": "string" } (required, min 10 chars). Responds 204.
+    /// The lawyer stays unverified, leaves the pending queue, and is notified.
+    /// </summary>
+    [HttpPut("lawyers/{id:guid}/reject")]
+    public async Task<IActionResult> RejectLawyer(
+        Guid id,
+        [FromBody] RejectLawyerRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new RejectLawyerCommand(id, body.Reason), cancellationToken);
+        return NoContent();
+    }
+
     /// <summary>GET /api/admin/users — returns all users.</summary>
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
@@ -82,3 +107,6 @@ public class AdminController : ControllerBase
 
 /// <summary>Request body for PUT /api/admin/lawyers/{id}/cancel-verification.</summary>
 public record CancelLawyerVerificationRequest(string Reason);
+
+/// <summary>Request body for PUT /api/admin/lawyers/{id}/reject.</summary>
+public record RejectLawyerRequest(string Reason);

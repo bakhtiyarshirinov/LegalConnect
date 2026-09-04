@@ -37,6 +37,8 @@ export interface UserAdmin {
   role: string
   isVerified: boolean
   createdAt: string
+  /** "Verified" | "Pending" | "Rejected" for lawyer rows; null otherwise. */
+  lawyerStatus: string | null
 }
 
 export interface LawyerProfileInfo {
@@ -52,6 +54,8 @@ export interface LawyerProfileInfo {
   specializations: string[]
   cancellationReason: string | null
   cancelledAt: string | null
+  rejectionReason: string | null
+  rejectedAt: string | null
 }
 
 export interface ActivitySummary {
@@ -82,4 +86,10 @@ export interface LoginResponse {
   email: string
   fullName: string
   role: string
+}
+
+export interface AdminStats {
+  totalUsers: number
+  verifiedLawyers: number
+  pendingApprovals: number
 }

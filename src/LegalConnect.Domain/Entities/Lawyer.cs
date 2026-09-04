@@ -18,6 +18,12 @@ public class Lawyer
     public string? CancellationReason { get; private set; }
     public DateTime? CancelledAt { get; private set; }
 
+    // Set when an admin rejects a pending verification application (see Reject).
+    // A rejected lawyer stays unverified and drops out of the pending queue until
+    // they re-apply (UpdateProfile) or an admin approves them directly (Verify).
+    public string? RejectionReason { get; private set; }
+    public DateTime? RejectedAt { get; private set; }
+
     // Navigation properties
     public User User { get; private set; }
     public ICollection<LawyerSpecialization> Specializations { get; private set; } = new List<LawyerSpecialization>();
@@ -62,6 +68,11 @@ public class Lawyer
         HourlyRate = hourlyRate;
         ExperienceYears = experienceYears;
         IsAvailable = isAvailable;
+
+        // Editing the profile counts as re-submitting the application: clear a prior
+        // rejection so the lawyer returns to the pending queue.
+        RejectionReason = null;
+        RejectedAt = null;
     }
 
     public void UpdateRating(float newRating, int reviewCount)
@@ -71,7 +82,31 @@ public class Lawyer
     }
 
     public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
-    public void Verify() => IsVerified = true;
+
+    /// <summary>
+    /// Grants (or re-grants) admin verification. Also clears any stale revoke metadata
+    /// from a previous CancelVerification so the record reflects only the latest action.
+    /// </summary>
+    public void Verify()
+    {
+        IsVerified = true;
+        CancellationReason = null;
+        CancelledAt = null;
+        RejectionReason = null;
+        RejectedAt = null;
+    }
+
+    /// <summary>
+    /// Rejects a pending verification application. The lawyer stays unverified but
+    /// leaves the pending queue; <paramref name="reason"/> is kept for the audit trail
+    /// and sent to the lawyer as a notification.
+    /// </summary>
+    public void Reject(string reason)
+    {
+        IsVerified = false;
+        RejectionReason = reason;
+        RejectedAt = DateTime.UtcNow;
+    }
 
     /// <summary>
     /// Revokes a verification that was previously granted. The lawyer drops back to the

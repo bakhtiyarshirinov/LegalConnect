@@ -47,7 +47,9 @@ public class GetUserProfileQueryHandler
                         .Select(s => s.Specialization.Name)
                         .ToList(),
                     CancellationReason: lawyer.CancellationReason,
-                    CancelledAt: lawyer.CancelledAt);
+                    CancelledAt: lawyer.CancelledAt,
+                    RejectionReason: lawyer.RejectionReason,
+                    RejectedAt: lawyer.RejectedAt);
 
                 appointments = await _unitOfWork.Appointments.GetByLawyerIdAsync(lawyer.Id);
             }

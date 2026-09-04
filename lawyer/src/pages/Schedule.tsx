@@ -8,6 +8,7 @@ import { getLawyerSlots, createBulkSlots, deleteSlot, type SlotDto } from '../ap
 import { getMyLawyerProfile } from '../api/profile'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
+import { useVerificationStatus } from '../hooks/useVerificationStatus'
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date)
@@ -38,6 +39,7 @@ function isSameDay(a: Date, b: Date): boolean {
 
 export default function Schedule() {
   const { user, lawyerId } = useAuthStore()
+  const { isRevoked } = useVerificationStatus()
   const qc = useQueryClient()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [modalOpen, setModalOpen] = useState(false)
@@ -103,7 +105,7 @@ export default function Schedule() {
           <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>Mənim cədvəlim</h1>
           <p style={{ fontSize: 14, color: '#6B6B6B', marginTop: 4 }}>Mövcud slotlarınızı idarə edin</p>
         </div>
-        <Button onClick={() => setModalOpen(true)}>
+        <Button onClick={() => setModalOpen(true)} disabled={isRevoked}>
           <Plus size={16} /> Günlük cədvəl əlavə et
         </Button>
       </motion.div>
@@ -145,7 +147,7 @@ export default function Schedule() {
                   {daySlots.map((slot) => (
                     <div key={slot.id} style={{ background: slot.isBooked ? '#F5F5F5' : '#0A0A0A', color: slot.isBooked ? '#6B6B6B' : '#FFFFFF', borderRadius: 7, padding: '6px 8px', fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span>{formatTime(slot.startTime)}–{formatTime(slot.endTime)}</span>
-                      {!slot.isBooked && (
+                      {!slot.isBooked && !isRevoked && (
                         <button onClick={() => deleteMutation.mutate(slot.id)}
                           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FFFFFF', padding: 0, display: 'flex', alignItems: 'center' }}
                         >

@@ -119,6 +119,10 @@ export const Users: React.FC = () => {
                     <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
                       <CheckCircle className="w-3.5 h-3.5" /> Təsdiqləndi
                     </span>
+                  ) : user.lawyerStatus === 'Rejected' ? (
+                    <span className="flex items-center gap-1 text-[#E03131] text-xs font-medium">
+                      <XCircle className="w-3.5 h-3.5" /> Rədd edilib
+                    </span>
                   ) : (
                     <span className="flex items-center gap-1 text-[#6B6B6B] text-xs">
                       <XCircle className="w-3.5 h-3.5" /> Gözləyir

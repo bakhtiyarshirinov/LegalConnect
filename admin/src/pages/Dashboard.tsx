@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Briefcase, CheckCircle, ArrowRight, MapPin, Star } from 'lucide-react'
-import { getPendingLawyers, verifyLawyer } from '../api/admin'
+import { getPendingLawyers, verifyLawyer, getAdminStats } from '../api/admin'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -26,6 +26,11 @@ export const Dashboard: React.FC = () => {
     queryFn: getPendingLawyers,
   })
 
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: getAdminStats,
+  })
+
   const { mutate: verify, isPending: verifying } = useMutation({
     mutationFn: verifyLawyer,
     onSuccess: (_, id) => {
@@ -33,14 +38,15 @@ export const Dashboard: React.FC = () => {
       queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
         old.filter((l) => l.id !== id)
       )
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
     },
     onError: () => toast.error('Təsdiqləmə alınmadı. Yenidən cəhd edin.'),
   })
 
-  const stats = [
-    { label: 'Gözləyən Təsdiqlər', value: isLoading ? '—' : pending.length },
-    { label: 'Ümumi İstifadəçilər', value: '248' },
-    { label: 'Təsdiqlənmiş Vəkillər', value: '34' },
+  const statCards = [
+    { label: 'Gözləyən Təsdiqlər', value: statsLoading || !stats ? '—' : stats.pendingApprovals },
+    { label: 'Ümumi İstifadəçilər', value: statsLoading || !stats ? '—' : stats.totalUsers },
+    { label: 'Təsdiqlənmiş Vəkillər', value: statsLoading || !stats ? '—' : stats.verifiedLawyers },
   ]
 
   const preview = pending.slice(0, 5)
@@ -53,7 +59,7 @@ export const Dashboard: React.FC = () => {
       </motion.div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
-        {stats.map((stat, i) => (
+        {statCards.map((stat, i) => (
           <motion.div key={stat.label} custom={i} initial="hidden" animate="visible" variants={fadeUp}
             whileHover={{ y: -2, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
             style={{ background: '#FFFFFF', border: '1px solid #F0F0F0', borderTop: '3px solid #0A0A0A', borderRadius: 16, padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', cursor: 'default' }}

@@ -6,5 +6,7 @@ public record UserAdminDto(
     string Email,
     string Role,
     bool IsVerified,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    // For a lawyer row: "Verified" | "Pending" | "Rejected". Null for non-lawyers.
+    string? LawyerStatus
 );

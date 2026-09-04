@@ -12,6 +12,7 @@ export interface LawyerProfile {
   hourlyRate: number
   experienceYears: number
   isAvailable: boolean
+  isVerified: boolean
   rating: number
   specializations?: string[]
   specializationIds?: number[]

@@ -147,17 +147,31 @@ export const UserProfile: React.FC = () => {
             </Card>
           )}
 
-          {/* Verification history — shown only if a verification was revoked (Phase 6.1) */}
-          {profile.lawyer?.cancellationReason && (
+          {/* Verification history — revoked verification and/or rejected application */}
+          {(profile.lawyer?.cancellationReason || profile.lawyer?.rejectionReason) && (
             <Card>
               <h2 className="text-sm font-bold text-[#0A0A0A] uppercase tracking-wide mb-3">Verifikasiya tarixçəsi</h2>
-              <div className="flex items-start gap-3 p-3 bg-[#FFF1F0] border border-[#FFCCC7] rounded-xl">
-                <ShieldAlert className="w-5 h-5 text-[#E03131] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-[#611A15]">Verifikasiya ləğv edilib</p>
-                  <p className="text-sm text-[#611A15] mt-1">Səbəb: {profile.lawyer.cancellationReason}</p>
-                  <p className="text-xs text-[#6B6B6B] mt-1">{fmtDateTime(profile.lawyer.cancelledAt)}</p>
-                </div>
+              <div className="flex flex-col gap-3">
+                {profile.lawyer?.rejectionReason && (
+                  <div className="flex items-start gap-3 p-3 bg-[#FFF1F0] border border-[#FFCCC7] rounded-xl">
+                    <ShieldAlert className="w-5 h-5 text-[#E03131] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-[#611A15]">Müraciət rədd edilib</p>
+                      <p className="text-sm text-[#611A15] mt-1">Səbəb: {profile.lawyer.rejectionReason}</p>
+                      <p className="text-xs text-[#6B6B6B] mt-1">{fmtDateTime(profile.lawyer.rejectedAt)}</p>
+                    </div>
+                  </div>
+                )}
+                {profile.lawyer?.cancellationReason && (
+                  <div className="flex items-start gap-3 p-3 bg-[#FFF1F0] border border-[#FFCCC7] rounded-xl">
+                    <ShieldAlert className="w-5 h-5 text-[#E03131] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-[#611A15]">Verifikasiya ləğv edilib</p>
+                      <p className="text-sm text-[#611A15] mt-1">Səbəb: {profile.lawyer.cancellationReason}</p>
+                      <p className="text-xs text-[#6B6B6B] mt-1">{fmtDateTime(profile.lawyer.cancelledAt)}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           )}

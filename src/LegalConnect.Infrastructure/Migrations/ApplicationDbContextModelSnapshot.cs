@@ -186,6 +186,13 @@ namespace LegalConnect.Infrastructure.Migrations
                         .HasPrecision(3, 2)
                         .HasColumnType("real");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<int>("ReviewCount")
                         .HasColumnType("integer");
 

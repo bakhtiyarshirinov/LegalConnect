@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ClientBadge > renders the real client name and its initial as the avatar 1`] = `
+<div>
+  <div
+    style="display: flex; align-items: center; gap: 10px;"
+  >
+    <div
+      aria-hidden="true"
+      style="width: 36px; height: 36px; border-radius: 50%; background: rgb(245, 245, 245); display: flex; align-items: center; justify-content: center; font-size: 14.4px; font-weight: 600; color: rgb(10, 10, 10); flex-shrink: 0;"
+    >
+      A
+    </div>
+    <div>
+      <div
+        style="font-size: 14px; font-weight: 600; color: rgb(10, 10, 10);"
+      >
+        Anar Həsənov
+      </div>
+      <div
+        style="font-size: 12px; color: rgb(107, 107, 107); margin-top: 2px;"
+      >
+        10 Sep, 09:00
+      </div>
+    </div>
+  </div>
+</div>
+`;

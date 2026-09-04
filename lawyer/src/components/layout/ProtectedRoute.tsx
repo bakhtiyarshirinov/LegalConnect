@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { Navbar } from './Navbar'
 import { Sidebar } from './Sidebar'
+import { VerificationBanner } from '../VerificationBanner'
 
 export default function ProtectedRoute() {
   const { token, user } = useAuthStore()
@@ -15,6 +16,7 @@ export default function ProtectedRoute() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar />
         <main style={{ flex: 1, overflow: 'auto', background: '#FAFAFA' }}>
+          <VerificationBanner />
           <Outlet />
         </main>
       </div>

@@ -28,6 +28,9 @@ public class LawyerConfiguration : IEntityTypeConfiguration<Lawyer>
         builder.Property(l => l.CancellationReason)
             .HasMaxLength(1000);
 
+        builder.Property(l => l.RejectionReason)
+            .HasMaxLength(1000);
+
         builder.Property(l => l.Rating)
             .HasPrecision(3, 2);
 

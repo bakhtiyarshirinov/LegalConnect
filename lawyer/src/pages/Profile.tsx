@@ -17,6 +17,7 @@ import { Card } from '../components/ui/Card'
 import { Input, Textarea } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
+import { useVerificationStatus } from '../hooks/useVerificationStatus'
 
 type Tab = 'profile' | 'statistics' | 'history'
 type HistoryFilter = 'All' | 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled'
@@ -48,6 +49,7 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function Profile() {
   const { user, lawyerId } = useAuthStore()
+  const { isRevoked } = useVerificationStatus()
   const qc = useQueryClient()
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
@@ -256,7 +258,7 @@ export default function Profile() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="primary" size="md" loading={saving} onClick={handleSave}>Dəyişiklikləri saxla</Button>
+                <Button variant="primary" size="md" loading={saving} disabled={isRevoked} onClick={handleSave}>Dəyişiklikləri saxla</Button>
               </div>
             </div>
           </Card>

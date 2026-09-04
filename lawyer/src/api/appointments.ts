@@ -6,7 +6,8 @@ export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Cancelled' | 'Complet
 export interface Appointment {
   id: string
   clientId: string
-  clientName: string
+  /** Matches the backend LawyerAppointmentDto field (was mistakenly `clientName`). */
+  clientFullName: string
   lawyerId: string
   scheduledAt: string
   durationMinutes: number

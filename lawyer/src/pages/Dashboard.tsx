@@ -5,7 +5,9 @@ import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
 import { getByLawyer, confirmAppointment, cancelAppointment, deleteAppointment, completeAppointment, type Appointment } from '../api/appointments'
 import { AppointmentActionModal, type AppointmentAction } from '../components/appointments/AppointmentActionModal'
+import { ClientBadge } from '../components/appointments/ClientBadge'
 import { getMyLawyerProfile } from '../api/profile'
+import { useVerificationStatus } from '../hooks/useVerificationStatus'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -29,6 +31,7 @@ function formatDate(dateStr: string) {
 
 export default function Dashboard() {
   const { user, lawyerId, setLawyerId } = useAuthStore()
+  const { isRevoked } = useVerificationStatus()
   const qc = useQueryClient()
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [actionTarget, setActionTarget] = useState<{
@@ -151,13 +154,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#0A0A0A', flexShrink: 0 }}>
-                          {a.clientName?.[0] ?? '?'}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0A0A0A' }}>{a.clientName}</div>
-                          <div style={{ fontSize: 12, color: '#6B6B6B' }}>{formatDate(a.scheduledAt)}</div>
-                        </div>
+                        <ClientBadge fullName={a.clientFullName} subtitle={formatDate(a.scheduledAt)} />
                         <Badge status={a.status} />
                       </div>
                       <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#6B6B6B', flexWrap: 'wrap' }}>
@@ -166,10 +163,12 @@ export default function Dashboard() {
                         <span>💰 ${a.price}</span>
                       </div>
                     </div>
+                    {!isRevoked && (
                     <div style={{ display: 'flex', gap: 8 }}>
                       <Button variant="success" size="sm" loading={actionLoading === a.id + 'confirm'} onClick={() => handleConfirm(a)}>Təsdiqlə</Button>
-                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
+                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientFullName })}>Ləğv et</Button>
                     </div>
+                    )}
                   </div>
                 </Card>
               </motion.div>
@@ -193,13 +192,7 @@ export default function Dashboard() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 600, color: '#0A0A0A', flexShrink: 0 }}>
-                          {a.clientName?.[0] ?? '?'}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0A0A0A' }}>{a.clientName}</div>
-                          <div style={{ fontSize: 12, color: '#6B6B6B' }}>{formatDate(a.scheduledAt)}</div>
-                        </div>
+                        <ClientBadge fullName={a.clientFullName} subtitle={formatDate(a.scheduledAt)} />
                         <Badge status={a.status} />
                       </div>
                       <div style={{ display: 'flex', gap: 20, fontSize: 12, color: '#6B6B6B', flexWrap: 'wrap' }}>
@@ -208,6 +201,7 @@ export default function Dashboard() {
                         <span>💰 ${a.price}</span>
                       </div>
                     </div>
+                    {!isRevoked && (
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         disabled={actionLoading === a.id + 'complete'}
@@ -216,9 +210,10 @@ export default function Dashboard() {
                       >
                         Tamamla
                       </button>
-                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientName })}>Ləğv et</Button>
-                      <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientName })}><Trash2 size={13} /> Sil</Button>
+                      <Button variant="danger" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'cancel', clientName: a.clientFullName })}>Ləğv et</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setActionTarget({ id: a.id, action: 'delete', clientName: a.clientFullName })}><Trash2 size={13} /> Sil</Button>
                     </div>
+                    )}
                   </div>
                 </Card>
               </motion.div>

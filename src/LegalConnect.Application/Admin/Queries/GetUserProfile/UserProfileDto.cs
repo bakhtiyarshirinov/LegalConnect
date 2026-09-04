@@ -28,7 +28,10 @@ public record LawyerProfileInfo(
     IEnumerable<string> Specializations,
     // Set when an admin revoked a previously granted verification (Phase 6.1).
     string? CancellationReason,
-    DateTime? CancelledAt
+    DateTime? CancelledAt,
+    // Set when an admin rejected the pending verification application.
+    string? RejectionReason,
+    DateTime? RejectedAt
 );
 
 /// <summary>Appointment activity roll-up. For a lawyer — their appointments; for a client — theirs.</summary>

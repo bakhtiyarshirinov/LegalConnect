@@ -8,8 +8,9 @@ import {
   verifyLawyer,
   getVerifiedLawyers,
   cancelLawyerVerification,
+  rejectLawyer,
 } from '../api/admin'
-import type { VerifiedLawyer } from '../types'
+import type { VerifiedLawyer, PendingLawyer } from '../types'
 import { Card } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -49,6 +50,7 @@ export const Lawyers: React.FC = () => {
         old.filter((l) => l.id !== id)
       )
       queryClient.invalidateQueries({ queryKey: ['verified-lawyers'] })
+      queryClient.invalidateQueries({ queryKey: ['all-users'] })
     },
     onError: () => toast.error('Təsdiqləmə alınmadı. Yenidən cəhd edin.'),
   })
@@ -60,10 +62,12 @@ export const Lawyers: React.FC = () => {
   })
 
   const [cancelTarget, setCancelTarget] = useState<VerifiedLawyer | null>(null)
+  const [rejectTarget, setRejectTarget] = useState<PendingLawyer | null>(null)
   const [reason, setReason] = useState('')
 
   const closeModal = () => {
     setCancelTarget(null)
+    setRejectTarget(null)
     setReason('')
   }
 
@@ -80,11 +84,29 @@ export const Lawyers: React.FC = () => {
     onError: (err) => toast.error(apiErrorMessage(err)),
   })
 
+  const { mutate: reject, isPending: rejecting } = useMutation({
+    mutationFn: rejectLawyer,
+    onSuccess: (_, { lawyerId }) => {
+      toast.success('Müraciət rədd edildi')
+      queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
+        old.filter((l) => l.id !== lawyerId)
+      )
+      queryClient.invalidateQueries({ queryKey: ['all-users'] })
+      closeModal()
+    },
+    onError: (err) => toast.error(apiErrorMessage(err)),
+  })
+
   const reasonValid = reason.trim().length >= REASON_MIN
 
   const submitCancel = () => {
     if (!cancelTarget || !reasonValid || cancelling) return
     cancelVerification({ lawyerId: cancelTarget.id, reason: reason.trim() })
+  }
+
+  const submitReject = () => {
+    if (!rejectTarget || !reasonValid || rejecting) return
+    reject({ lawyerId: rejectTarget.id, reason: reason.trim() })
   }
 
   return (
@@ -166,10 +188,14 @@ export const Lawyers: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 flex flex-col gap-2">
                     <Button variant="success" size="md" loading={verifying && verifyingId === lawyer.id} onClick={() => verify(lawyer.id)}>
                       <CheckCircle className="w-4 h-4" />
                       Təsdiqlə
+                    </Button>
+                    <Button variant="danger" size="md" onClick={() => setRejectTarget(lawyer)}>
+                      <XCircle className="w-4 h-4" />
+                      Rədd et
                     </Button>
                   </div>
                 </div>
@@ -294,6 +320,51 @@ export const Lawyers: React.FC = () => {
             disabled={!reasonValid}
           >
             Ləğvi təsdiqlə
+          </Button>
+        </div>
+      </Modal>
+
+      {/* ─── Reject-application confirm modal ────────────────────────────── */}
+      <Modal
+        open={rejectTarget !== null}
+        onClose={() => { if (!rejecting) closeModal() }}
+        title={
+          <span>
+            Müraciəti rədd et
+            {rejectTarget && <span className="text-[#6B6B6B] font-normal"> — {rejectTarget.fullName}</span>}
+          </span>
+        }
+      >
+        <div className="flex items-start gap-3 p-3 bg-[#FFF1F0] border border-[#FFCCC7] rounded-xl mb-4">
+          <AlertTriangle className="w-5 h-5 text-[#E03131] flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-[#611A15]">
+            Vəkil təsdiqlənməyəcək və gözləyən siyahısından çıxarılacaq. Səbəb ona
+            bildiriş olaraq göndəriləcək; o, profilini yeniləyərək təkrar müraciət
+            edə bilər.
+          </p>
+        </div>
+
+        <label className="text-sm font-medium text-[#0A0A0A]">Rədd etmə səbəbi</label>
+        <textarea
+          className="mt-1.5 w-full min-h-[110px] border border-[#E8E8E8] rounded-xl bg-white text-[#0A0A0A] placeholder:text-[#6B6B6B] text-sm p-3 outline-none focus:border-[#0A0A0A] focus:ring-2 focus:ring-[#0A0A0A]/10 transition-all resize-y"
+          placeholder="Ən azı 10 simvol — səbəb vəkilə bildiriş olaraq göndəriləcək"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          disabled={rejecting}
+          autoFocus
+        />
+        <p className="text-xs text-[#6B6B6B] mt-1">
+          {reason.trim().length < REASON_MIN
+            ? `Daha ${Math.max(REASON_MIN - reason.trim().length, 0)} simvol lazımdır`
+            : `${reason.trim().length} simvol`}
+        </p>
+
+        <div className="flex justify-end gap-2 mt-5">
+          <Button variant="secondary" size="md" onClick={closeModal} disabled={rejecting}>
+            İmtina
+          </Button>
+          <Button variant="danger" size="md" onClick={submitReject} loading={rejecting} disabled={!reasonValid}>
+            Rədd et
           </Button>
         </div>
       </Modal>

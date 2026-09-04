@@ -74,7 +74,7 @@ public class LawyerRepository : ILawyerRepository
             .Include(l => l.User)
             .Include(l => l.Specializations)
             .ThenInclude(ls => ls.Specialization)
-            .Where(l => !l.IsVerified)
+            .Where(l => !l.IsVerified && l.RejectedAt == null)
             .OrderBy(l => l.User.FullName)
             .ToListAsync();
 
@@ -86,6 +86,9 @@ public class LawyerRepository : ILawyerRepository
             .Where(l => l.IsVerified)
             .OrderBy(l => l.User.FullName)
             .ToListAsync();
+
+    public async Task<IEnumerable<Lawyer>> GetAllAsync()
+        => await _context.Lawyers.ToListAsync();
 
     public async Task AddAsync(Lawyer lawyer)
         => await _context.Lawyers.AddAsync(lawyer);
