@@ -15,23 +15,27 @@ function fmt(iso: string) {
     ' ' + d.toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })
 }
 
-/** "Perenos təklif olunub" — shown on both sides while a reschedule request is pending. */
+export const RESCHEDULE_PROPOSED_TEXT = 'Təyin olunmuş görüş vaxtının dəyişdirilməsi barədə təklif göndərildi'
+
+/** Shown on both sides while a reschedule request is pending. */
 export function RescheduleBadge({ proposedScheduledAt, isOwnProposal, onAccept, onReject, accepting }: Props) {
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+        display: 'flex', flexDirection: 'column', gap: 8,
         background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10,
-        padding: '8px 12px', fontSize: 12.5, color: '#92400E',
+        padding: '10px 12px', fontSize: 12.5, color: '#92400E', maxWidth: 420,
       }}
     >
-      <CalendarClock size={14} style={{ flexShrink: 0 }} />
-      <span>
-        <strong>Perenos təklif olunub</strong> — {fmt(proposedScheduledAt)}
-        {isOwnProposal ? ' (sizin təklifiniz, cavab gözlənilir)' : ''}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <CalendarClock size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+        <span style={{ lineHeight: 1.4 }}>
+          <strong>{RESCHEDULE_PROPOSED_TEXT}</strong> — yeni vaxt: {fmt(proposedScheduledAt)}
+          {isOwnProposal ? ' (sizin təklifiniz, cavab gözlənilir)' : ''}
+        </span>
+      </div>
       {!isOwnProposal && (
-        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={onAccept}
             disabled={accepting}

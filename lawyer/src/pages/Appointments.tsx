@@ -97,7 +97,7 @@ export default function Appointments() {
     setRespondBusy(id)
     try {
       await respondRescheduleApi(id, true)
-      toast.success('Perenos təsdiqləndi, görüş vaxtı yeniləndi')
+      toast.success('Vaxt dəyişikliyi qəbul edildi, görüş vaxtı yeniləndi')
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -110,7 +110,7 @@ export default function Appointments() {
     if (!respondTarget) return
     try {
       await respondRescheduleApi(respondTarget.id, false, reason)
-      toast.success('Perenos təklifi rədd edildi')
+      toast.success('Vaxt dəyişikliyi təklifi rədd edildi')
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -118,11 +118,11 @@ export default function Appointments() {
     }
   }
 
-  const proposeReschedule = async (reason: string | undefined) => {
+  const proposeReschedule = async (newTime: Date, reason: string | undefined) => {
     if (!proposeTarget) return
     try {
-      await proposeRescheduleApi(proposeTarget.id, proposeTarget.newTime.toISOString(), reason)
-      toast.success('Perenos sorğusu göndərildi')
+      await proposeRescheduleApi(proposeTarget.id, newTime.toISOString(), reason)
+      toast.success('Təyin olunmuş görüş vaxtının dəyişdirilməsi barədə təklif göndərildi')
       qc.invalidateQueries({ queryKey: ['appointments'] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')

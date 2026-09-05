@@ -54,7 +54,7 @@ public class ProposeRescheduleCommandHandler : IRequestHandler<ProposeReschedule
 
         await _unitOfWork.Notifications.AddAsync(Notification.Create(
             userId: recipientUserId,
-            title: "Perenos təklif olunub",
+            title: "Təyin olunmuş görüş vaxtının dəyişdirilməsi barədə təklif göndərildi",
             body: $"{initiatorLabel} proposed to move the appointment to " +
                   $"{appointment.ProposedScheduledAt:yyyy-MM-dd HH:mm} (UTC).{reasonSuffix} " +
                   "Open the appointment to accept or reject.",

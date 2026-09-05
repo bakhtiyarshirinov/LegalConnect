@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, XCircle, Trash2, Star, List, CalendarDays, Video } from 'lucide-react'
+import { Calendar, XCircle, Trash2, Star, List, CalendarDays, Video, CalendarClock } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi, type AppointmentDto } from '../../api/appointments'
 import { reviewsApi } from '../../api/reviews'
@@ -39,7 +39,7 @@ export default function ClientAppointments() {
   const [actionTarget, setActionTarget] = useState<{
     id: string; action: AppointmentAction; lawyerName: string
   } | null>(null)
-  const [proposeTarget, setProposeTarget] = useState<{ id: string; newTime: Date; lawyerName: string } | null>(null)
+  const [proposeTarget, setProposeTarget] = useState<{ id: string; newTime: Date | null; lawyerName: string } | null>(null)
   const [respondTarget, setRespondTarget] = useState<{ id: string; proposedAt: string } | null>(null)
   const [respondBusy, setRespondBusy] = useState<string | null>(null)
 
@@ -101,7 +101,7 @@ export default function ClientAppointments() {
     setRespondBusy(apptId)
     try {
       await appointmentsApi.respondReschedule(apptId, true)
-      toast.success('Perenos təsdiqləndi, görüş vaxtı yeniləndi')
+      toast.success('Vaxt dəyişikliyi qəbul edildi, görüş vaxtı yeniləndi')
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -114,7 +114,7 @@ export default function ClientAppointments() {
     if (!respondTarget) return
     try {
       await appointmentsApi.respondReschedule(respondTarget.id, false, reason)
-      toast.success('Perenos təklifi rədd edildi')
+      toast.success('Vaxt dəyişikliyi təklifi rədd edildi')
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -122,11 +122,11 @@ export default function ClientAppointments() {
     }
   }
 
-  const proposeReschedule = async (reason: string | undefined) => {
+  const proposeReschedule = async (newTime: Date, reason: string | undefined) => {
     if (!proposeTarget) return
     try {
-      await appointmentsApi.proposeReschedule(proposeTarget.id, proposeTarget.newTime.toISOString(), reason)
-      toast.success('Perenos sorğusu göndərildi')
+      await appointmentsApi.proposeReschedule(proposeTarget.id, newTime.toISOString(), reason)
+      toast.success('Təyin olunmuş görüş vaxtının dəyişdirilməsi barədə təklif göndərildi')
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -207,6 +207,14 @@ export default function ClientAppointments() {
             )}
             {(appt.status === 'Pending' || appt.status === 'Confirmed') && (
               <>
+                {appt.rescheduleStatus !== 'Pending' && (
+                  <button
+                    onClick={() => setProposeTarget({ id: appt.id, newTime: null, lawyerName: appt.lawyerFullName })}
+                    style={{ background: '#EFF6FF', color: '#1C7ED6', border: '1px solid #BFDBFE', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}
+                  >
+                    <CalendarClock size={14} /> Vaxtı dəyişdirmək təklif et
+                  </button>
+                )}
                 <button
                   onClick={() => setActionTarget({ id: appt.id, action: 'cancel', lawyerName: appt.lawyerFullName })}
                   style={{ background: '#FFF1F0', color: '#E03131', border: '1px solid #FFCCC7', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}

@@ -39,7 +39,7 @@ export function RespondRescheduleModal({ open, proposedTime, onClose, onConfirm 
   }
 
   return (
-    <Modal open={open} onClose={close} title="Perenos təklifini rədd et" width={440}>
+    <Modal open={open} onClose={close} title="Vaxt dəyişikliyi təklifini rədd et" width={440}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', gap: 10, padding: 12, background: '#FFF1F0', border: '1px solid #FFCCC7', borderRadius: 12 }}>
           <XCircle size={18} color="#E03131" style={{ flexShrink: 0, marginTop: 1 }} />

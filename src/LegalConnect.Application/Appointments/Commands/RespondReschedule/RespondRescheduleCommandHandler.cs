@@ -72,7 +72,7 @@ public class RespondRescheduleCommandHandler : IRequestHandler<RespondReschedule
             // Only the proposer is notified of the rejection.
             await _unitOfWork.Notifications.AddAsync(Notification.Create(
                 userId: proposerUserId,
-                title: "Perenos təklifi rədd edildi",
+                title: "Vaxt dəyişikliyi təklifi rədd edildi",
                 body: $"Your reschedule proposal was rejected. The appointment time is unchanged.{reasonSuffix}",
                 type: "RescheduleRejected"));
         }

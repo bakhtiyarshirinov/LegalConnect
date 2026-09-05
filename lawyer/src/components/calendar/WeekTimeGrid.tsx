@@ -97,7 +97,12 @@ function DraggableAppointment({
         {new Date(appt.scheduledAt).toLocaleTimeString('az-AZ', { hour: '2-digit', minute: '2-digit' })}
       </div>
       {appt.rescheduleStatus === 'Pending' && (
-        <div style={{ fontWeight: 700, marginTop: 2 }}>⏳ Perenos gözlənilir</div>
+        <div
+          style={{ fontWeight: 700, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          title="Təyin olunmuş görüş vaxtının dəyişdirilməsi barədə təklif göndərildi"
+        >
+          ⏳ Vaxt dəyişikliyi təklifi
+        </div>
       )}
     </div>
   )
