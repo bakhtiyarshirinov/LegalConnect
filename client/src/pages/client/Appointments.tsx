@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Calendar, XCircle, Trash2, Star, List, CalendarDays, Video } from 'lucide-react'
-import ReactCalendar from 'react-calendar'
 import { useAuthStore } from '../../store/authStore'
 import { appointmentsApi, type AppointmentDto } from '../../api/appointments'
 import { reviewsApi } from '../../api/reviews'
@@ -12,22 +11,16 @@ import { Card } from '../../components/ui/Card'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import { ReviewModal } from '../../components/reviews/ReviewModal'
 import { AppointmentActionModal, type AppointmentAction } from '../../components/appointments/AppointmentActionModal'
+import { ProposeRescheduleModal } from '../../components/appointments/ProposeRescheduleModal'
+import { RespondRescheduleModal } from '../../components/appointments/RespondRescheduleModal'
+import { RescheduleBadge } from '../../components/appointments/RescheduleBadge'
+import { WeekTimeGrid, type GridAppointment } from '../../components/calendar/WeekTimeGrid'
+import { startOfWeek } from '../../lib/weekGrid'
 
 const stagger = { visible: { transition: { staggerChildren: 0.07 } } }
 const item = { hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }
 
-const STATUS_DOT: Record<string, string> = {
-  Pending: '#F97316',
-  Confirmed: '#16A34A',
-  Completed: '#3B82F6',
-  Cancelled: '#9CA3AF',
-}
-
 type View = 'list' | 'calendar'
-
-function toLocalKey(isoStr: string): string {
-  return new Date(isoStr).toLocaleDateString('en-CA')
-}
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', {
@@ -35,24 +28,23 @@ function formatDate(d: string) {
   }) + ' at ' + new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
-function formatTime(d: string) {
-  return new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-}
-
 export default function ClientAppointments() {
   const user = useAuthStore((s) => s.user)!
   const qc = useQueryClient()
   const [view, setView] = useState<View>('list')
-  const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null)
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [reviewTarget, setReviewTarget] = useState<{
     appointmentId: string; lawyerId: string; lawyerName: string
   } | null>(null)
   const [actionTarget, setActionTarget] = useState<{
     id: string; action: AppointmentAction; lawyerName: string
   } | null>(null)
+  const [proposeTarget, setProposeTarget] = useState<{ id: string; newTime: Date; lawyerName: string } | null>(null)
+  const [respondTarget, setRespondTarget] = useState<{ id: string; proposedAt: string } | null>(null)
+  const [respondBusy, setRespondBusy] = useState<string | null>(null)
 
   const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ['clientAppointments', user.userId],
+    queryKey: ['appointments', user.userId],
     queryFn: () => appointmentsApi.getByClient(user.userId),
   })
 
@@ -79,7 +71,6 @@ export default function ClientAppointments() {
         await appointmentsApi.remove(actionTarget.id, reason)
         toast.success('Görüş silindi')
       }
-      qc.invalidateQueries({ queryKey: ['clientAppointments', user.userId] })
       qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
@@ -95,7 +86,7 @@ export default function ClientAppointments() {
     try {
       const { meetingUrl } = await appointmentsApi.createMeeting(appt.id)
       window.open(meetingUrl, '_blank')
-      qc.invalidateQueries({ queryKey: ['clientAppointments', user.userId] })
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Görüşə qoşulmaq alınmadı')
     }
@@ -106,15 +97,56 @@ export default function ClientAppointments() {
     return diff >= 0 && diff <= 24 * 60 * 60 * 1000
   }
 
-  const dateMap = appointments.reduce<Record<string, AppointmentDto[]>>((acc, a) => {
-    const key = toLocalKey(a.scheduledAt)
-    if (!acc[key]) acc[key] = []
-    acc[key].push(a)
-    return acc
-  }, {})
+  const acceptReschedule = async (apptId: string) => {
+    setRespondBusy(apptId)
+    try {
+      await appointmentsApi.respondReschedule(apptId, true)
+      toast.success('Perenos təsdiqləndi, görüş vaxtı yeniləndi')
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+    } finally {
+      setRespondBusy(null)
+    }
+  }
 
-  const selectedDateStr = selectedCalDate ? selectedCalDate.toLocaleDateString('en-CA') : null
-  const selectedDayAppts = selectedDateStr ? (dateMap[selectedDateStr] ?? []) : []
+  const rejectReschedule = async (reason: string | undefined) => {
+    if (!respondTarget) return
+    try {
+      await appointmentsApi.respondReschedule(respondTarget.id, false, reason)
+      toast.success('Perenos təklifi rədd edildi')
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
+
+  const proposeReschedule = async (reason: string | undefined) => {
+    if (!proposeTarget) return
+    try {
+      await appointmentsApi.proposeReschedule(proposeTarget.id, proposeTarget.newTime.toISOString(), reason)
+      toast.success('Perenos sorğusu göndərildi')
+      qc.invalidateQueries({ queryKey: ['appointments', user.userId] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
+
+  const gridAppointments: GridAppointment[] = appointments
+    .filter((a) => a.status !== 'Cancelled')
+    .map((a) => ({
+      id: a.id,
+      scheduledAt: a.scheduledAt,
+      durationMinutes: a.durationMinutes,
+      status: a.status,
+      title: a.lawyerFullName,
+      rescheduleStatus: a.rescheduleStatus,
+    }))
+
+  const isApptLocked = (g: GridAppointment) =>
+    g.status === 'Completed' || g.rescheduleStatus === 'Pending'
 
   const sorted = [...appointments].sort((a, b) => {
     const order = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
@@ -152,6 +184,17 @@ export default function ClientAppointments() {
                 <span style={{ color: '#E03131' }}>✕ Ləğv səbəbi: {appt.cancellationReason}</span>
               )}
             </div>
+            {appt.rescheduleStatus === 'Pending' && appt.proposedScheduledAt && (
+              <div style={{ paddingLeft: 46, marginTop: 8 }}>
+                <RescheduleBadge
+                  proposedScheduledAt={appt.proposedScheduledAt}
+                  isOwnProposal={appt.proposedByUserId === user.userId}
+                  accepting={respondBusy === appt.id}
+                  onAccept={() => acceptReschedule(appt.id)}
+                  onReject={() => setRespondTarget({ id: appt.id, proposedAt: appt.proposedScheduledAt! })}
+                />
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
             {appt.status === 'Confirmed' && isWithin24Hours(appt.scheduledAt) && (
@@ -255,73 +298,33 @@ export default function ClientAppointments() {
           </motion.div>
         )
       ) : (
-        /* ── Calendar View ── */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <ReactCalendar
-            onChange={(val) => setSelectedCalDate(val as Date)}
-            value={selectedCalDate}
-            tileContent={({ date, view: calView }) => {
-              if (calView !== 'month') return null
-              const key = date.toLocaleDateString('en-CA')
-              const dayAppts = dateMap[key]
-              if (!dayAppts?.length) return null
-              return (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 3 }}>
-                  {dayAppts.slice(0, 4).map((a, i) => (
-                    <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: STATUS_DOT[a.status] ?? '#9CA3AF', flexShrink: 0 }} />
-                  ))}
-                </div>
-              )
-            }}
-          />
-
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {Object.entries(STATUS_DOT).map(([status, color]) => (
-              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-2)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                {status}
-              </div>
-            ))}
-          </div>
-
-          {selectedCalDate && (
-            <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>
-                {selectedCalDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', marginLeft: 8 }}>
-                  {selectedDayAppts.length} görüş
-                </span>
-              </h3>
-              {selectedDayAppts.length === 0 ? (
-                <Card padding={24} style={{ textAlign: 'center', color: 'var(--text-2)', fontSize: 14 }}>
-                  Bu gündə görüş yoxdur
-                </Card>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {selectedDayAppts.map((appt) => (
-                    <Card key={appt.id} padding={18}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14 }}>{appt.lawyerFullName}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
-                            {formatTime(appt.scheduledAt)} · {appt.durationMinutes} dəq · {appt.type}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>${appt.price}</span>
-                          <span style={{ background: STATUS_DOT[appt.status] + '22', color: STATUS_DOT[appt.status], borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                            {appt.status}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        /* ── Calendar View (custom week time-grid, drag-and-drop reschedule) ── */
+        <WeekTimeGrid
+          appointments={gridAppointments}
+          weekStart={weekStart}
+          onWeekStartChange={setWeekStart}
+          isLocked={isApptLocked}
+          onDropProposal={(id, newTime) => {
+            const appt = appointments.find((a) => a.id === id)
+            setProposeTarget({ id, newTime, lawyerName: appt?.lawyerFullName ?? '' })
+          }}
+        />
       )}
+
+      <ProposeRescheduleModal
+        open={!!proposeTarget}
+        newTime={proposeTarget?.newTime ?? null}
+        counterpartyName={proposeTarget?.lawyerName}
+        onClose={() => setProposeTarget(null)}
+        onConfirm={proposeReschedule}
+      />
+
+      <RespondRescheduleModal
+        open={!!respondTarget}
+        proposedTime={respondTarget ? new Date(respondTarget.proposedAt) : null}
+        onClose={() => setRespondTarget(null)}
+        onConfirm={rejectReschedule}
+      />
 
       <AppointmentActionModal
         open={!!actionTarget}

@@ -38,4 +38,14 @@ public class AvailabilitySlot
         IsBooked = false;
         AppointmentId = null;
     }
+
+    /// <summary>
+    /// Moves a free slot to a new time range (drag-and-drop / quick edit in Cədvəl).
+    /// Callers must reject this for a booked slot before calling — see MoveSlotCommandHandler.
+    /// </summary>
+    public void Reschedule(DateTime startTime, DateTime endTime)
+    {
+        StartTime = DateTime.SpecifyKind(startTime, DateTimeKind.Utc);
+        EndTime = DateTime.SpecifyKind(endTime, DateTimeKind.Utc);
+    }
 }

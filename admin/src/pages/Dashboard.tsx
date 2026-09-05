@@ -38,7 +38,9 @@ export const Dashboard: React.FC = () => {
       queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
         old.filter((l) => l.id !== id)
       )
-      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+      queryClient.setQueryData<typeof stats>(['admin-stats'], (old) =>
+        old ? { ...old, pendingApprovals: old.pendingApprovals - 1, verifiedLawyers: old.verifiedLawyers + 1 } : old
+      )
     },
     onError: () => toast.error('Təsdiqləmə alınmadı. Yenidən cəhd edin.'),
   })

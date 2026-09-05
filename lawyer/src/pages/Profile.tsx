@@ -64,7 +64,7 @@ export default function Profile() {
   })
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['profile-page', user?.userId],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user,
   })
@@ -76,7 +76,7 @@ export default function Profile() {
   })
 
   const { data: history = [], isLoading: loadingHistory } = useQuery({
-    queryKey: ['lawyer-history', lawyerId],
+    queryKey: ['appointments', lawyerId],
     queryFn: () => getByLawyer(lawyerId!),
     enabled: !!lawyerId && activeTab === 'history',
   })
@@ -100,7 +100,7 @@ export default function Profile() {
     try {
       await uploadAvatar(file)
       toast.success('Şəkil yeniləndi!')
-      qc.invalidateQueries({ queryKey: ['profile-page'] })
+      qc.invalidateQueries({ queryKey: ['lawyer-profile', user?.userId] })
     } catch { toast.error('Şəkil yüklənə bilmədi') } finally {
       setUploadingAvatar(false)
       if (avatarInputRef.current) avatarInputRef.current.value = ''
@@ -117,7 +117,7 @@ export default function Profile() {
       await updateProfile(form)
       await updateSpecializations(selectedSpecIds)
       toast.success('Profil yeniləndi!')
-      qc.invalidateQueries({ queryKey: ['profile-page'] })
+      qc.invalidateQueries({ queryKey: ['lawyer-profile', user?.userId] })
     } catch { toast.error('Profil yenilənmədi') } finally { setSaving(false) }
   }
 

@@ -38,10 +38,10 @@ export function Sidebar() {
   const navItems = role === 'Lawyer' ? lawyerNav : role === 'Admin' ? adminNav : clientNav
 
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-count', user?.userId],
+    queryKey: ['chat-unread-count', user?.userId],
     queryFn: () => chatsApi.getUnreadCount(user!.userId),
     enabled: !!user && role !== 'Admin',
-    refetchInterval: 30000,
+    // SignalR (Chat.tsx) invalidates this on every incoming/read message; no interval needed.
   })
 
   const { data: notifUnread = 0 } = useQuery({

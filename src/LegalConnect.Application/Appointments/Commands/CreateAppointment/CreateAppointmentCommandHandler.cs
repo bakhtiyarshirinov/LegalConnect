@@ -1,6 +1,7 @@
 using LegalConnect.Application.Common.Exceptions;
 using LegalConnect.Application.Common.Interfaces;
 using LegalConnect.Domain.Entities;
+using LegalConnect.Domain.Enums;
 using LegalConnect.Domain.Interfaces;
 using MediatR;
 
@@ -68,12 +69,16 @@ public class CreateAppointmentCommandHandler
 
         var price = lawyer.HourlyRate * (durationMinutes / 60m);
 
+        // Online format has been removed from the product — every new appointment is
+        // Offline regardless of what a caller sends (old cached frontend build, direct
+        // API call, etc.). AppointmentType.Online / the Type column stay in the schema
+        // so already-booked Online appointments keep displaying correctly.
         var appointment = Appointment.Create(
             clientId: clientId,
             lawyerId: request.LawyerId,
             scheduledAt: scheduledAt,
             durationMinutes: durationMinutes,
-            type: request.Type,
+            type: AppointmentType.Offline,
             price: price,
             notes: request.Notes,
             slotId: slotId

@@ -11,5 +11,9 @@ public record AppointmentDto(
     decimal Price,
     string? Notes,
     string? MeetingUrl,
-    string? CancellationReason
+    string? CancellationReason,
+    string RescheduleStatus,
+    DateTime? ProposedScheduledAt,
+    Guid? ProposedByUserId,
+    string? RescheduleReason
 );

@@ -21,7 +21,6 @@ export function Sidebar() {
     queryKey: ['unread-count', user?.userId],
     queryFn: () => getUnreadCount(user!.userId),
     enabled: !!user,
-    refetchInterval: 30000,
   })
 
   const { data: notifUnread = 0 } = useQuery({

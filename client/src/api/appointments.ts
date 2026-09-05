@@ -12,6 +12,10 @@ export interface AppointmentDto {
   notes?: string
   meetingUrl?: string
   cancellationReason?: string
+  rescheduleStatus: 'None' | 'Pending' | 'Accepted' | 'Rejected'
+  proposedScheduledAt?: string
+  proposedByUserId?: string
+  rescheduleReason?: string
 }
 
 export interface LawyerAppointmentDto {
@@ -26,6 +30,10 @@ export interface LawyerAppointmentDto {
   notes?: string
   meetingUrl?: string
   cancellationReason?: string
+  rescheduleStatus: 'None' | 'Pending' | 'Accepted' | 'Rejected'
+  proposedScheduledAt?: string
+  proposedByUserId?: string
+  rescheduleReason?: string
 }
 
 export interface CreateAppointmentPayload {
@@ -69,4 +77,12 @@ export const appointmentsApi = {
 
   createMeeting: (id: string) =>
     api.post<{ meetingUrl: string }>(`/appointments/${id}/create-meeting`).then((r) => r.data),
+
+  /** Propose a new time — does NOT move the appointment until the other side accepts. */
+  proposeReschedule: (id: string, newScheduledAt: string, reason?: string) =>
+    api.post(`/appointments/${id}/propose-reschedule`, { newScheduledAt, reason }),
+
+  /** Only the non-proposing participant may call this (server enforces it, 403 otherwise). */
+  respondReschedule: (id: string, accept: boolean, reason?: string) =>
+    api.post(`/appointments/${id}/respond-reschedule`, { accept, reason }),
 }

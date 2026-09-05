@@ -12,7 +12,7 @@ export function Navbar() {
   const [dropOpen, setDropOpen] = useState(false)
 
   const { data: profile } = useQuery({
-    queryKey: ['profile-page', user?.userId],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user,
     staleTime: 5 * 60 * 1000,

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Calendar, List, CalendarDays, Trash2 } from 'lucide-react'
-import ReactCalendar from 'react-calendar'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
 import {
@@ -11,6 +10,8 @@ import {
   cancelAppointment,
   deleteAppointment,
   completeAppointment,
+  proposeReschedule as proposeRescheduleApi,
+  respondReschedule as respondRescheduleApi,
   type Appointment,
   type AppointmentStatus,
 } from '../api/appointments'
@@ -20,29 +21,19 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { AppointmentSkeleton } from '../components/ui/Skeleton'
 import { AppointmentActionModal, type AppointmentAction } from '../components/appointments/AppointmentActionModal'
+import { ProposeRescheduleModal } from '../components/appointments/ProposeRescheduleModal'
+import { RespondRescheduleModal } from '../components/appointments/RespondRescheduleModal'
+import { RescheduleBadge } from '../components/appointments/RescheduleBadge'
+import { WeekTimeGrid, type GridAppointment } from '../components/calendar/WeekTimeGrid'
+import { startOfWeek } from '../lib/weekGrid'
 import { useVerificationStatus } from '../hooks/useVerificationStatus'
 
-const STATUS_DOT: Record<string, string> = {
-  Pending: '#F97316',
-  Confirmed: '#16A34A',
-  Completed: '#3B82F6',
-  Cancelled: '#9CA3AF',
-}
-
 type View = 'list' | 'calendar'
-
-function toLocalKey(isoStr: string): string {
-  return new Date(isoStr).toLocaleDateString('en-CA')
-}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
-}
-
-function formatTime(d: string) {
-  return new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 }
 
 const TABS: { label: string; value: AppointmentStatus | 'All' }[] = [
@@ -60,13 +51,16 @@ export default function Appointments() {
   const [activeTab, setActiveTab] = useState<AppointmentStatus | 'All'>('All')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [view, setView] = useState<View>('list')
-  const [selectedCalDate, setSelectedCalDate] = useState<Date | null>(null)
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [actionTarget, setActionTarget] = useState<{
     id: string; action: AppointmentAction; clientName: string
   } | null>(null)
+  const [proposeTarget, setProposeTarget] = useState<{ id: string; newTime: Date; clientName: string } | null>(null)
+  const [respondTarget, setRespondTarget] = useState<{ id: string; proposedAt: string } | null>(null)
+  const [respondBusy, setRespondBusy] = useState<string | null>(null)
 
   const { data: profile } = useQuery({
-    queryKey: ['lawyer-profile'],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user && !lawyerId,
   })
@@ -85,15 +79,56 @@ export default function Appointments() {
 
   const filtered = activeTab === 'All' ? appointments : appointments.filter((a) => a.status === activeTab)
 
-  const dateMap = appointments.reduce<Record<string, Appointment[]>>((acc, a) => {
-    const key = toLocalKey(a.scheduledAt)
-    if (!acc[key]) acc[key] = []
-    acc[key].push(a)
-    return acc
-  }, {})
+  const gridAppointments: GridAppointment[] = appointments
+    .filter((a) => a.status !== 'Cancelled')
+    .map((a) => ({
+      id: a.id,
+      scheduledAt: a.scheduledAt,
+      durationMinutes: a.durationMinutes,
+      status: a.status,
+      title: a.clientFullName,
+      rescheduleStatus: a.rescheduleStatus,
+    }))
 
-  const selectedDateStr = selectedCalDate ? selectedCalDate.toLocaleDateString('en-CA') : null
-  const selectedDayAppts = selectedDateStr ? (dateMap[selectedDateStr] ?? []) : []
+  const isApptLocked = (g: GridAppointment) =>
+    isRevoked || g.status === 'Completed' || g.rescheduleStatus === 'Pending'
+
+  const acceptReschedule = async (id: string) => {
+    setRespondBusy(id)
+    try {
+      await respondRescheduleApi(id, true)
+      toast.success('Perenos təsdiqləndi, görüş vaxtı yeniləndi')
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+    } finally {
+      setRespondBusy(null)
+    }
+  }
+
+  const rejectReschedule = async (reason: string | undefined) => {
+    if (!respondTarget) return
+    try {
+      await respondRescheduleApi(respondTarget.id, false, reason)
+      toast.success('Perenos təklifi rədd edildi')
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
+
+  const proposeReschedule = async (reason: string | undefined) => {
+    if (!proposeTarget) return
+    try {
+      await proposeRescheduleApi(proposeTarget.id, proposeTarget.newTime.toISOString(), reason)
+      toast.success('Perenos sorğusu göndərildi')
+      qc.invalidateQueries({ queryKey: ['appointments'] })
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Əməliyyat alınmadı')
+      throw err
+    }
+  }
 
   const handleConfirm = async (a: Appointment) => {
     if (!effectiveLawyerId) return
@@ -195,6 +230,17 @@ export default function Appointments() {
                         {a.status === 'Cancelled' && a.cancellationReason && (
                           <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>✕ Ləğv səbəbi: {a.cancellationReason}</div>
                         )}
+                        {a.rescheduleStatus === 'Pending' && a.proposedScheduledAt && (
+                          <div style={{ marginTop: 6 }}>
+                            <RescheduleBadge
+                              proposedScheduledAt={a.proposedScheduledAt}
+                              isOwnProposal={a.proposedByUserId === user?.userId}
+                              accepting={respondBusy === a.id}
+                              onAccept={() => acceptReschedule(a.id)}
+                              onReject={() => setRespondTarget({ id: a.id, proposedAt: a.proposedScheduledAt! })}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                         <span>
@@ -231,70 +277,33 @@ export default function Appointments() {
           )}
         </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <ReactCalendar
-            onChange={(val) => setSelectedCalDate(val as Date)}
-            value={selectedCalDate}
-            tileContent={({ date, view: calView }) => {
-              if (calView !== 'month') return null
-              const key = date.toLocaleDateString('en-CA')
-              const dayAppts = dateMap[key]
-              if (!dayAppts?.length) return null
-              return (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 3 }}>
-                  {dayAppts.slice(0, 4).map((a, i) => (
-                    <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: STATUS_DOT[a.status] ?? '#9CA3AF', flexShrink: 0 }} />
-                  ))}
-                </div>
-              )
-            }}
-          />
-
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            {Object.entries(STATUS_DOT).map(([status, color]) => (
-              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                {status}
-              </div>
-            ))}
-          </div>
-
-          {selectedCalDate && (
-            <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-                {selectedCalDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginLeft: 8 }}>
-                  {selectedDayAppts.length} görüş
-                </span>
-              </h3>
-              {selectedDayAppts.length === 0 ? (
-                <Card style={{ textAlign: 'center', padding: 24, color: 'var(--text-secondary)', fontSize: 14 }}>Bu gündə görüş yoxdur</Card>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {selectedDayAppts.map((a) => (
-                    <Card key={a.id} padding={18}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                        <div>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>{a.clientFullName}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                            {formatTime(a.scheduledAt)} · {a.durationMinutes} dəq · {a.type}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>${a.price}</span>
-                          <span style={{ background: (STATUS_DOT[a.status] ?? '#9CA3AF') + '22', color: STATUS_DOT[a.status] ?? '#9CA3AF', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>
-                            {a.status}
-                          </span>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        /* ── Calendar View (custom week time-grid, drag-and-drop reschedule) ── */
+        <WeekTimeGrid
+          appointments={gridAppointments}
+          weekStart={weekStart}
+          onWeekStartChange={setWeekStart}
+          isLocked={isApptLocked}
+          onDropProposal={(id, newTime) => {
+            const appt = appointments.find((a) => a.id === id)
+            setProposeTarget({ id, newTime, clientName: appt?.clientFullName ?? '' })
+          }}
+        />
       )}
+
+      <ProposeRescheduleModal
+        open={!!proposeTarget}
+        newTime={proposeTarget?.newTime ?? null}
+        counterpartyName={proposeTarget?.clientName}
+        onClose={() => setProposeTarget(null)}
+        onConfirm={proposeReschedule}
+      />
+
+      <RespondRescheduleModal
+        open={!!respondTarget}
+        proposedTime={respondTarget ? new Date(respondTarget.proposedAt) : null}
+        onClose={() => setRespondTarget(null)}
+        onConfirm={rejectReschedule}
+      />
 
       <AppointmentActionModal
         open={!!actionTarget}

@@ -46,10 +46,19 @@ export const Lawyers: React.FC = () => {
     mutationFn: verifyLawyer,
     onSuccess: (_, id) => {
       toast.success('Vəkil təsdiqləndi!')
+      const verifiedLawyer = pending.find((l) => l.id === id)
       queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
         old.filter((l) => l.id !== id)
       )
-      queryClient.invalidateQueries({ queryKey: ['verified-lawyers'] })
+      if (verifiedLawyer) {
+        queryClient.setQueryData<VerifiedLawyer[]>(['verified-lawyers'], (old = []) =>
+          old.some((l) => l.id === id) ? old : [...old, verifiedLawyer]
+        )
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['verified-lawyers'] })
+      }
+      // Verifying changes the user's role/status row too (all-users), whose shape
+      // isn't reconstructable client-side from a PendingLawyer — refetch it.
       queryClient.invalidateQueries({ queryKey: ['all-users'] })
     },
     onError: () => toast.error('Təsdiqləmə alınmadı. Yenidən cəhd edin.'),
@@ -78,7 +87,16 @@ export const Lawyers: React.FC = () => {
       queryClient.setQueryData<VerifiedLawyer[]>(['verified-lawyers'], (old = []) =>
         old.filter((l) => l.id !== lawyerId)
       )
-      queryClient.invalidateQueries({ queryKey: ['pending-lawyers'] })
+      // Backend clears IsVerified but leaves RejectedAt null, so GetPendingAsync's
+      // `!IsVerified && RejectedAt == null` filter picks the lawyer back up immediately —
+      // append the row we already have instead of a full pending-lawyers refetch.
+      if (cancelTarget) {
+        queryClient.setQueryData<typeof pending>(['pending-lawyers'], (old = []) =>
+          old.some((l) => l.id === lawyerId) ? old : [...old, cancelTarget]
+        )
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['pending-lawyers'] })
+      }
       closeModal()
     },
     onError: (err) => toast.error(apiErrorMessage(err)),

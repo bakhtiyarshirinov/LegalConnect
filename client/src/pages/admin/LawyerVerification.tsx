@@ -18,12 +18,12 @@ export default function LawyerVerification() {
   const { data: lawyers = [], isLoading } = useQuery({
     queryKey: ['pending-lawyers'],
     queryFn: () =>
-      api.get<LawyerDetailDto[]>('/api/admin/lawyers/pending').then((r) => r.data),
+      api.get<LawyerDetailDto[]>('/admin/lawyers/pending').then((r) => r.data),
   })
 
   const { mutate: verify, variables: verifyingId } = useMutation({
     mutationFn: (id: string) =>
-      api.put(`/api/admin/lawyers/${id}/verify`),
+      api.put(`/admin/lawyers/${id}/verify`),
     onSuccess: () => {
       toast.success('Vəkil uğurla təsdiqləndi!')
       qc.invalidateQueries({ queryKey: ['pending-lawyers'] })

@@ -77,7 +77,7 @@ public class CancelAppointmentCommandHandler
                 userId: appointment.ClientId,
                 title: "Appointment Cancelled",
                 body: $"Your appointment has been cancelled by an administrator.{reasonSuffix}",
-                type: "appointment"));
+                type: "AppointmentCancelled"));
 
             if (appointment.Lawyer is not null)
             {
@@ -85,7 +85,7 @@ public class CancelAppointmentCommandHandler
                     userId: appointment.Lawyer.UserId,
                     title: "Appointment Cancelled",
                     body: $"An appointment with your client has been cancelled by an administrator.{reasonSuffix}",
-                    type: "appointment"));
+                    type: "AppointmentCancelled"));
             }
         }
         else if (isClient)
@@ -94,7 +94,7 @@ public class CancelAppointmentCommandHandler
                 userId: appointment.Lawyer!.UserId,
                 title: "Appointment Cancelled",
                 body: $"The client has cancelled the appointment.{reasonSuffix}",
-                type: "appointment"));
+                type: "AppointmentCancelled"));
         }
         else // isLawyer
         {
@@ -102,7 +102,7 @@ public class CancelAppointmentCommandHandler
                 userId: appointment.ClientId,
                 title: "Appointment Cancelled",
                 body: $"Your appointment has been cancelled by the lawyer.{reasonSuffix}",
-                type: "appointment"));
+                type: "AppointmentCancelled"));
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -11,7 +11,7 @@ export function useVerificationStatus() {
   const user = useAuthStore((s) => s.user)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['lawyer-profile'],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user,
     staleTime: 30_000,

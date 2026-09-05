@@ -39,7 +39,7 @@ export default function Dashboard() {
   } | null>(null)
 
   const { data: profile } = useQuery({
-    queryKey: ['lawyer-profile'],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user && !lawyerId,
   })

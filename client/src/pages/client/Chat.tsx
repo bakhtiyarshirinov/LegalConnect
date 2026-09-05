@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Send, MessageSquare, Paperclip, FileText, Download, Search } from 'lucide-react'
-import { chatsApi, type MessageDto } from '../../api/chats'
+import { chatsApi, type ChatDto, type MessageDto } from '../../api/chats'
 import { filesApi } from '../../api/files'
 import { usersApi } from '../../api/users'
 import { useAuthStore } from '../../store/authStore'
@@ -106,11 +106,20 @@ export default function Chat() {
       if (prev.some((m) => m.id === msg.id)) return prev
       return [...prev, msg]
     })
-    qc.invalidateQueries({ queryKey: ['chats', userId] })
+    // SignalR only ever has us joined to the currently-active chat room, so this
+    // message always belongs to activeChatIdRef.current — patch that chat's
+    // lastMessageAt in place instead of refetching the whole list.
     const chatId = activeChatIdRef.current
+    if (chatId) {
+      qc.setQueryData<ChatDto[]>(['chats', userId], (old) => {
+        if (!old) return old
+        const next = old.map((c) => (c.id === chatId ? { ...c, lastMessageAt: msg.sentAt } : c))
+        return next.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+      })
+    }
     if (chatId && msg.senderId !== userId) {
       chatsApi.markAsRead(chatId, userId).catch(() => {})
-      qc.invalidateQueries({ queryKey: ['unread-count', userId] })
+      qc.invalidateQueries({ queryKey: ['chat-unread-count', userId] })
     }
   }, [qc, userId])
 
@@ -122,7 +131,7 @@ export default function Chat() {
   const markChatAsRead = useCallback(async (chatId: string) => {
     chatsApi.markAsRead(chatId, userId).catch(() => {})
     markAsRead(chatId).catch(() => {})
-    qc.invalidateQueries({ queryKey: ['unread-count', userId] })
+    qc.invalidateQueries({ queryKey: ['chat-unread-count', userId] })
   }, [markAsRead, userId, qc])
 
   useEffect(() => {
@@ -133,6 +142,14 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const bumpChatTimestamp = useCallback((chatId: string, at: string) => {
+    qc.setQueryData<ChatDto[]>(['chats', userId], (old) => {
+      if (!old) return old
+      const next = old.map((c) => (c.id === chatId ? { ...c, lastMessageAt: at } : c))
+      return next.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+    })
+  }, [qc, userId])
+
   const handleSend = async () => {
     const text = input.trim()
     if (!text || !activeChatId || sending) return
@@ -140,12 +157,12 @@ export default function Chat() {
     setSending(true)
     try {
       await sendMessage(activeChatId, text, 'Text')
-      qc.invalidateQueries({ queryKey: ['chats', userId] })
+      bumpChatTimestamp(activeChatId, new Date().toISOString())
     } catch {
       try {
         const msg = await chatsApi.sendMessage(activeChatId, userId, text)
         setMessages((prev) => [...prev, msg])
-        qc.invalidateQueries({ queryKey: ['chats', userId] })
+        bumpChatTimestamp(activeChatId, msg.sentAt)
       } catch (err: unknown) {
         toast.error((err as Error)?.message ?? 'Göndərmək alınmadı')
         setInput(text)
@@ -165,11 +182,11 @@ export default function Chat() {
       const msgType = mimeType.startsWith('image/') ? 'Image' : 'File'
       try {
         await sendMessage(activeChatId, url, msgType)
-        qc.invalidateQueries({ queryKey: ['chats', userId] })
+        bumpChatTimestamp(activeChatId, new Date().toISOString())
       } catch {
         const msg = await chatsApi.sendMessage(activeChatId, userId, url)
         setMessages((prev) => [...prev, { ...msg, type: msgType }])
-        qc.invalidateQueries({ queryKey: ['chats', userId] })
+        bumpChatTimestamp(activeChatId, msg.sentAt)
       }
     } catch (err: unknown) {
       toast.error((err as Error)?.message ?? 'Yükləmə alınmadı')

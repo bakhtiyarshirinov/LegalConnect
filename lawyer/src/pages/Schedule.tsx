@@ -1,175 +1,273 @@
-import { useState, useMemo } from 'react'
+import { useState, type CSSProperties } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
-import { getLawyerSlots, createBulkSlots, deleteSlot, type SlotDto } from '../api/slots'
+import { getLawyerSlots, createBulkSlots, createSlot, moveSlot as moveSlotApi, deleteSlot, type SlotDto } from '../api/slots'
 import { getMyLawyerProfile } from '../api/profile'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
 import { useVerificationStatus } from '../hooks/useVerificationStatus'
+import { addDays, startOfWeek } from '../lib/weekGrid'
+import { startOfDay, buildMonthMatrix, decideSlotMove } from '../lib/scheduleGrid'
+import { ScheduleTimeGrid } from '../components/calendar/ScheduleTimeGrid'
+import { MonthGrid } from '../components/calendar/MonthGrid'
+import { SlotModal } from '../components/calendar/SlotModal'
+import { SlotActionsPopover } from '../components/calendar/SlotActionsPopover'
 
-function startOfWeek(date: Date): Date {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
+type ViewMode = 'month' | 'week' | 'day'
+const VIEWS: { value: ViewMode; label: string }[] = [
+  { value: 'month', label: 'Ay' },
+  { value: 'week', label: 'Həftə' },
+  { value: 'day', label: 'Gün' },
+]
+
+function parseDateParam(v: string | null): Date {
+  if (!v) return startOfDay(new Date())
+  const d = new Date(v + 'T00:00:00')
+  return Number.isNaN(d.getTime()) ? startOfDay(new Date()) : d
 }
 
-function addDays(date: Date, n: number): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() + n)
-  return d
-}
-
-function formatDay(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function formatTime(dt: string): string {
-  return new Date(dt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-}
-
-function isSameDay(a: Date, b: Date): boolean {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+function dateParam(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export default function Schedule() {
   const { user, lawyerId } = useAuthStore()
   const { isRevoked } = useVerificationStatus()
   const qc = useQueryClient()
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
-  const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({
+
+  // View + current date are kept in the URL (?view=week&date=2026-09-10) so a
+  // refresh / shared link lands back on the same view, like Google Calendar.
+  const [params, setParams] = useSearchParams()
+  const view = (params.get('view') as ViewMode) ?? 'week'
+  const anchor = parseDateParam(params.get('date'))
+
+  const setView = (v: ViewMode) => setParams((p) => { p.set('view', v); return p }, { replace: true })
+  const setAnchor = (d: Date) => setParams((p) => { p.set('date', dateParam(d)); return p }, { replace: true })
+
+  const [bulkModalOpen, setBulkModalOpen] = useState(false)
+  const [bulkForm, setBulkForm] = useState({
     date: new Date().toISOString().split('T')[0],
-    startHour: 9,
-    endHour: 17,
-    slotDuration: 60,
+    startHour: 9, endHour: 17, slotDuration: 60,
   })
+  const [createTarget, setCreateTarget] = useState<Date | null>(null)
+  const [editTarget, setEditTarget] = useState<SlotDto | null>(null)
+  const [popoverSlot, setPopoverSlot] = useState<SlotDto | null>(null)
+  const [busySlotId, setBusySlotId] = useState<string | null>(null)
 
   const { data: profile } = useQuery({
-    queryKey: ['lawyer-profile'],
+    queryKey: ['lawyer-profile', user?.userId],
     queryFn: getMyLawyerProfile,
     enabled: !!user && !lawyerId,
   })
   const effectiveLawyerId = lawyerId ?? profile?.id
-  const weekEnd = addDays(weekStart, 7)
+
+  // Fetch range depends on the view — Month needs the full 6-week matrix so leading
+  // /trailing days from adjacent months still show their slot counts.
+  const rangeStart =
+    view === 'month' ? buildMonthMatrix(anchor)[0]
+      : view === 'week' ? startOfWeek(anchor)
+        : startOfDay(anchor)
+  const rangeEnd =
+    view === 'month' ? addDays(rangeStart, 42)
+      : view === 'week' ? addDays(rangeStart, 7)
+        : addDays(rangeStart, 1)
 
   const { data: slots = [], isLoading } = useQuery({
-    queryKey: ['slots', effectiveLawyerId, weekStart.toISOString()],
-    queryFn: () => getLawyerSlots(effectiveLawyerId!, weekStart.toISOString(), weekEnd.toISOString()),
+    queryKey: ['slots', effectiveLawyerId, view, rangeStart.toISOString()],
+    queryFn: () => getLawyerSlots(effectiveLawyerId!, rangeStart.toISOString(), rangeEnd.toISOString()),
     enabled: !!effectiveLawyerId,
   })
 
+  const invalidateSlots = () => qc.invalidateQueries({ queryKey: ['slots', effectiveLawyerId] })
+
   const bulkMutation = useMutation({
     mutationFn: () => {
-      const dateUtc = new Date(form.date).toISOString()
-      return createBulkSlots({ lawyerId: effectiveLawyerId!, date: dateUtc, slotDurationMinutes: form.slotDuration, startHour: form.startHour, endHour: form.endHour })
+      const dateUtc = new Date(bulkForm.date).toISOString()
+      return createBulkSlots({ lawyerId: effectiveLawyerId!, date: dateUtc, slotDurationMinutes: bulkForm.slotDuration, startHour: bulkForm.startHour, endHour: bulkForm.endHour })
     },
-    onSuccess: (count) => {
-      toast.success(`${count} slot yaradıldı`)
-      qc.invalidateQueries({ queryKey: ['slots'] })
-      setModalOpen(false)
-    },
+    onSuccess: (count) => { toast.success(`${count} slot yaradıldı`); invalidateSlots(); setBulkModalOpen(false) },
     onError: () => toast.error('Slotlar yaradılmadı'),
   })
 
-  const deleteMutation = useMutation({
+  const quickCreate = async (start: Date, durationMinutes: number) => {
+    try {
+      await createSlot(start.toISOString(), new Date(start.getTime() + durationMinutes * 60000).toISOString())
+      toast.success('Slot yaradıldı')
+      invalidateSlots()
+      setCreateTarget(null)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Slot yaradılmadı — vaxt üst-üstə düşür ola bilər')
+    }
+  }
+
+  const editSlot = async (start: Date, durationMinutes: number) => {
+    if (!editTarget) return
+    if (editTarget.isBooked) {
+      toast.error('Rezerv edilmiş slot redaktə edilə bilməz')
+      return
+    }
+    const end = new Date(start.getTime() + durationMinutes * 60000)
+    try {
+      await moveSlotApi(editTarget.id, start.toISOString(), end.toISOString())
+      toast.success('Slot yeniləndi')
+      invalidateSlots()
+      setEditTarget(null)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Slot yenilənmədi — vaxt üst-üstə düşür ola bilər')
+    }
+  }
+
+  const moveSlot = async (slot: SlotDto, newStart: Date) => {
+    // decideSlotMove is the same pure function covered by scheduleGrid.test.ts — the
+    // component just acts on its verdict instead of re-implementing the checks inline.
+    const decision = decideSlotMove(slot, newStart, slots)
+    if (!decision.send) {
+      if (decision.reason === 'booked') toast.error('Rezerv edilmiş slot köçürülə bilməz — bu vaxta artıq müştəri görüşü var')
+      else if (decision.reason === 'collision') toast.error('Bu vaxtda artıq slot var')
+      return // 'no-change' (dropped back on its own cell) — nothing to do, no error either
+    }
+
+    setBusySlotId(slot.id)
+    try {
+      // Single atomic PATCH — updates this slot's own time range server-side. (The
+      // previous "create at new time, then delete the old one" approach is what broke
+      // drag-and-drop: CreateSlotCommand's overlap check saw the not-yet-deleted original
+      // slot and rejected any move that landed within the slot's own original duration.)
+      await moveSlotApi(decision.slotId, decision.startTime.toISOString(), decision.endTime.toISOString())
+      toast.success('Slot köçürüldü')
+      invalidateSlots()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Slot köçürülmədi')
+    } finally {
+      setBusySlotId(null)
+    }
+  }
+
+  const deleteSlotMutation = useMutation({
     mutationFn: (slotId: string) => deleteSlot(slotId, effectiveLawyerId!),
-    onSuccess: () => { toast.success('Slot silindi'); qc.invalidateQueries({ queryKey: ['slots'] }) },
-    onError: () => toast.error('Slot silinmədi'),
+    onSuccess: () => { toast.success('Slot silindi'); invalidateSlots(); setPopoverSlot(null) },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Slot silinmədi'),
   })
 
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart])
+  const step = view === 'month' ? 30 /* ~1 month */ : view === 'week' ? 7 : 1
+  const goPrev = () => setAnchor(addDays(anchor, -step))
+  const goNext = () => setAnchor(addDays(anchor, step))
+  const goToday = () => setAnchor(startOfDay(new Date()))
 
-  const slotsByDay = useMemo(() => {
-    const map: Record<string, SlotDto[]> = {}
-    weekDays.forEach((d) => { map[d.toDateString()] = [] })
-    slots.forEach((s) => {
-      const d = new Date(s.startTime)
-      const key = d.toDateString()
-      if (map[key]) map[key].push(s)
-    })
-    return map
-  }, [slots, weekDays])
+  const headerLabel =
+    view === 'month' ? anchor.toLocaleDateString('az-AZ', { month: 'long', year: 'numeric' })
+      : view === 'week' ? `${rangeStart.toLocaleDateString('az-AZ', { day: 'numeric', month: 'long' })} – ${addDays(rangeStart, 6).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : anchor.toLocaleDateString('az-AZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100 }}>
+    <div style={{ padding: 32, maxWidth: 1200 }}>
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: 28, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}
       >
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, color: '#0A0A0A' }}>Mənim cədvəlim</h1>
           <p style={{ fontSize: 14, color: '#6B6B6B', marginTop: 4 }}>Mövcud slotlarınızı idarə edin</p>
         </div>
-        <Button onClick={() => setModalOpen(true)} disabled={isRevoked}>
+        <Button onClick={() => setBulkModalOpen(true)} disabled={isRevoked} variant="secondary">
           <Plus size={16} /> Günlük cədvəl əlavə et
         </Button>
       </motion.div>
 
-      {/* Week navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <button onClick={() => setWeekStart((w) => addDays(w, -7))}
-          style={{ background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#0A0A0A' }}>
-          {weekStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} –{' '}
-          {addDays(weekStart, 6).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-        </span>
-        <button onClick={() => setWeekStart((w) => addDays(w, 7))}
-          style={{ background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 8, padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
-          <ChevronRight size={16} />
-        </button>
+      {/* Toolbar: prev/next/today + view switcher (Month/Week/Day) */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={goPrev} style={navBtn}><ChevronLeft size={16} /></button>
+          <button onClick={goToday} style={{ ...navBtn, width: 'auto', padding: '6px 12px', fontSize: 12, fontWeight: 600, color: '#0A0A0A' }}>Bu gün</button>
+          <button onClick={goNext} style={navBtn}><ChevronRight size={16} /></button>
+          <span style={{ fontSize: 15, fontWeight: 600, color: '#0A0A0A', marginLeft: 6, textTransform: 'capitalize' }}>{headerLabel}</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 4, background: '#F5F5F5', padding: 4, borderRadius: 10 }}>
+          {VIEWS.map((v) => (
+            <button key={v.value} onClick={() => setView(v.value)}
+              style={{
+                padding: '7px 16px', borderRadius: 7, border: 'none',
+                background: view === v.value ? '#fff' : 'transparent',
+                color: view === v.value ? '#0A0A0A' : '#6B6B6B',
+                fontWeight: view === v.value ? 600 : 500, fontSize: 13, cursor: 'pointer',
+                boxShadow: view === v.value ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                fontFamily: 'Inter, sans-serif',
+              }}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Week grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 10 }}>
-        {weekDays.map((day) => {
-          const isToday = isSameDay(day, new Date())
-          const daySlots = slotsByDay[day.toDateString()] ?? []
-          return (
-            <div key={day.toISOString()} style={{ background: '#FFFFFF', border: `1px solid ${isToday ? '#0A0A0A' : '#E8E8E8'}`, borderRadius: 12, padding: 12, minHeight: 160 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: isToday ? '#0A0A0A' : '#6B6B6B', marginBottom: 10, textAlign: 'center' }}>
-                {formatDay(day)}
-              </div>
-              {isLoading ? (
-                <div style={{ height: 40, background: '#F5F5F5', borderRadius: 8 }} />
-              ) : daySlots.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#C4C4C4', fontSize: 12, paddingTop: 20 }}>Slot yoxdur</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {daySlots.map((slot) => (
-                    <div key={slot.id} style={{ background: slot.isBooked ? '#F5F5F5' : '#0A0A0A', color: slot.isBooked ? '#6B6B6B' : '#FFFFFF', borderRadius: 7, padding: '6px 8px', fontSize: 11, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{formatTime(slot.startTime)}–{formatTime(slot.endTime)}</span>
-                      {!slot.isBooked && !isRevoked && (
-                        <button onClick={() => deleteMutation.mutate(slot.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FFFFFF', padding: 0, display: 'flex', alignItems: 'center' }}
-                        >
-                          <Trash2 size={11} />
-                        </button>
-                      )}
-                      {slot.isBooked && <span style={{ fontSize: 10, fontWeight: 600 }}>Rezerv edilib</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
+      {isLoading ? (
+        <div style={{ height: 400, background: '#F5F5F5', borderRadius: 12 }} />
+      ) : view === 'month' ? (
+        <MonthGrid
+          monthAnchor={anchor}
+          slots={slots}
+          onDayClick={(day) => { setAnchor(day); setView('day') }}
+        />
+      ) : (
+        <>
+          <div className="schedule-grid-scroll" style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: view === 'week' ? 640 : 280 }}>
+              <ScheduleTimeGrid
+                slots={slots}
+                rangeStart={rangeStart}
+                daysToShow={view === 'week' ? 7 : 1}
+                disabled={isRevoked || !!busySlotId}
+                onCellClick={(start) => setCreateTarget(start)}
+                onSlotClick={(slot) => setPopoverSlot(slot)}
+                onSlotMove={moveSlot}
+              />
             </div>
-          )
-        })}
-      </div>
+          </div>
+          <p style={{ fontSize: 11, color: '#A3A3A3', marginTop: 10 }}>
+            Boş xananı klikləyib yeni slot yaradın, mövcud slotu sürüşdürüb vaxtını dəyişin,
+            klikləyib redaktə/silin. Rezerv edilmiş slotlar (boz) sadəcə baxış üçündür.
+          </p>
+        </>
+      )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Tarix seçin" width={420}>
+      {/* Quick create (click an empty cell) */}
+      <SlotModal
+        open={!!createTarget}
+        startTime={createTarget}
+        mode="create"
+        onClose={() => setCreateTarget(null)}
+        onSubmit={quickCreate}
+      />
+
+      {/* Edit (from the popover) */}
+      <SlotModal
+        open={!!editTarget}
+        startTime={editTarget ? new Date(editTarget.startTime) : null}
+        initialDurationMinutes={editTarget?.durationMinutes}
+        mode="edit"
+        onClose={() => setEditTarget(null)}
+        onSubmit={editSlot}
+      />
+
+      {/* Click-on-slot menu: Redaktə et / Sil (or read-only info if booked) */}
+      <SlotActionsPopover
+        slot={popoverSlot}
+        busy={deleteSlotMutation.isPending}
+        onClose={() => setPopoverSlot(null)}
+        onEdit={() => { setEditTarget(popoverSlot); setPopoverSlot(null) }}
+        onDelete={() => { if (popoverSlot) deleteSlotMutation.mutate(popoverSlot.id) }}
+      />
+
+      <Modal open={bulkModalOpen} onClose={() => setBulkModalOpen(false)} title="Tarix seçin" width={420}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Tarix seçin</label>
-            <input type="date" value={form.date} min={new Date().toISOString().split('T')[0]}
-              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+            <input type="date" value={bulkForm.date} min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setBulkForm((f) => ({ ...f, date: e.target.value }))}
               style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '10px 14px', fontSize: 14, outline: 'none', fontFamily: 'Inter, sans-serif' }}
             />
           </div>
@@ -177,8 +275,8 @@ export default function Schedule() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Başlanğıc saatı</label>
-              <select value={form.startHour}
-                onChange={(e) => { const v = parseInt(e.target.value); setForm((f) => ({ ...f, startHour: v, endHour: f.endHour <= v ? v + 1 : f.endHour })) }}
+              <select value={bulkForm.startHour}
+                onChange={(e) => { const v = parseInt(e.target.value); setBulkForm((f) => ({ ...f, startHour: v, endHour: f.endHour <= v ? v + 1 : f.endHour })) }}
                 style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, cursor: 'pointer', outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}
               >
                 {Array.from({ length: 17 }, (_, i) => i + 6).map((h) => (
@@ -188,11 +286,11 @@ export default function Schedule() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Bitmə saatı</label>
-              <select value={form.endHour}
-                onChange={(e) => setForm((f) => ({ ...f, endHour: parseInt(e.target.value) }))}
+              <select value={bulkForm.endHour}
+                onChange={(e) => setBulkForm((f) => ({ ...f, endHour: parseInt(e.target.value) }))}
                 style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, cursor: 'pointer', outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}
               >
-                {Array.from({ length: 17 }, (_, i) => i + 7).filter((h) => h > form.startHour).map((h) => (
+                {Array.from({ length: 17 }, (_, i) => i + 7).filter((h) => h > bulkForm.startHour).map((h) => (
                   <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>
                 ))}
               </select>
@@ -201,8 +299,8 @@ export default function Schedule() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 13, fontWeight: 500, color: '#0A0A0A' }}>Slot müddəti</label>
-            <select value={form.slotDuration}
-              onChange={(e) => setForm((f) => ({ ...f, slotDuration: parseInt(e.target.value) }))}
+            <select value={bulkForm.slotDuration}
+              onChange={(e) => setBulkForm((f) => ({ ...f, slotDuration: parseInt(e.target.value) }))}
               style={{ border: '1px solid #E8E8E8', borderRadius: 10, padding: '11px 14px', fontSize: 14, cursor: 'pointer', outline: 'none', fontFamily: 'Inter, sans-serif', background: '#FFFFFF' }}
             >
               <option value={30}>30 dəqiqə</option>
@@ -213,10 +311,10 @@ export default function Schedule() {
           </div>
 
           {(() => {
-            const count = Math.floor((form.endHour - form.startHour) * 60 / form.slotDuration)
+            const count = Math.floor((bulkForm.endHour - bulkForm.startHour) * 60 / bulkForm.slotDuration)
             const previews = Array.from({ length: Math.min(count, 3) }, (_, i) => {
-              const s = form.startHour + (i * form.slotDuration) / 60
-              const e = s + form.slotDuration / 60
+              const s = bulkForm.startHour + (i * bulkForm.slotDuration) / 60
+              const e = s + bulkForm.slotDuration / 60
               const fmt = (h: number) => `${String(Math.floor(h)).padStart(2, '0')}:00`
               return `${fmt(s)}–${fmt(e)}`
             })
@@ -228,11 +326,16 @@ export default function Schedule() {
             )
           })()}
 
-          <Button fullWidth loading={bulkMutation.isPending} disabled={!form.date || form.endHour <= form.startHour} onClick={() => bulkMutation.mutate()}>
+          <Button fullWidth loading={bulkMutation.isPending} disabled={!bulkForm.date || bulkForm.endHour <= bulkForm.startHour} onClick={() => bulkMutation.mutate()}>
             Slotlar yarat
           </Button>
         </div>
       </Modal>
     </div>
   )
+}
+
+const navBtn: CSSProperties = {
+  background: '#F5F5F5', border: '1px solid #E8E8E8', borderRadius: 8,
+  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#0A0A0A',
 }

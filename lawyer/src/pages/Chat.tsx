@@ -92,8 +92,19 @@ export default function Chat() {
       if (prev.some((m) => m.id === msg.id)) return prev
       return [...prev, { id: msg.id, chatId: selectedChatIdRef.current ?? '', senderId: msg.senderId, content: msg.content, sentAt: msg.sentAt, type: msg.type }]
     })
-    if (user) getChats(user.userId).then(setChats).catch(() => {})
+    // IncomingMessage has no chatId — SignalR only delivers messages for a joined
+    // (i.e. currently selected) chat, so selectedChatIdRef.current is the chat it belongs to.
     const chatId = selectedChatIdRef.current
+    setChats((prev) => {
+      if (!chatId || !prev.some((c) => c.id === chatId)) {
+        // Unknown/new chat — fall back to a full refetch, we can't patch a row we don't have.
+        if (user) getChats(user.userId).then(setChats).catch(() => {})
+        return prev
+      }
+      const next = prev.map((c) => (c.id === chatId ? { ...c, lastMessageAt: msg.sentAt } : c))
+      next.sort((a, b) => new Date(b.lastMessageAt ?? 0).getTime() - new Date(a.lastMessageAt ?? 0).getTime())
+      return next
+    })
     if (chatId && msg.senderId !== user?.userId) {
       markAsReadApi(chatId, user?.userId ?? '').catch(() => {})
       qc.invalidateQueries({ queryKey: ['unread-count', user?.userId] })

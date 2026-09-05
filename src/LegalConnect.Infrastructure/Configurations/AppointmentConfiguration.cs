@@ -38,6 +38,18 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
         builder.Property(a => a.CancelledAt)
             .IsRequired(false);
 
+        builder.Property(a => a.RescheduleStatus)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasDefaultValue(Domain.Enums.RescheduleStatus.None);
+
+        builder.Property(a => a.RescheduleReason)
+            .HasMaxLength(1000)
+            .IsRequired(false);
+
+        builder.Property(a => a.ProposedScheduledAt).IsRequired(false);
+        builder.Property(a => a.ProposedByUserId).IsRequired(false);
+
         // Клиент -> Записи (один ко многим)
         builder.HasOne(a => a.Client)
             .WithMany(u => u.Appointments)

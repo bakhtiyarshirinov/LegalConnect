@@ -14,6 +14,7 @@ const mockAppointment: Appointment = {
   type: 'Online',
   status: 'Confirmed',
   price: 100,
+  rescheduleStatus: 'None',
 }
 
 describe('ClientBadge', () => {

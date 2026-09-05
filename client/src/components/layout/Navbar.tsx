@@ -14,7 +14,7 @@ export function Navbar() {
   const [dropOpen, setDropOpen] = useState(false)
 
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-count', user?.userId],
+    queryKey: ['notif-unread-count', user?.userId],
     queryFn: () => notificationsApi.getUnreadCount(user!.userId),
     enabled: !!user,
     refetchInterval: 60_000,

@@ -40,6 +40,10 @@ public class GetLawyerAppointmentsQueryHandler
             Price: a.Price,
             Notes: a.Notes,
             MeetingUrl: a.MeetingUrl,
-            CancellationReason: a.CancellationReason));
+            CancellationReason: a.CancellationReason,
+            RescheduleStatus: a.RescheduleStatus.ToString(),
+            ProposedScheduledAt: a.ProposedScheduledAt,
+            ProposedByUserId: a.ProposedByUserId,
+            RescheduleReason: a.RescheduleReason));
     }
 }

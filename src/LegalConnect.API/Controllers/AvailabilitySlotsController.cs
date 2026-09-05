@@ -2,6 +2,7 @@ using System.Globalization;
 using LegalConnect.Application.Slots.Commands.CreateBulkSlots;
 using LegalConnect.Application.Slots.Commands.CreateSlot;
 using LegalConnect.Application.Slots.Commands.DeleteSlot;
+using LegalConnect.Application.Slots.Commands.MoveSlot;
 using LegalConnect.Application.Slots.Queries.GetAvailableSlots;
 using LegalConnect.Application.Slots.Queries.GetLawyerSlots;
 using MediatR;
@@ -85,6 +86,22 @@ public class AvailabilitySlotsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// PATCH /api/slots/{id} — moves a free slot to a new time range (drag-and-drop /
+    /// quick edit in Cədvəl). Booked slots are rejected with a clear 400, never a silent
+    /// no-op. Body: { startTime, endTime }.
+    /// </summary>
+    [HttpPatch("{id:guid}")]
+    [Authorize]
+    public async Task<IActionResult> MoveSlot(
+        Guid id,
+        [FromBody] MoveSlotRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new MoveSlotCommand(id, body.StartTime, body.EndTime), cancellationToken);
+        return NoContent();
+    }
+
     private static DateTime? ParseDateUtc(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
@@ -106,3 +123,6 @@ public class AvailabilitySlotsController : ControllerBase
         return null;
     }
 }
+
+/// <summary>Request body for PATCH /api/slots/{id}.</summary>
+public record MoveSlotRequest(DateTime StartTime, DateTime EndTime);

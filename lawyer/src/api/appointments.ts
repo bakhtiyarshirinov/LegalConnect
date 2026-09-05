@@ -16,6 +16,10 @@ export interface Appointment {
   price: number
   notes?: string
   cancellationReason?: string
+  rescheduleStatus: 'None' | 'Pending' | 'Accepted' | 'Rejected'
+  proposedScheduledAt?: string
+  proposedByUserId?: string
+  rescheduleReason?: string
 }
 
 export async function getByLawyer(lawyerId: string): Promise<Appointment[]> {
@@ -42,4 +46,14 @@ export async function deleteAppointment(appointmentId: string, reason?: string):
 
 export async function completeAppointment(appointmentId: string, lawyerId: string): Promise<void> {
   await api.put(`/appointments/${appointmentId}/complete?lawyerId=${lawyerId}`)
+}
+
+/** Propose a new time — does NOT move the appointment until the other side accepts. */
+export async function proposeReschedule(appointmentId: string, newScheduledAt: string, reason?: string): Promise<void> {
+  await api.post(`/appointments/${appointmentId}/propose-reschedule`, { newScheduledAt, reason })
+}
+
+/** Only the non-proposing participant may call this (server enforces it, 403 otherwise). */
+export async function respondReschedule(appointmentId: string, accept: boolean, reason?: string): Promise<void> {
+  await api.post(`/appointments/${appointmentId}/respond-reschedule`, { accept, reason })
 }

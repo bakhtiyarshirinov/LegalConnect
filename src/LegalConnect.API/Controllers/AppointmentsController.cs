@@ -3,6 +3,8 @@ using LegalConnect.Application.Appointments.Commands.CompleteAppointment;
 using LegalConnect.Application.Appointments.Commands.ConfirmAppointment;
 using LegalConnect.Application.Appointments.Commands.CreateAppointment;
 using LegalConnect.Application.Appointments.Commands.CreateMeeting;
+using LegalConnect.Application.Appointments.Commands.ProposeReschedule;
+using LegalConnect.Application.Appointments.Commands.RespondReschedule;
 using LegalConnect.Application.Appointments.Queries.GetClientAppointments;
 using LegalConnect.Application.Appointments.Queries.GetLawyerAppointments;
 using MediatR;
@@ -73,6 +75,38 @@ public class AppointmentsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// POST /api/appointments/{id}/propose-reschedule — a participant proposes a new time.
+    /// Body: { newScheduledAt, reason? }. Does not move the appointment; the other party must accept.
+    /// </summary>
+    [HttpPost("{id:guid}/propose-reschedule")]
+    public async Task<IActionResult> ProposeReschedule(
+        Guid id,
+        [FromBody] ProposeRescheduleRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(
+            new ProposeRescheduleCommand(id, body.NewScheduledAt, body.Reason),
+            cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// POST /api/appointments/{id}/respond-reschedule — the OTHER party accepts/rejects the proposal.
+    /// Body: { accept, reason? }. The proposer calling this gets 403.
+    /// </summary>
+    [HttpPost("{id:guid}/respond-reschedule")]
+    public async Task<IActionResult> RespondReschedule(
+        Guid id,
+        [FromBody] RespondRescheduleRequest body,
+        CancellationToken cancellationToken)
+    {
+        await _mediator.Send(
+            new RespondRescheduleCommand(id, body.Accept, body.Reason),
+            cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("{id:guid}/complete")]
     public async Task<IActionResult> Complete(
         Guid id,
@@ -116,3 +150,9 @@ public class AppointmentsController : ControllerBase
 
 /// <summary>Request body for PUT /api/appointments/{id}/cancel.</summary>
 public record CancelAppointmentRequest(string? Reason);
+
+/// <summary>Request body for POST /api/appointments/{id}/propose-reschedule.</summary>
+public record ProposeRescheduleRequest(DateTime NewScheduledAt, string? Reason);
+
+/// <summary>Request body for POST /api/appointments/{id}/respond-reschedule.</summary>
+public record RespondRescheduleRequest(bool Accept, string? Reason);

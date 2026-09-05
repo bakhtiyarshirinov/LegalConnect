@@ -23,6 +23,14 @@ public class Appointment
     public string? CancellationReason { get; private set; }
     public DateTime? CancelledAt { get; private set; }
 
+    // ─── Reschedule proposal state ───────────────────────────────────────────
+    // A reschedule is a REQUEST: ScheduledAt is not touched until the other party
+    // accepts. Only one proposal can be pending at a time.
+    public DateTime? ProposedScheduledAt { get; private set; }
+    public Guid? ProposedByUserId { get; private set; }
+    public RescheduleStatus RescheduleStatus { get; private set; } = RescheduleStatus.None;
+    public string? RescheduleReason { get; private set; }
+
     public User Client { get; private set; } = null!;
     public Lawyer Lawyer { get; private set; } = null!;
     public Review? Review { get; private set; }
@@ -67,7 +75,41 @@ public class Appointment
         Status = AppointmentStatus.Cancelled;
         CancellationReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
         CancelledAt = DateTime.UtcNow;
+        ClearReschedule(); // drop any pending proposal
     }
     public void Complete() => Status = AppointmentStatus.Completed;
     public void SetMeetingUrl(string url) => MeetingUrl = url;
+
+    /// <summary>
+    /// Records a reschedule proposal. Does NOT change <see cref="ScheduledAt"/> — the
+    /// other party must accept first.
+    /// </summary>
+    public void ProposeReschedule(DateTime proposedAt, Guid byUserId, string? reason)
+    {
+        ProposedScheduledAt = DateTime.SpecifyKind(proposedAt, DateTimeKind.Utc);
+        ProposedByUserId = byUserId;
+        RescheduleStatus = RescheduleStatus.Pending;
+        RescheduleReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+    }
+
+    /// <summary>Applies a pending proposal: the appointment moves to the proposed time.</summary>
+    public void AcceptReschedule()
+    {
+        if (RescheduleStatus != RescheduleStatus.Pending || ProposedScheduledAt is null)
+            throw new InvalidOperationException("No pending reschedule request to accept");
+
+        ScheduledAt = ProposedScheduledAt.Value;
+        ClearReschedule();
+    }
+
+    /// <summary>Discards a pending proposal; the appointment stays at its current time.</summary>
+    public void RejectReschedule() => ClearReschedule();
+
+    private void ClearReschedule()
+    {
+        ProposedScheduledAt = null;
+        ProposedByUserId = null;
+        RescheduleStatus = RescheduleStatus.None;
+        RescheduleReason = null;
+    }
 }
